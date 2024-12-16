@@ -1,0 +1,29 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.12.35527.113
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "sfa-chat-graph.Server", "sfa-chat-graph.Server\sfa-chat-graph.Server.csproj", "{0EA78725-4796-4F94-9EB4-6A3C2AA1B480}"
+EndProject
+Project("{54A90642-561A-4BB1-A94E-469ADEE60C69}") = "sfa-chat-graph.client", "sfa-chat-graph.client\sfa-chat-graph.client.esproj", "{37E8CE2C-E560-4247-8902-6D4FF7F95902}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0EA78725-4796-4F94-9EB4-6A3C2AA1B480}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0EA78725-4796-4F94-9EB4-6A3C2AA1B480}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0EA78725-4796-4F94-9EB4-6A3C2AA1B480}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0EA78725-4796-4F94-9EB4-6A3C2AA1B480}.Release|Any CPU.Build.0 = Release|Any CPU
+		{37E8CE2C-E560-4247-8902-6D4FF7F95902}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{37E8CE2C-E560-4247-8902-6D4FF7F95902}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{37E8CE2C-E560-4247-8902-6D4FF7F95902}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{37E8CE2C-E560-4247-8902-6D4FF7F95902}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{37E8CE2C-E560-4247-8902-6D4FF7F95902}.Release|Any CPU.Build.0 = Release|Any CPU
+		{37E8CE2C-E560-4247-8902-6D4FF7F95902}.Release|Any CPU.Deploy.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
