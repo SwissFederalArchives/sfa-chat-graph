@@ -19,7 +19,7 @@ namespace sfa_chat_graph.Server.RDF.Models
 			switch (Type)
 			{
 				case "uri":
-					return g.CreateUriNode(Value);
+					return g.CreateUriNode(new Uri(Value));
 				case "literal":
 					return string.IsNullOrEmpty(DataType) ? g.CreateLiteralNode(Value) : g.CreateLiteralNode(Value, DataType);
 				default:

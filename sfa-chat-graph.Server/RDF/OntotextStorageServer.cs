@@ -19,14 +19,14 @@ namespace sfa_chat_graph.Server.RDF
 		}
 	}
 
-	public class OntoextStorageServer : IAsyncStorageServer
+	public class OntotextStorageServer : IAsyncStorageServer
 	{
 		public string Endpoint { get; init; }
 		private HttpClient _client;
 
 		public IOBehaviour IOBehaviour => IOBehaviour.IsReadOnly;
 
-		public OntoextStorageServer(string endpoint)
+		public OntotextStorageServer(string endpoint)
 		{
 			this.Endpoint = endpoint;
 			_client = new HttpClient()
@@ -50,7 +50,7 @@ namespace sfa_chat_graph.Server.RDF
 			});
 		}
 
-		public async Task<IEnumerable<string>> ListStoresAsync(CancellationToken cancellationToken)
+		public async Task<IEnumerable<string>> ListStoresAsync(CancellationToken cancellationToken = default)
 		{
 			var response = await _client.GetAsync("repositories");
 			response.EnsureSuccessStatusCode();
@@ -73,7 +73,7 @@ namespace sfa_chat_graph.Server.RDF
 			throw new NotImplementedException();
 		}
 
-		public Task<IEnumerable<IStoreTemplate>> GetAvailableTemplatesAsync(string id, CancellationToken cancellationToken)
+		public Task<IEnumerable<IStoreTemplate>> GetAvailableTemplatesAsync(string id, CancellationToken cancellationToken = default)
 		{
 			throw new NotImplementedException();
 		}
@@ -83,7 +83,7 @@ namespace sfa_chat_graph.Server.RDF
 			throw new NotImplementedException();
 		}
 
-		public Task<string> CreateStoreAsync(IStoreTemplate template, CancellationToken cancellationToken)
+		public Task<string> CreateStoreAsync(IStoreTemplate template, CancellationToken cancellationToken = default)
 		{
 			throw new NotImplementedException();
 		}
@@ -93,7 +93,7 @@ namespace sfa_chat_graph.Server.RDF
 			throw new NotImplementedException();
 		}
 
-		public Task DeleteStoreAsync(string storeId, CancellationToken cancellationToken)
+		public Task DeleteStoreAsync(string storeId, CancellationToken cancellationToken = default)
 		{
 			throw new NotImplementedException();
 		}
@@ -104,7 +104,7 @@ namespace sfa_chat_graph.Server.RDF
 			callback(this, new AsyncStorageCallbackArgs(AsyncStorageOperation.GetStore, storeId, store), state);
 		}
 
-		public Task<IAsyncStorageProvider> GetStoreAsync(string storeId, CancellationToken cancellationToken)
+		public Task<IAsyncStorageProvider> GetStoreAsync(string storeId, CancellationToken cancellationToken = default)
 		{
 			return Task.FromResult<IAsyncStorageProvider>(new OntotextStorage(this, Endpoint, storeId));
 		}

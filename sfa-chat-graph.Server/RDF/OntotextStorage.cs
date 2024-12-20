@@ -2,21 +2,26 @@
 using sfa_chat_graph.Server.RDF.Models;
 using System.Data;
 using System.Net.Http.Headers;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using VDS.RDF;
+using VDS.RDF.Parsing.Handlers;
 using VDS.RDF.Query;
 using VDS.RDF.Storage;
 using VDS.RDF.Storage.Management;
 
 namespace sfa_chat_graph.Server.RDF
 {
-	public class OntotextStorage : IAsyncQueryableStorage
+	public class OntotextStorage : IAsyncQueryableStorage, IGraphRag
 	{
 		private HttpClient _client;
-		public string Repository { get; set; }
+		public string Repository { get; init; }
 		public string Endpoint { get; init; }
 		public IAsyncStorageServer AsyncParentServer { get; init; }
+		private JsonSerializerOptions _jsonOptions = new JsonSerializerOptions { Converters = { new SparqlStarConverter() } };
+		public string Schema { get; private set; }
+		public string Graph { get; private set; }
 
 		public OntotextStorage(IAsyncStorageServer parent, string endpoint, string repository)
 		{
@@ -25,11 +30,29 @@ namespace sfa_chat_graph.Server.RDF
 			AsyncParentServer = parent;
 			_client = new HttpClient()
 			{
-				BaseAddress = new Uri(Endpoint)
+				BaseAddress = new Uri(new Uri(Endpoint), "repositories/")
 			};
 		}
 
-		private async Task<JsonDocument> QueryStorageAsync(string query)
+		public async Task ChangeGraphAsync(string grah)
+		{
+			this.Graph = grah;
+			await InitAsync(true);
+		}
+
+		private async Task<T> QueryRepositoryAsJsonAsync<T>(string query, JsonSerializerOptions options = null)
+		{
+			var stream = await QueryRepositoryAsJsonStreamAsync(query);
+			return await JsonSerializer.DeserializeAsync<T>(stream, options);
+		}
+
+		private async Task<SparqlStarResult> QueryRepositoryAsSparqlStartAsync(string query)
+		{
+			using var stream = await QueryRepositoryAsJsonStreamAsync(query);
+			return await JsonSerializer.DeserializeAsync<SparqlStarResult>(stream, _jsonOptions);
+		}
+
+		private async Task<Stream> QueryRepositoryAsJsonStreamAsync(string query)
 		{
 			var data = new Dictionary<string, string>
 			{
@@ -37,18 +60,14 @@ namespace sfa_chat_graph.Server.RDF
 			};
 
 			var formContent = new FormUrlEncodedContent(data);
-			var request = new HttpRequestMessage(HttpMethod.Post, Repository)
-			{
-				Content = formContent,
-				Headers =
-				{
-					{"Accept", "application/json"}
-				}
-			};
+			var request = new HttpRequestMessage(HttpMethod.Post, $"/repositories/{Repository}");
+			request.Content = formContent;
+			request.Headers.Add("Accept", "application/json");
 
 			var response = await _client.SendAsync(request);
 			response.EnsureSuccessStatusCode();
-			return await response.Content.ReadFromJsonAsync<JsonDocument>();
+			var stream = await response.Content.ReadAsStreamAsync();
+			return stream;
 		}
 
 
@@ -96,9 +115,17 @@ namespace sfa_chat_graph.Server.RDF
 			});
 		}
 
-		public Task<object> QueryAsync(string sparqlQuery, CancellationToken cancellationToken)
+		public async Task<object> QueryAsync(string sparqlQuery, CancellationToken cancellationToken)
 		{
-			throw new NotImplementedException();
+			var sparqlStar = await QueryRepositoryAsSparqlStartAsync(sparqlQuery);
+			var factory = new NodeFactory();
+			var result = new SparqlResultSet(sparqlStar.Results.Select (
+				x => new SparqlResult(x.GetNamedTerms().Select (
+					nt => new KeyValuePair<string, INode>(nt.key, nt.term?.GetNode(factory) ?? factory.CreateBlankNode()))
+				)
+			));
+
+			return result;
 		}
 
 		public Task QueryAsync(IRdfHandler rdfHandler, ISparqlResultsHandler resultsHandler, string sparqlQuery, CancellationToken cancellationToken)
@@ -139,32 +166,15 @@ namespace sfa_chat_graph.Server.RDF
 			});
 		}
 
-
-		private SparqlStarResult ReadSparqlStarResult(INodeFactory factory, JsonDocument sparqlStar)
+		private IEnumerable<Triple> LoadTriplesFromSparqlStar(INodeFactory factory, SparqlStarResult sparqlStar)
 		{
-			var res = sparqlStar.RootElement.Deserialize<SparqlStarResult>();
-			var converter = new SparqlStarConverter(res.Head.Vars);
-			var options = new JsonSerializerOptions
-			{
-				Converters = { converter }
-			};
-
-			res.Results = sparqlStar.RootElement.GetProperty("results").GetProperty("bindings").Deserialize<SparqlStarObject[]>(options);
-			return res;
-		}
-
-		private IEnumerable<Triple> LoadTriplesFromJson(INodeFactory factory, JsonDocument sparqlStar)
-		{
-			var res = ReadSparqlStarResult(factory, sparqlStar);
-			foreach (var binding in res.Results)
-			{
+			foreach (var binding in sparqlStar.Results)
 				yield return new Triple(binding["s"].GetNode(factory), binding["p"].GetNode(factory), binding["o"].GetNode(factory));
-			}
 		}
 
 		public async Task LoadGraphAsync(IGraph g, string graphName, CancellationToken cancellationToken)
 		{
-			if(Uri.IsWellFormedUriString(graphName, UriKind.RelativeOrAbsolute) == false)
+			if (Uri.IsWellFormedUriString(graphName, UriKind.RelativeOrAbsolute) == false)
 				throw new ArgumentException($"{graphName} is not a valid URI", nameof(graphName));
 
 			var query = $$"""
@@ -174,14 +184,28 @@ namespace sfa_chat_graph.Server.RDF
 				}
 			}
 			""";
-			
-			var json = await QueryStorageAsync(query);
 
+			var sparqlStar = await QueryRepositoryAsSparqlStartAsync(query);
+			var triples = LoadTriplesFromSparqlStar(g, sparqlStar);
+			g.Assert(triples);
 		}
 
-		public Task LoadGraphAsync(IRdfHandler handler, string graphName, CancellationToken cancellationToken)
+		public async Task LoadGraphAsync(IRdfHandler handler, string graphName, CancellationToken cancellationToken)
 		{
-			handler.
+			if (Uri.IsWellFormedUriString(graphName, UriKind.RelativeOrAbsolute) == false)
+				throw new ArgumentException($"{graphName} is not a valid URI", nameof(graphName));
+
+			var query = $$"""
+			SELECT ?s ?p ?o FROM {
+				GRAPH <{{graphName}}> {
+					?s ?p ?o .
+				}
+			}
+			""";
+
+			var sparqlStar = await QueryRepositoryAsSparqlStartAsync(query);
+			var triples = LoadTriplesFromSparqlStar(handler, sparqlStar);
+			handler.Apply(triples);
 		}
 
 		public void SaveGraph(IGraph g, AsyncStorageCallback callback, object state)
@@ -226,17 +250,96 @@ namespace sfa_chat_graph.Server.RDF
 
 		public void ListGraphs(AsyncStorageCallback callback, object state)
 		{
-			throw new NotImplementedException();
+			ListGraphsAsync(CancellationToken.None).ContinueWith(t =>
+			{
+				if (t.IsFaulted)
+				{
+					callback(this, new AsyncStorageCallbackArgs(AsyncStorageOperation.ListGraphs, t.Exception), state);
+				}
+				else
+				{
+					callback(this, new AsyncStorageCallbackArgs(AsyncStorageOperation.ListGraphs, t.Result), state);
+				}
+			});
 		}
 
-		public Task<IEnumerable<string>> ListGraphsAsync(CancellationToken cancellationToken)
+		public async Task<IEnumerable<string>> ListGraphsAsync(CancellationToken cancellationToken)
 		{
-			throw new NotImplementedException();
+			var query = """
+			select distinct ?g where {
+				graph ?g {
+					?s ?p ?o .
+				}
+			}
+			""";
+
+			var sparqlStar = await QueryRepositoryAsSparqlStartAsync(query);
+			return sparqlStar.Results.Select((x) => x[0].Value);
 		}
 
 		public void Dispose()
 		{
-			throw new NotImplementedException();
+			_client.Dispose();
+		}
+
+
+		public async Task InitAsync(bool ignoreExisting = false)
+		{
+			if(string.IsNullOrEmpty(Schema) == false && ignoreExisting == false)
+				return;
+
+			var query = $$"""
+					select distinct ?st ?p ?ot where { 
+				    graph <{{this.Graph}}> {
+				       ?s a ?st .
+				       optional { 
+				            ?s ?p ?o .
+				       		optional { 
+								?o a ?ot . 
+							}  
+				        }
+				    }
+				}
+			""";
+
+			var rdfType = new Uri("http://www.w3.org/1999/02/22-rdf-syntax-ns#type");
+
+			var data = await this.QueryAsync(query, CancellationToken.None) as SparqlResultSet;
+			var builder = new StringBuilder();
+			foreach (var group in data.Results.GroupBy(x => (x["st"] as IUriNode).Uri))
+			{
+				builder.AppendLine($"{group.Key}: [");
+				foreach (var row in group)
+				{
+					var predicate = (row["p"] as IUriNode).Uri;
+					if (predicate.Equals(rdfType))
+						continue;
+
+					var ot = row["ot"];
+					builder.Append($"\t{predicate} -> ");
+					switch (ot)
+					{
+						case IUriNode uriNode:
+							builder.Append(uriNode.Uri);
+							break;
+
+						default:
+							builder.Append("literal");
+							break;
+					}
+
+					builder.AppendLine();
+				}
+				builder.AppendLine("]");
+				builder.AppendLine();
+			}
+
+			Schema = builder.ToString();
+		}
+
+		Task<SparqlStarResult> IGraphRag.QueryAsync(string query)
+		{
+			return QueryRepositoryAsSparqlStartAsync(query);
 		}
 	}
 }
