@@ -4,13 +4,16 @@ import { BrowserModule } from '@angular/platform-browser';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
+import { GraphVisualisationComponent } from './graph-visualisation/graph-visualisation.component';
 
 @NgModule({
   declarations: [
     AppComponent
   ],
   imports: [
-    BrowserModule, HttpClientModule,
+    BrowserModule,
+    HttpClientModule,
+    GraphVisualisationComponent,
     AppRoutingModule
   ],
   providers: [],

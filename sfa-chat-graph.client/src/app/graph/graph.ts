@@ -25,7 +25,7 @@ export class Graph {
     const node2 = this.createNode(`${subIri}@${predIri}=${obj}`, obj, "#AF9030");
     this.createEdge(node1.id, node2.id, predIri, predIri);
   }
-  d
+  
   createTriple(subIri: string, predIri: string, objIri: string) {
     const node1 = this.getOrCreateNode(subIri);
     const node2 = this.getOrCreateNode(objIri);
@@ -37,7 +37,7 @@ export class Graph {
   }
 
   createNode(id: string, label?: string, color?: string): Node {
-    const node = new Node(id, label ?? id, 0, 0, 25, color ?? "#AF3090");
+    const node = new Node(id, label ?? id, 0, 0, 40, color ?? "#AF3090");
     this.insertNode(node);
     return node;
   }
@@ -63,7 +63,7 @@ export class Graph {
   }
 
   createEdge(fromId: string, toId: string, edgeId: string, label: string): void {
-    const edge = new Edge(edgeId, fromId, toId, label, "#101010");
+    const edge = new Edge(edgeId, label, fromId, toId, "#101010");
     this.insertEdge(edge);
   }
 

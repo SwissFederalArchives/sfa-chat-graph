@@ -2,17 +2,17 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "type": "edge",
+      "type": "msedge",
       "request": "launch",
       "name": "localhost (Edge)",
-      "url": "https://localhost:40112",
+      "url": "http://localhost:40112",
       "webRoot": "${workspaceFolder}"
     },
     {
       "type": "chrome",
       "request": "launch",
       "name": "localhost (Chrome)",
-      "url": "https://localhost:40112",
+      "url": "http://localhost:40112",
       "webRoot": "${workspaceFolder}"
     }
   ]

@@ -12,18 +12,20 @@ export class Node {
     public color: string,
   ) { }
 
-  move(x: number, y: number): void {
+  moveWithLeafs(x: number, y: number): void {
     const deltaX = x - this.x;
     const deltaY = y - this.y;
     this.x = x;
     this.y = y;
 
     if (this.isLeaf() == false) {
-      this.getLeafNodes().forEach(leaf => {
-        leaf.x += deltaX;
-        leaf.y += deltaY;
-      });
+      this.getLeafNodes().forEach(leaf => leaf.move(deltaX, deltaY));
     }
+  }
+
+  move(x: number, y: number): void {
+    this.x += x;
+    this.y += y;
   }
 
   getLeafNodes(): Node[] {

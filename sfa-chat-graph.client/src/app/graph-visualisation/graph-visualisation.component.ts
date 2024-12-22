@@ -19,8 +19,8 @@ export class GraphVisualisationComponent implements AfterViewInit {
   private _ctx?: CanvasRenderingContext2D;
   private _layouting: IGraphLayout;
 
-  constructor(layouting?: IGraphLayout) {
-    this._layouting = layouting ?? new NaiveGraphLayout();
+  constructor() {
+    this._layouting = new NaiveGraphLayout();
     this.graph = new Graph();
     this.graph.createTripleLiteralObj("https://ld.admin.ch/stapfer/stapfer/Teacher/130", "https://ld.admin.ch/stapfer/stapfer/Teacher/predicates#hasName", "Weber")
     this.graph.createTripleLiteralObj("https://ld.admin.ch/stapfer/stapfer/Teacher/130", "https://ld.admin.ch/stapfer/stapfer/Teacher/predicates#hasFirstName", "Hans Jakob")
@@ -36,7 +36,7 @@ export class GraphVisualisationComponent implements AfterViewInit {
     this.graph.createTripleLiteralObj("https://ld.admin.ch/stapfer/stapfer/Teacher/130", "https://ld.admin.ch/stapfer/stapfer/Teacher/predicates#hasOtherDuties", "1")
     this.graph.createTripleLiteralObj("https://ld.admin.ch/stapfer/stapfer/Teacher/130", "https://ld.admin.ch/stapfer/stapfer/Teacher/predicates#hasBeenTeachingSince", "17")
     this.graph.createTriple("https://ld.admin.ch/stapfer/stapfer/Teacher/130", "rdf:type", " https://ld.admin.ch/stapfer/stapfer/Teacher")
-    this.graph.createTriple("https://ld.admin.ch/stapfer/stapfer/Teacher/130", "https://ld.admin.ch/stapfer/stapfer/Teacher/predicates#teacherOfOccupation", " https://ld.admin.ch/stapfer/stapfer/TeacherOccupation/1")
+    this.graph.createTriple("https://ld.admin.ch/stapfer/stapfer/Teacher/130", "https://ld.admin.ch/stapfer/stapfer/Teacher/predicates#teacherOfOccupation", "https://ld.admin.ch/stapfer/stapfer/TeacherOccupation/1")
     this.graph.createTriple("https://ld.admin.ch/stapfer/stapfer/Teacher/130", "https://ld.admin.ch/stapfer/stapfer/Teacher/predicates#teachesAtSchool", "https://ld.admin.ch/stapfer/stapfer/TeacherSchool/130%2B28")
     this.graph.createTriple("https://ld.admin.ch/stapfer/stapfer/Teacher/130", "https://ld.admin.ch/stapfer/stapfer/Teacher/predicates#teachesAtSchool", "https://ld.admin.ch/stapfer/stapfer/TeacherSchool/130%2B40")
 
@@ -79,6 +79,7 @@ export class GraphVisualisationComponent implements AfterViewInit {
     this.graph.createTriple("https://ld.admin.ch/stapfer/stapfer/Occupation/94", "rdf:type", "https://ld.admin.ch/stapfer/stapfer/Occupation")
 
     this.graph.updateModels();
+    this._layouting.layout(this.graph);
   }
 
   ngAfterViewInit() {
@@ -88,7 +89,8 @@ export class GraphVisualisationComponent implements AfterViewInit {
 
   render() {
     if (this._ctx) {
-      this._layouting.layout(this.graph);
+     
+      this._ctx.textAlign = "center"
       for (const edge of this.graph.getEdges()) {
         this._ctx.beginPath();
         this._ctx.strokeStyle = edge.color;
@@ -100,15 +102,15 @@ export class GraphVisualisationComponent implements AfterViewInit {
         const midX = (edge.getFrom().x + edge.getTo().x) / 2;
         const midY = (edge.getFrom().y + edge.getTo().y) / 2;
         const name = edge.label.split("/").slice(-2).join('/');
+        const distance = Math.sqrt(Math.pow(edge.getTo().x - edge.getFrom().x, 2) + Math.pow(edge.getTo().y - edge.getFrom().y, 2)) - edge.getFrom().radius - edge.getTo().radius;
         const angle = Math.atan2(edge.getTo().y - edge.getFrom().y, edge.getTo().x - edge.getFrom().x);
         this._ctx.translate(midX, midY);
         this._ctx.rotate(angle);
         this._ctx.fillStyle = "#202020";
-        this._ctx.fillText(name, 0, 0);
+        this._ctx.fillText(name, 0, 0, distance);
         this._ctx.restore();
       }
 
-      this._ctx.textAlign = "center"
       for (const node of this.graph.getNodes()) {
         this._ctx.beginPath();
         this._ctx.fillStyle = node.color;
