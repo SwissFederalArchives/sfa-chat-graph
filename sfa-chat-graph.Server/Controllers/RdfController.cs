@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using OpenAI.Chat;
 using sfa_chat_graph.Server.Models;
 using sfa_chat_graph.Server.RDF;
+using sfa_chat_graph.Server.RDF.Models;
 using System.Text;
 using VDS.RDF.Storage;
 using VDS.RDF.Storage.Management;
@@ -31,6 +32,17 @@ namespace sfa_chat_graph.Server.Controllers
 			});
 
 			_answerSysMessage=new SystemChatMessage("Your job is to answer the user's question given the result of a knowledgegraph lookup. If the question can't be answered with the given data clearly state so");
+		}
+
+		[HttpGet("describe")]
+		[ProducesResponseType<SparqlStarResult>(StatusCodes.Status200OK)]
+		public async Task<IActionResult> DescribeAsync([FromQuery]string subject)
+		{
+			var graph = await _graphDb.QueryAsync($"DESCRIBE <{subject}>");
+			if(graph.Results.Length==0)
+				return NotFound();
+
+			return Ok(graph);
 		}
 
 		[HttpPost("query")]
