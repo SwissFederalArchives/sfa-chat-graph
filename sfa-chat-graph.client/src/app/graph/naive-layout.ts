@@ -12,6 +12,10 @@ class Vector {
     this.y = y;
   }
 
+  abs(): Vector {
+    return new Vector(Math.abs(this.x), Math.abs(this.y));
+  }
+
   add(other: Vector): Vector {
     return new Vector(this.x + other.x, this.y + other.y);
   }
@@ -66,7 +70,7 @@ class Vector {
     return Math.sqrt(dx * dx + dy * dy);
   }
 
-  distanceXY(x: number, y: number){
+  distanceXY(x: number, y: number) {
     const dx = this.x - x;
     const dy = this.y - y;
     return Math.sqrt(dx * dx + dy * dy);
@@ -82,10 +86,23 @@ class Vector {
     return new Vector(0, 0);
   }
 
-  static random(scale: number = 1): Vector {
-    return new Vector((Math.random() - 0.5) * scale, (Math.random() - 0.5) * scale);
+  private static clippedRandom(scale: number = 1, minValue: number = 0, maxValue = 1): number {
+    const num = (Math.random() - 0.5) * scale;
+    if (minValue == 0)
+      return Math.min(num, maxValue);
+
+    if (num < 0)
+      return Math.max(Math.min(-minValue, num), -maxValue);
+    else
+      return Math.min(maxValue, Math.max(minValue, num));
+  }
+
+  static random(scale: number = 1, minValue: number = 0, maxValue = 1): Vector {
+    return new Vector(Vector.clippedRandom(scale, minValue, maxValue), Vector.clippedRandom(scale, minValue, maxValue));
   }
 }
+
+const NODE_CIRCLE_PADDING = 25;
 
 class NodeCircle {
 
@@ -123,7 +140,7 @@ class NodeCircle {
   }
 
   notifyNodeUpdated(): void {
-    this.radius = this.node.getLeafNodes().map(leaf => this.center.distanceXY(leaf.x, leaf.y) + leaf.radius).reduce((max, current) => Math.max(max, current), 0);
+    this.radius = Math.max(this.node.radius * 2, NODE_CIRCLE_PADDING + this.node.getLeafNodes().map(leaf => this.center.distanceXY(leaf.x, leaf.y) + leaf.radius).reduce((max, current) => Math.max(max, current), 0));
     this.node.circleRadius = this.radius;
     this.center.setXY(this.node.x, this.node.y);
   }
@@ -132,8 +149,9 @@ class NodeCircle {
 
 class Spring {
   readonly springLength: number = 3;
-  readonly springStiffness: number = 1;
-  readonly forceScale: number = 0.5;
+  readonly springStiffness: number = 0.25;
+  readonly forceScale: number = 2;
+  readonly distanceForceLimitingDivider: number = 1;
 
   public circle1: NodeCircle;
   public circle2: NodeCircle;
@@ -146,7 +164,7 @@ class Spring {
   applyForces() {
     const distance = Math.max(0.1, this.circle1.center.distance(this.circle2.center) - this.circle1.radius - this.circle2.radius);
     const force = this.springLength * Math.log(distance / this.springStiffness);
-    const vector = this.circle1.center.sub(this.circle2.center).normalize().mul(Math.min(force * this.forceScale, distance / 2));
+    const vector = this.circle1.center.sub(this.circle2.center).normalize().mul(Math.min(force * this.forceScale, distance / this.distanceForceLimitingDivider));
     this.circle2.next.set(vector)
     this.circle1.next.set(vector).mulSet(-1);
   }
@@ -156,8 +174,9 @@ export class NaiveGraphLayout implements IGraphLayout {
 
   minRadius: number = 200;
   nodePadding: number = 50;
-  readonly repulsionFactor: number = 1.5;
-  readonly centerAttraction: number = 0.1;
+  readonly repulsionFactor: number = 300;
+  readonly maxRepulsion: number = 75;
+  readonly centerAttraction: number = 0.05;
   readonly maxDistance: number = 2000;
 
   readonly graph: Graph;
@@ -173,8 +192,8 @@ export class NaiveGraphLayout implements IGraphLayout {
       const node = centerNodes[i];
       const leafes = node.getLeafNodes();
       const radius = leafes.length == 0 ? node.radius * 2 : Math.max(this.minRadius, leafes.reduce((sum, current) => sum + this.nodePadding + current.radius * 2, 0) / (2 * Math.PI));
-      node.circleRadius = radius;
-      const circle = new NodeCircle(node, radius, Vector.random(1000));
+      const circle = new NodeCircle(node, radius + NODE_CIRCLE_PADDING, Vector.random(4000, leafes.length * 200, 4000 - Math.max(0, (10 - leafes.length) * 200)));
+      node.circleRadius = circle.radius;
 
       this.circleMap.set(node, circle);
       leafes.forEach((leaf, index) => {
@@ -219,8 +238,8 @@ export class NaiveGraphLayout implements IGraphLayout {
         const circle2 = circles[j];
         const distance = Math.max(0.1, circle1.center.distance(circle2.center) - circle1.radius - circle2.radius);
         if (distance < this.maxDistance) {
-          const force = this.repulsionFactor / (distance * distance);
-          const vector = circle1.center.sub(circle2.center).normalize().mul(force);
+          const force = (this.repulsionFactor * this.repulsionFactor) / (distance * distance);
+          const vector = circle1.center.sub(circle2.center).normalize().mul(Math.min(force, this.maxRepulsion));
           circle1.next.addSet(vector);
           circle2.next.addSet(vector.mulSet(-1));
         }
@@ -242,20 +261,20 @@ export class NaiveGraphLayout implements IGraphLayout {
   layout(steps: number, scale: number = 1): number {
     const center: Vector = Vector.zero();
 
-    const internalEnergy: Vector = Vector.zero();
+    let internalEnergy: number = 0;
     for (let i = 0; i < steps; i++) {
       this.springs.forEach(spring => spring.applyForces());
       this.applyCenterAttraction(this.nodeCircles, center);
       this.applyRepulsion(this.nodeCircles);
       this.nodeCircles.forEach(circle => {
         circle.next.mulSet(scale);
-        internalEnergy.addSet(circle.next);
+        internalEnergy += circle.next.length();
         circle.applyVector()
       });
     }
 
     this.nodeCircles.forEach(circle => circle.updateNodes());
-    return internalEnergy.length();
+    return internalEnergy / (this.nodeCircles.length / 3);
   }
 
   notifyGraphUpdated(): void {

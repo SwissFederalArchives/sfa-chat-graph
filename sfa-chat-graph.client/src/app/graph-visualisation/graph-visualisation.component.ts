@@ -82,13 +82,16 @@ export class GraphVisualisationComponent implements AfterViewInit {
     }
   }
 
+  lastEnergy: number = 0;
   startLayoutTimer() {
     if (!this._layoutTimer) {
       this._layoutTimer = setInterval(() => {
         const energy = this._layouting.layout(5, 0.05);
+        const energyDelta = Math.abs(energy-this.lastEnergy);
+        this.lastEnergy = energy;
         this._bbox = this._layouting.getMinimalBbox();
-
-        if (energy < 0.5){
+        console.log(`energy: ${energy}, energyDelta: ${energyDelta}`);
+        if (energy <= 7.5 || energyDelta <= 0.001){
           this.stopLayoutTimer();
           this.isGraphStable = true;
         }

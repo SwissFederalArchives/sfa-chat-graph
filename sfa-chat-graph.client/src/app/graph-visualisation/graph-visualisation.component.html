@@ -6,14 +6,12 @@
         (mousemove)="onMouseMove($event)"
         (mouseup)="onMouseUp($event)">
         
-        <g *ngIf="showDebug">
-            <circle class="node-circle" *ngFor="let node of graph.getCenterNodes()"
-            [attr.cx]="node.x"
-            [attr.cy]="node.y"
-            [attr.r]="node.circleRadius"
-            fill="none"/>
-        </g>
-
+        <circle class="node-circle" *ngFor="let node of graph.getCenterNodes()"
+        [attr.cx]="node.x"
+        [attr.cy]="node.y"
+        [attr.r]="node.circleRadius"
+        fill="none"/>
+        
         <line *ngFor="let edge of graph.getEdges()"
             [attr.x1]="edge.getFrom().x"
             [attr.y1]="edge.getFrom().y"

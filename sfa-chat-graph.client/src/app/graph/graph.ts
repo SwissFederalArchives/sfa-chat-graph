@@ -21,16 +21,17 @@ export class Graph {
     return node;
   }
 
+  readonly splitExp: RegExp = new RegExp("\\/#");
   createTripleLiteralObj(subIri: string, predIri: string, obj: string) {
     const node1 = this.getOrCreateNode(subIri, subIri.split("/").slice(-2).join("/"));
     const node2 = this.createNode(`${subIri}@${predIri}=${obj}`, obj, "#CFA060");
-    this.createEdge(node1.id, node2.id, predIri, predIri.split("/").slice(-2).join("/"));
+    this.createEdge(node1.id, node2.id, predIri, predIri.split("#").slice(-1).join("/"));
   }
   
   createTriple(subIri: string, predIri: string, objIri: string) {
     const node1 = this.getOrCreateNode(subIri, subIri.split("/").slice(-2).join("/"));
     const node2 = this.getOrCreateNode(objIri, objIri.split("/").slice(-2).join("/"));
-    this.createEdge(node1.id, node2.id, predIri, predIri.split("/").slice(-2).join("/"));
+    this.createEdge(node1.id, node2.id, predIri, predIri.split("#").slice(-1).join("/"));
   }
 
   isAdjacant(node1: Node, node2: Node):boolean {
