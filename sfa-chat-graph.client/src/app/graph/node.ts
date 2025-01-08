@@ -28,6 +28,10 @@ export class Node {
     this.y += y;
   }
 
+  getSiblings(): Node[] {
+    return this.edges.map(edge => edge.getOther(this)!).filter(other => other.isLeaf() == false);
+  }
+
   getLeafNodes(): Node[] {
     return this.edges.map(edge => edge.getOther(this)!).filter(other => other.isLeaf());
   }

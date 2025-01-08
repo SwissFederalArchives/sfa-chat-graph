@@ -1,103 +1,143 @@
 import { Graph } from "./graph";
-import { IGraphLayout } from "./graph-layout";
+import { BBox, IGraphLayout } from "./graph-layout";
 import { Node } from "./node";
 
 
 class Vector {
   public x: number = 0;
   public y: number = 0;
+
   constructor(x: number, y: number) {
     this.x = x;
     this.y = y;
   }
+
   add(other: Vector): Vector {
     return new Vector(this.x + other.x, this.y + other.y);
   }
+
   sub(other: Vector): Vector {
     return new Vector(this.x - other.x, this.y - other.y);
   }
+
   mul(factor: number): Vector {
     return new Vector(this.x * factor, this.y * factor);
   }
+
   div(factor: number): Vector {
     return new Vector(this.x / factor, this.y / factor);
   }
+
   length(): number {
     return Math.sqrt(this.x * this.x + this.y * this.y);
   }
+
   normalize(): Vector {
     return this.div(this.length());
   }
-  static random(): Vector {
-    return new Vector(Math.random(), Math.random());
+
+  mulSet(factor: number): Vector {
+    this.x *= factor;
+    this.y *= factor;
+    return this;
+  }
+
+  addSet(vec: Vector): Vector {
+    this.x += vec.x;
+    this.y += vec.y;
+    return this;
+  }
+
+  set(vec: Vector): Vector {
+    this.x = vec.x;
+    this.y = vec.y;
+    return this;
+  }
+
+  setXY(x: number, y: number): Vector {
+    this.x = x;
+    this.y = y;
+    return this;
+  }
+
+  distance(other: Vector): number {
+    const dx = this.x - other.x;
+    const dy = this.y - other.y;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+
+  clear(): Vector {
+    this.x = 0;
+    this.y = 0;
+    return this;
+  }
+
+  static zero(): Vector {
+    return new Vector(0, 0);
+  }
+
+  static random(scale: number = 1): Vector {
+    return new Vector((Math.random() - 0.5) * scale, (Math.random() - 0.5) * scale);
+  }
+}
+
+class NodeCircle {
+
+  public readonly node: Node;
+  public readonly radius: number;
+  public readonly adjacent: NodeCircle[] = [];
+
+  public readonly center: Vector;
+  public readonly next: Vector = Vector.zero();
+
+  constructor(centerNode: Node, radius: number, position: Vector) {
+    this.node = centerNode;
+    this.radius = radius;
+    this.center = position;
+  }
+
+  applyVector() {
+    if (this.next) {
+      this.center.addSet(this.next);
+      this.next.clear();
+    }
+  }
+
+  updateNodes() {
+    const dx = this.center.x - this.node.x;
+    const dy = this.center.y - this.node.y;
+
+    this.node.x += dx;
+    this.node.y += dy;
+
+    this.node.getLeafNodes().forEach(leaf => {
+      leaf.x += dx;
+      leaf.y += dy;
+    });
+
   }
 }
 
 
-class NodeCircle {
+class Spring {
+  readonly springLength: number = 3;
+  readonly springStiffness: number = 1;
+  readonly forceScale: number = 0.5;
 
-  private readonly REPULSION_DISTANCE = 250;
-  private readonly SPRING_SCALE = 0.1;
-  public readonly node: Node;
-  public centerX: number = 0;
-  public centerY: number = 0;
-  public radius: number = 0;
-  public springs: Map<NodeCircle, number> = new Map();
+  public circle1: NodeCircle;
+  public circle2: NodeCircle;
 
-  private _vec?: Vector;
-
-  applyVector() {
-    if (this._vec) {
-      this.centerX += this._vec.x;
-      this.centerY += this._vec.y;
-    }
+  constructor(circle1: NodeCircle, circle2: NodeCircle) {
+    this.circle1 = circle1;
+    this.circle2 = circle2;
   }
 
-  setVector(vec: Vector) {
-    this._vec = vec;
-  }
-
-  getVector(): Vector | undefined {
-    return this._vec;
-  }
-
-  clearVector() {
-    this._vec = undefined;
-  }
-
-  updateNode() {
-    this.node.moveWithLeafs(this.centerX, this.centerY);
-  }
-
-  updateSpringForceTo(other: NodeCircle): Vector {
-    if (other === this)
-      return new Vector(0, 0);
-
-    const dx = this.centerX < other.centerX ? (this.centerX + this.radius) - (other.centerX - other.radius) : (this.centerX - this.radius) - (other.centerX + other.radius);
-    const dy = this.centerY < other.centerY ? (this.centerY + this.radius) - (other.centerY - other.radius) : (this.centerY - this.radius) - (other.centerY + other.radius);
-
-    let result: Vector;
-
-    if (this.springs.has(other)) {
-      const attraction = this.springs.get(other)!;
-      result = new Vector(dx * attraction * this.SPRING_SCALE, dy * attraction * this.SPRING_SCALE);
-    } else {
-      const repulsion = 0.01;
-      result = new Vector((1.0 / (dx == 0 ? 1 : dx)) * repulsion * this.REPULSION_DISTANCE * this.SPRING_SCALE, (1.0 / (dy == 0 ? 1 : dy)) * repulsion * this.REPULSION_DISTANCE * this.SPRING_SCALE);
-    }
-
-    if (this._vec) {
-      this._vec = this._vec.add(result);
-    } else {
-      this._vec = result;
-    }
-
-    return result;
-  }
-
-  constructor(node: Node, radius: number = 0) {
-    this.node = node;
-    this.radius = radius;
+  applyForces() {
+    const distance = Math.max(0.1, this.circle1.center.distance(this.circle2.center) - this.circle1.radius - this.circle2.radius);
+    const force = this.springLength * Math.log(distance / this.springStiffness);
+    const vector = this.circle1.center.sub(this.circle2.center).normalize().mul(Math.min(force * this.forceScale, distance/2));
+    this.circle2.next.set(vector)
+    this.circle1.next.set(vector).mulSet(-1);
   }
 }
 
@@ -105,6 +145,9 @@ export class NaiveGraphLayout implements IGraphLayout {
 
   minRadius: number = 200;
   nodePadding: number = 50;
+  readonly repulsionFactor: number = 1.5;
+  readonly centerAttraction: number = 0.1;
+  readonly maxDistance: number = 2000;
 
   private rotateX(angle: number, radius: number): number {
     return radius * Math.cos(angle);
@@ -114,70 +157,95 @@ export class NaiveGraphLayout implements IGraphLayout {
     return radius * Math.sin(angle);
   }
 
-  layout(graph: Graph): void {
 
+  applyRepulsion(circles: NodeCircle[]) {
+    for (let i = 0; i < circles.length - 1; i++) {
+      for (let j = i + 1; j < circles.length; j++) {
+        const circle1 = circles[i];
+        const circle2 = circles[j];
+        const distance = Math.max(0.1, circle1.center.distance(circle2.center) - circle1.radius - circle2.radius);
+        if (distance < this.maxDistance) {
+          const force = this.repulsionFactor / (distance * distance);
+          const vector = circle1.center.sub(circle2.center).normalize().mul(force);
+          circle1.next.addSet(vector);
+          circle2.next.addSet(vector.mulSet(-1));
+        }
+      }
+    }
+  }
+
+  applyCenterAttraction(circles: NodeCircle[], center: Vector){
+    circles.forEach(circle => {
+      const distance = Math.max(0.1, circle.center.distance(center) - circle.radius);
+      const force = this.centerAttraction * distance;
+      const vector = center.sub(circle.center).normalize().mul(Math.min(force, distance/2));
+      circle.next.addSet(vector);
+    })
+  }
+
+  layout(graph: Graph, steps: number): BBox {
+
+    const springs: Spring[] = [];
     const centerNodes = graph.getNodes().filter(node => node.isLeaf() == false);
+
     console.log(centerNodes)
-    let circles: Map<Node, NodeCircle> = new Map();
-    let currentX = 0;
-    let currentY = 0;
+    const circleMap: Map<Node, NodeCircle> = new Map();
+    const center: Vector = Vector.zero();
 
-    for (let node of centerNodes) {
+    for (let i = 0; i < centerNodes.length; i++) {
+      const node = centerNodes[i];
       const leafes = node.getLeafNodes();
-      const radius = Math.max(this.minRadius, leafes.reduce((sum, current) => sum + this.nodePadding + current.radius * 2, 0) / (2 * Math.PI));
-      const circle = new NodeCircle(node, radius);
-      circle.centerX = currentX;
-      circle.centerY = currentY;
-      currentX += radius*1.5;
-      currentY += 0;
+      const radius = leafes.length == 0 ? node.radius*2 : Math.max(this.minRadius, leafes.reduce((sum, current) => sum + this.nodePadding + current.radius * 2, 0) / (2 * Math.PI));
+      const circle = new NodeCircle(node, radius, Vector.random(1000));
 
-      circles.set(node, circle);
+      circleMap.set(node, circle);
       leafes.forEach((leaf, index) => {
         const angle = (index / Math.max(5, leafes.length)) * 2 * Math.PI + Math.PI / 3;
         leaf.move(node.x + this.rotateX(angle, radius - leaf.radius), node.y + this.rotateY(angle, radius - leaf.radius));
       });
     }
-    console.log(circles);
 
-    for (let edge of graph.getEdges()) {
-      if (circles.has(edge.getFrom()) && circles.has(edge.getTo())) {
-        const fromCircle = circles.get(edge.getFrom())!;
-        const toCircle = circles.get(edge.getTo())!;
-        fromCircle.springs.set(toCircle, -0.1);
-        toCircle.springs.set(fromCircle, -0.1);
-      }
-    }
+    const circles: NodeCircle[] = Array.from(circleMap.values());
 
-    for (let i = 0; i < 0; i++) {
-      for (let circle of circles.values()) {
-        circle.clearVector();
-      }
-
-      for (let circle of circles.values()) {
-        for (let other of circles.values()) {
-          circle.updateSpringForceTo(other);
+    const visited = new Set<Node>();
+    for (let i = 0; i < centerNodes.length; i++) {
+      const node = centerNodes[i];
+      const circle = circleMap.get(node)!;
+      visited.add(node);
+      node.getSiblings().forEach(sibling => {
+        if (visited.has(sibling) == false) {
+          const siblingCircle = circleMap.get(sibling);
+          if (siblingCircle) {
+            springs.push(new Spring(circle, siblingCircle));
+            circle.adjacent.push(siblingCircle);
+            siblingCircle.adjacent.push(circle);
+          }
         }
-      }
-
-      for (let circle of circles.values()) {
-        console.log(circle.getVector())
-        circle.applyVector();
-      }
+      });
     }
 
-    circles.forEach((c, n) => c.updateNode());
-
-    let minX = 0, minY = 0;
-    graph.getNodes().forEach(x => {
-      minX = Math.min(minX, x.x - x.radius);
-      minY = Math.min(minY, x.y - x.radius);
-    });
-
-    minX *= -1;
-    minY *= -1;
-    for (let node of graph.getNodes()) {
-      node.move(minX, minY);
+    console.log(springs);
+    for (let i = 0; i < steps; i++) {
+      springs.forEach(spring => spring.applyForces());
+      this.applyCenterAttraction(circles, center);
+      this.applyRepulsion(circles);
+      circles.forEach(circle => circle.applyVector());
     }
+
+    circles.forEach(circle => circle.updateNodes());
+    const minX = graph.getNodes().map(node => node.x - node.radius).reduce((min, current) => Math.min(min, current), Number.MAX_VALUE);
+    const minY = graph.getNodes().map(node => node.y - node.radius).reduce((min, current) => Math.min(min, current), Number.MAX_VALUE);
+    const maxX = graph.getNodes().map(node => node.x + node.radius).reduce((max, current) => Math.max(max, current), Number.MIN_VALUE);
+    const maxY = graph.getNodes().map(node => node.y + node.radius).reduce((max, current) => Math.max(max, current), Number.MIN_VALUE);
+   
+    // const dx = cx-(minX+(maxX - minX)/2);
+    // const dy = cy-(minY+(maxY - minY)/2);
+    // graph.getNodes().forEach(node => {
+    //   node.x += dx;
+    //   node.y += dy;
+    // });
+
+    return new BBox(minX, minY, maxX-minX, maxY-minY);
   }
 
 

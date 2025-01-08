@@ -6,6 +6,7 @@ export class Graph {
 
   private _nodes: Map<string, Node> = new Map();
   private _edges: Map<string, Edge> = new Map();
+  private _adjacencies: Map<[Node, Node], Edge> = new Map();
 
   getEdges() {
     return Array.from(this._edges.values());
@@ -21,15 +22,19 @@ export class Graph {
   }
 
   createTripleLiteralObj(subIri: string, predIri: string, obj: string) {
-    const node1 = this.getOrCreateNode(subIri);
-    const node2 = this.createNode(`${subIri}@${predIri}=${obj}`, obj, "#AF9030");
-    this.createEdge(node1.id, node2.id, predIri, predIri);
+    const node1 = this.getOrCreateNode(subIri, subIri.split("/").slice(-2).join("/"));
+    const node2 = this.createNode(`${subIri}@${predIri}=${obj}`, obj, "#CFA060");
+    this.createEdge(node1.id, node2.id, predIri, predIri.split("/").slice(-2).join("/"));
   }
   
   createTriple(subIri: string, predIri: string, objIri: string) {
-    const node1 = this.getOrCreateNode(subIri);
-    const node2 = this.getOrCreateNode(objIri);
-    this.createEdge(node1.id, node2.id, predIri, predIri);
+    const node1 = this.getOrCreateNode(subIri, subIri.split("/").slice(-2).join("/"));
+    const node2 = this.getOrCreateNode(objIri, objIri.split("/").slice(-2).join("/"));
+    this.createEdge(node1.id, node2.id, predIri, predIri.split("/").slice(-2).join("/"));
+  }
+
+  isAdjacant(node1: Node, node2: Node):boolean {
+    return node1.edges.some((edge, _) => edge.getOther(node1) == node2);
   }
 
   insertNode(node: Node): void {
@@ -37,7 +42,7 @@ export class Graph {
   }
 
   createNode(id: string, label?: string, color?: string): Node {
-    const node = new Node(id, label ?? id, 0, 0, 40, color ?? "#AF3090");
+    const node = new Node(id, label ?? id, 0, 0, 40, color ?? "#CF60A0");
     this.insertNode(node);
     return node;
   }
@@ -60,6 +65,8 @@ export class Graph {
 
   insertEdge(edge: Edge): void {
     this._edges.set(this.makeEdgeId(edge), edge);
+    this._adjacencies.set([edge.fromNode!, edge.toNode!], edge);
+    this._adjacencies.set([edge.toNode!, edge.fromNode!], edge);
   }
 
   createEdge(fromId: string, toId: string, edgeId: string, label: string): void {

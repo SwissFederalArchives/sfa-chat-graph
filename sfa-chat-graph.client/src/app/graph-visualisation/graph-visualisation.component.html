@@ -1,2 +1,37 @@
-<canvas ngModel #canvas width="{{width}}" height="{{height}}">
-</canvas>
+<!-- <canvas ngModel #canvas width="{{width}}" height="{{height}}">
+</canvas> -->
+<div *ngIf="graphReady">
+    <svg  [attr.viewBox]="viewBox">
+        <line *ngFor="let edge of graph.getEdges()"
+            [attr.x1]="edge.getFrom().x"
+            [attr.y1]="edge.getFrom().y"
+            [attr.x2]="edge.getTo().x"
+            [attr.y2]="edge.getTo().y"
+            [attr.stroke]="edge.color"/>
+        
+        <text *ngFor="let edge of graph.getEdges()"
+            [attr.x]="(edge.getFrom().x + edge.getTo().x) / 2"
+            [attr.y]="(edge.getFrom().y + edge.getTo().y) / 2"
+            text-anchor="middle"
+            font-size="12"
+            [attr.transform]="getTextTransform(edge)"
+            fill="black">{{edge.label}}
+        </text>
+        
+        <circle *ngFor="let node of graph.getNodes()"
+            [attr.cx]="node.x"
+            [attr.cy]="node.y"
+            [attr.r]="node.radius"
+            [attr.fill]="node.color"/>
+
+        <text *ngFor="let node of graph.getNodes()"
+            [attr.x]="node.x"
+            [attr.y]="node.y"
+            text-anchor="middle"
+            font-size="20"
+            fill="black" 
+            dominant-baseline="middle">{{node.label}}
+        </text>  
+            
+    </svg>
+</div>
