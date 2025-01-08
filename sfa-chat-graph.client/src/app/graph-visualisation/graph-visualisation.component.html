@@ -1,7 +1,19 @@
 <!-- <canvas ngModel #canvas width="{{width}}" height="{{height}}">
 </canvas> -->
 <div *ngIf="graphReady">
-    <svg  [attr.viewBox]="viewBox">
+    <svg  [attr.viewBox]="getViewBox()"  
+    [attr.class]="isGraphStable ? 'stable-graph' : 'updating-graph'"
+        (mousemove)="onMouseMove($event)"
+        (mouseup)="onMouseUp($event)">
+        
+        <g *ngIf="showDebug">
+            <circle class="node-circle" *ngFor="let node of graph.getCenterNodes()"
+            [attr.cx]="node.x"
+            [attr.cy]="node.y"
+            [attr.r]="node.circleRadius"
+            fill="none"/>
+        </g>
+
         <line *ngFor="let edge of graph.getEdges()"
             [attr.x1]="edge.getFrom().x"
             [attr.y1]="edge.getFrom().y"
@@ -13,7 +25,8 @@
             [attr.x]="(edge.getFrom().x + edge.getTo().x) / 2"
             [attr.y]="(edge.getFrom().y + edge.getTo().y) / 2"
             text-anchor="middle"
-            font-size="12"
+            font-size="14"
+            [attr.dy]="-5"
             [attr.transform]="getTextTransform(edge)"
             fill="black">{{edge.label}}
         </text>
@@ -22,7 +35,8 @@
             [attr.cx]="node.x"
             [attr.cy]="node.y"
             [attr.r]="node.radius"
-            [attr.fill]="node.color"/>
+            [attr.fill]="node.color"
+            (mousedown)="onMouseDown($event, node)"/>
 
         <text *ngFor="let node of graph.getNodes()"
             [attr.x]="node.x"

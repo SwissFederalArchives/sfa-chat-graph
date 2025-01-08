@@ -2,6 +2,7 @@ import { Edge } from "./edge";
 
 export class Node {
   public edges: Edge[] = []
+  public circleRadius: number;
 
   constructor(
     public id: string,
@@ -10,7 +11,9 @@ export class Node {
     public y: number,
     public radius: number,
     public color: string,
-  ) { }
+  ) { 
+    this.circleRadius = radius;
+  }
 
   moveWithLeafs(x: number, y: number): void {
     const deltaX = x - this.x;

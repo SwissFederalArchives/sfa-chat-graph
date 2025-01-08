@@ -66,6 +66,12 @@ class Vector {
     return Math.sqrt(dx * dx + dy * dy);
   }
 
+  distanceXY(x: number, y: number){
+    const dx = this.x - x;
+    const dy = this.y - y;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+
   clear(): Vector {
     this.x = 0;
     this.y = 0;
@@ -84,7 +90,7 @@ class Vector {
 class NodeCircle {
 
   public readonly node: Node;
-  public readonly radius: number;
+  public radius: number;
   public readonly adjacent: NodeCircle[] = [];
 
   public readonly center: Vector;
@@ -114,7 +120,12 @@ class NodeCircle {
       leaf.x += dx;
       leaf.y += dy;
     });
+  }
 
+  notifyNodeUpdated(): void {
+    this.radius = this.node.getLeafNodes().map(leaf => this.center.distanceXY(leaf.x, leaf.y) + leaf.radius).reduce((max, current) => Math.max(max, current), 0);
+    this.node.circleRadius = this.radius;
+    this.center.setXY(this.node.x, this.node.y);
   }
 }
 
@@ -135,7 +146,7 @@ class Spring {
   applyForces() {
     const distance = Math.max(0.1, this.circle1.center.distance(this.circle2.center) - this.circle1.radius - this.circle2.radius);
     const force = this.springLength * Math.log(distance / this.springStiffness);
-    const vector = this.circle1.center.sub(this.circle2.center).normalize().mul(Math.min(force * this.forceScale, distance/2));
+    const vector = this.circle1.center.sub(this.circle2.center).normalize().mul(Math.min(force * this.forceScale, distance / 2));
     this.circle2.next.set(vector)
     this.circle1.next.set(vector).mulSet(-1);
   }
@@ -148,6 +159,49 @@ export class NaiveGraphLayout implements IGraphLayout {
   readonly repulsionFactor: number = 1.5;
   readonly centerAttraction: number = 0.1;
   readonly maxDistance: number = 2000;
+
+  readonly graph: Graph;
+  readonly springs: Spring[] = [];
+  readonly circleMap: Map<Node, NodeCircle> = new Map<Node, NodeCircle>();
+  readonly nodeCircles: NodeCircle[];
+
+  constructor(graph: Graph) {
+    this.graph = graph;
+
+    const centerNodes = graph.getNodes().filter(node => node.isLeaf() == false);
+    for (let i = 0; i < centerNodes.length; i++) {
+      const node = centerNodes[i];
+      const leafes = node.getLeafNodes();
+      const radius = leafes.length == 0 ? node.radius * 2 : Math.max(this.minRadius, leafes.reduce((sum, current) => sum + this.nodePadding + current.radius * 2, 0) / (2 * Math.PI));
+      node.circleRadius = radius;
+      const circle = new NodeCircle(node, radius, Vector.random(1000));
+
+      this.circleMap.set(node, circle);
+      leafes.forEach((leaf, index) => {
+        const angle = (index / Math.max(7, leafes.length)) * 2 * Math.PI + Math.PI / 3;
+        leaf.move(node.x + this.rotateX(angle, radius - leaf.radius), node.y + this.rotateY(angle, radius - leaf.radius));
+      });
+    }
+
+    this.nodeCircles = Array.from(this.circleMap.values());
+
+    const visited = new Set<Node>();
+    for (let i = 0; i < centerNodes.length; i++) {
+      const node = centerNodes[i];
+      const circle = this.circleMap.get(node)!;
+      visited.add(node);
+      node.getSiblings().forEach(sibling => {
+        if (visited.has(sibling) == false) {
+          const siblingCircle = this.circleMap.get(sibling);
+          if (siblingCircle) {
+            this.springs.push(new Spring(circle, siblingCircle));
+            circle.adjacent.push(siblingCircle);
+            siblingCircle.adjacent.push(circle);
+          }
+        }
+      });
+    }
+  }
 
   private rotateX(angle: number, radius: number): number {
     return radius * Math.cos(angle);
@@ -174,78 +228,47 @@ export class NaiveGraphLayout implements IGraphLayout {
     }
   }
 
-  applyCenterAttraction(circles: NodeCircle[], center: Vector){
+  applyCenterAttraction(circles: NodeCircle[], center: Vector) {
     circles.forEach(circle => {
       const distance = Math.max(0.1, circle.center.distance(center) - circle.radius);
       const force = this.centerAttraction * distance;
-      const vector = center.sub(circle.center).normalize().mul(Math.min(force, distance/2));
+      const vector = center.sub(circle.center).normalize().mul(Math.min(force, distance / 2));
       circle.next.addSet(vector);
     })
   }
 
-  layout(graph: Graph, steps: number): BBox {
 
-    const springs: Spring[] = [];
-    const centerNodes = graph.getNodes().filter(node => node.isLeaf() == false);
 
-    console.log(centerNodes)
-    const circleMap: Map<Node, NodeCircle> = new Map();
+  layout(steps: number, scale: number = 1): number {
     const center: Vector = Vector.zero();
 
-    for (let i = 0; i < centerNodes.length; i++) {
-      const node = centerNodes[i];
-      const leafes = node.getLeafNodes();
-      const radius = leafes.length == 0 ? node.radius*2 : Math.max(this.minRadius, leafes.reduce((sum, current) => sum + this.nodePadding + current.radius * 2, 0) / (2 * Math.PI));
-      const circle = new NodeCircle(node, radius, Vector.random(1000));
-
-      circleMap.set(node, circle);
-      leafes.forEach((leaf, index) => {
-        const angle = (index / Math.max(5, leafes.length)) * 2 * Math.PI + Math.PI / 3;
-        leaf.move(node.x + this.rotateX(angle, radius - leaf.radius), node.y + this.rotateY(angle, radius - leaf.radius));
-      });
-    }
-
-    const circles: NodeCircle[] = Array.from(circleMap.values());
-
-    const visited = new Set<Node>();
-    for (let i = 0; i < centerNodes.length; i++) {
-      const node = centerNodes[i];
-      const circle = circleMap.get(node)!;
-      visited.add(node);
-      node.getSiblings().forEach(sibling => {
-        if (visited.has(sibling) == false) {
-          const siblingCircle = circleMap.get(sibling);
-          if (siblingCircle) {
-            springs.push(new Spring(circle, siblingCircle));
-            circle.adjacent.push(siblingCircle);
-            siblingCircle.adjacent.push(circle);
-          }
-        }
-      });
-    }
-
-    console.log(springs);
+    const internalEnergy: Vector = Vector.zero();
     for (let i = 0; i < steps; i++) {
-      springs.forEach(spring => spring.applyForces());
-      this.applyCenterAttraction(circles, center);
-      this.applyRepulsion(circles);
-      circles.forEach(circle => circle.applyVector());
+      this.springs.forEach(spring => spring.applyForces());
+      this.applyCenterAttraction(this.nodeCircles, center);
+      this.applyRepulsion(this.nodeCircles);
+      this.nodeCircles.forEach(circle => {
+        circle.next.mulSet(scale);
+        internalEnergy.addSet(circle.next);
+        circle.applyVector()
+      });
     }
 
-    circles.forEach(circle => circle.updateNodes());
-    const minX = graph.getNodes().map(node => node.x - node.radius).reduce((min, current) => Math.min(min, current), Number.MAX_VALUE);
-    const minY = graph.getNodes().map(node => node.y - node.radius).reduce((min, current) => Math.min(min, current), Number.MAX_VALUE);
-    const maxX = graph.getNodes().map(node => node.x + node.radius).reduce((max, current) => Math.max(max, current), Number.MIN_VALUE);
-    const maxY = graph.getNodes().map(node => node.y + node.radius).reduce((max, current) => Math.max(max, current), Number.MIN_VALUE);
-   
-    // const dx = cx-(minX+(maxX - minX)/2);
-    // const dy = cy-(minY+(maxY - minY)/2);
-    // graph.getNodes().forEach(node => {
-    //   node.x += dx;
-    //   node.y += dy;
-    // });
+    this.nodeCircles.forEach(circle => circle.updateNodes());
+    return internalEnergy.length();
+  }
 
-    return new BBox(minX, minY, maxX-minX, maxY-minY);
+  notifyGraphUpdated(): void {
+    this.nodeCircles.forEach(circle => circle.notifyNodeUpdated())
+  }
+
+  getMinimalBbox(): BBox {
+    const minX = this.graph.getNodes().map(node => node.x - node.radius).reduce((min, current) => Math.min(min, current), Number.MAX_VALUE);
+    const minY = this.graph.getNodes().map(node => node.y - node.radius).reduce((min, current) => Math.min(min, current), Number.MAX_VALUE);
+    const maxX = this.graph.getNodes().map(node => node.x + node.radius).reduce((max, current) => Math.max(max, current), Number.MIN_VALUE);
+    const maxY = this.graph.getNodes().map(node => node.y + node.radius).reduce((max, current) => Math.max(max, current), Number.MIN_VALUE);
+
+    return new BBox(minX, minY, maxX - minX, maxY - minY);
   }
 
 

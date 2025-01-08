@@ -15,5 +15,7 @@ export class BBox {
 }
 
 export interface IGraphLayout {
-  layout(graph: Graph, steps: number): BBox;
+  layout(steps: number, scale: number): number;
+  getMinimalBbox(): BBox;
+  notifyGraphUpdated(): void;
 }

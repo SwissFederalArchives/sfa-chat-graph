@@ -55,6 +55,10 @@ export class Graph {
     return Array.from(this._nodes.values());
   }
 
+  getCenterNodes(): Node[]{
+    return this.getNodes().filter(node => node.isLeaf() == false)
+  }
+
   getNode(id: string): Node | undefined {
     return this._nodes.get(id);
   }
