@@ -1,12 +1,12 @@
 ﻿using Lucene.Net.Index;
-using sfa_chat_graph.Server.Utils;
+using SfaChatGraph.Server.Utils;
 using System.Collections.Frozen;
 using System.Dynamic;
 using System.Reflection.Metadata;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace sfa_chat_graph.Server.RDF.Models
+namespace SfaChatGraph.Server.RDF.Models
 {
 	public class SparqlStarConverter : JsonConverter<SparqlStarResult>
 	{
@@ -70,9 +70,8 @@ namespace sfa_chat_graph.Server.RDF.Models
 		public override void Write(Utf8JsonWriter writer, SparqlStarResult value, JsonSerializerOptions options)
 		{
 			writer.WriteStartObject();
-			writer.WriteStartObject("head");
+			writer.WritePropertyName("head");
 			JsonSerializer.Serialize(writer, value.Head, options);
-			writer.WriteEndObject();
 			writer.WriteStartObject("results");
 			writer.WriteStartArray("bindings");
 			foreach (var obj in value.Results)

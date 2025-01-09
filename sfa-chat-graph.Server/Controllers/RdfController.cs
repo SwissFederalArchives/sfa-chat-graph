@@ -1,19 +1,21 @@
 ﻿using J2N.Text;
 using Microsoft.AspNetCore.Mvc;
 using OpenAI.Chat;
-using sfa_chat_graph.Server.Models;
-using sfa_chat_graph.Server.RDF;
-using sfa_chat_graph.Server.RDF.Models;
+using SfaChatGraph.Server.Models;
+using SfaChatGraph.Server.RDF;
+using SfaChatGraph.Server.RDF.Models;
 using System.Text;
+using VDS.RDF;
 using VDS.RDF.Storage;
 using VDS.RDF.Storage.Management;
 
-namespace sfa_chat_graph.Server.Controllers
+namespace SfaChatGraph.Server.Controllers
 {
 	[ApiController]
 	[Route("/api/v1/rdf")]
 	public class RdfController : ControllerBase
 	{
+		private readonly IServiceProvider _serviceProvider;
 		private readonly IGraphRag _graphDb;
 		private readonly ChatClient _chatClient;
 		private SystemChatMessage _schemaSysMessage;
@@ -21,7 +23,7 @@ namespace sfa_chat_graph.Server.Controllers
 		private Task _initTask;
 		private ILogger _logger;
 
-		public RdfController(IGraphRag graphDb, ChatClient chatClient, ILoggerFactory loggerFactory)
+		public RdfController(IGraphRag graphDb, ChatClient chatClient, ILoggerFactory loggerFactory, IServiceProvider serviceProvider)
 		{
 			_graphDb=graphDb;
 			_logger=loggerFactory.CreateLogger<RdfController>();
@@ -32,17 +34,104 @@ namespace sfa_chat_graph.Server.Controllers
 			});
 
 			_answerSysMessage=new SystemChatMessage("Your job is to answer the user's question given the result of a knowledgegraph lookup. If the question can't be answered with the given data clearly state so");
+			_serviceProvider=serviceProvider;
 		}
 
 		[HttpGet("describe")]
 		[ProducesResponseType<SparqlStarResult>(StatusCodes.Status200OK)]
-		public async Task<IActionResult> DescribeAsync([FromQuery]string subject)
+		public async Task<IActionResult> DescribeAsync([FromQuery] string subject)
 		{
 			var graph = await _graphDb.QueryAsync($"DESCRIBE <{subject}>");
-			if(graph.Results.Length==0)
+			if (graph.Results.Length==0)
 				return NotFound();
 
 			return Ok(graph);
+		}
+
+
+		[HttpPost("chat")]
+		[ProducesResponseType<ApiChatMessage[]>(StatusCodes.Status200OK)]
+		public async Task<IActionResult> ChatAsync([FromBody] ApiChatRequest chat)
+		{
+			var sysPrompt = $"""
+			You are an helpfull assistant which answers questions with the help of generating sparql queries for the current database. Use your tool calls to query the database with sparql.
+			The scheme of the current database is:
+			{_graphDb.Schema}
+			""";
+
+			var options = new ChatCompletionOptions();
+			foreach (var cf in _graphDb.CallableFunctions)
+				options.Tools.Add(cf);
+
+			List<ChatMessage> messages = [ChatMessage.CreateSystemMessage(sysPrompt)];
+			messages.AddRange(chat.History.Select(x => x.ToChatMessage()));
+			var apiMessages = new List<ApiChatMessage>();
+
+			bool requiresAction = true;
+			do
+			{
+				var response = await _chatClient.CompleteChatAsync(messages, options);
+				var message = AssistantChatMessage.CreateAssistantMessage(response);
+				apiMessages.Add(ApiChatMessage.FromChatMessage(message));
+				messages.Add(message);
+
+				switch (response.Value.FinishReason)
+				{
+					case ChatFinishReason.Stop:
+						{
+							requiresAction = false;
+							break;
+						}
+
+					case ChatFinishReason.ToolCalls:
+						{
+							foreach (var toolCall in response.Value.ToolCalls)
+							{
+								try
+								{
+									var toolResponse = await _graphDb.CallFunctionAsync(_serviceProvider, toolCall.FunctionName, toolCall.FunctionArguments.ToString());
+
+									if (toolResponse is string stringData)
+									{
+										var toolMessage = ToolChatMessage.CreateToolMessage(toolCall.Id, stringData);
+										apiMessages.Add(ApiChatMessage.FromChatMessage(toolMessage));
+										messages.Add(toolMessage);
+									}
+									else if (toolResponse is SparqlStarResult graphData)
+									{
+										var builder = new StringBuilder();
+										builder.AppendLine(string.Join(";", graphData.Head.Vars));
+										foreach (var row in graphData.Results)
+											builder.AppendLine(string.Join(";", graphData.Head.Vars.Select(x => row[x]?.Value)));
+
+										var toolMessage = ToolChatMessage.CreateToolMessage(toolCall.Id, builder.ToString());
+										apiMessages.Add(ApiChatMessage.FromChatMessage(toolMessage, graphData));
+										messages.Add(toolMessage);
+									}
+								}
+								catch (Exception ex)
+								{
+									if (chat.MaxErrors-- <= 0)
+									{
+										return BadRequest($"Error in ToolCall: {ex.Message}");
+									}
+									else
+									{
+										var toolMessage = ToolChatMessage.CreateToolMessage(toolCall.Id, $"You're tool call yielded an error: {ex.Message}\nthis is most likel due to malformed sparql or forgotten prefixes ");
+										apiMessages.Add(ApiChatMessage.FromChatMessage(toolMessage));
+										messages.Add(toolMessage);
+									}
+								}
+							}
+							break;
+						}
+
+					default:
+						return BadRequest($"Unexpected ChatFinishReason: {response.Value.FinishReason}");
+				}
+			} while (requiresAction);
+
+			return Ok(apiMessages);
 		}
 
 		[HttpPost("query")]

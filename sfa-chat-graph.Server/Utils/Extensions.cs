@@ -1,6 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
 
-namespace sfa_chat_graph.Server.Utils
+namespace SfaChatGraph.Server.Utils
 {
 	public static class Extensions
 	{

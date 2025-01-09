@@ -1,6 +1,6 @@
 using OpenAI;
-using sfa_chat_graph.Server.RDF;
-using sfa_chat_graph.Server.RDF.Models;
+using SfaChatGraph.Server.RDF;
+using SfaChatGraph.Server.RDF.Models;
 using System.ClientModel;
 using VDS.RDF.Storage.Management;
 
@@ -14,6 +14,7 @@ var store = (OntotextStorage)await server.GetStoreAsync("TestDB");
 await store.ChangeGraphAsync("http://ld.admin.ch/stapfer-ai");
 
 builder.Services.AddSingleton<IAsyncStorageServer>(server);
+builder.Services.AddSingleton<OntotextStorage>(store);
 builder.Services.AddSingleton<IGraphRag>(store);
 var client = new OpenAIClient(System.Environment.GetEnvironmentVariable("OPENAI_KEY"));
 builder.Services.AddSingleton<OpenAIClient>(client);

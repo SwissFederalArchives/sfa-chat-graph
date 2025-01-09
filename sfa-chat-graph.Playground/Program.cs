@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.DataProtection.KeyManagement.Internal;
-using sfa_chat_graph.Server.RDF;
+using SfaChatGraph.Server.RDF;
 using System.Text;
 using VDS.RDF;
 using VDS.RDF.Dynamic;

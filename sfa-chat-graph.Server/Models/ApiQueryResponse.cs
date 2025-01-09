@@ -1,6 +1,6 @@
-﻿using sfa_chat_graph.Server.RDF.Models;
+﻿using SfaChatGraph.Server.RDF.Models;
 
-namespace sfa_chat_graph.Server.Models
+namespace SfaChatGraph.Server.Models
 {
 	public class ApiQueryResponse
 	{

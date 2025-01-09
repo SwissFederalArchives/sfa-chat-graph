@@ -15,6 +15,8 @@
   <ItemGroup>
     <PackageReference Include="DotNetEnv" Version="3.1.1" />
     <PackageReference Include="dotNetRdf" Version="3.3.0" />
+    <PackageReference Include="JsonSchema.Net" Version="7.3.1" />
+    <PackageReference Include="JsonSchema.Net.Generation" Version="5.0.0" />
     <PackageReference Include="Microsoft.AspNet.WebApi.Core" Version="5.3.0" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.SpaProxy">

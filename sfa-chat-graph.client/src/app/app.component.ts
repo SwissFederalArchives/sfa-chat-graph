@@ -82,7 +82,7 @@ export class AppComponent implements OnInit {
   }
 
   constructor(private http: HttpClient) {
-    this.graph = this.getSimpleGraph();
+    this.graph = this.getComplexGraph();
     this.graph.updateModels();
   }
 

@@ -2,7 +2,7 @@
 using VDS.RDF.Storage.Management;
 using VDS.RDF.Storage.Management.Provisioning;
 
-namespace sfa_chat_graph.Server.RDF
+namespace SfaChatGraph.Server.RDF
 {
 
 	class DummyTemplate : IStoreTemplate
