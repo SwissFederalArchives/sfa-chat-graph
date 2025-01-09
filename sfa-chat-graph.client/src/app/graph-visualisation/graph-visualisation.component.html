@@ -11,7 +11,20 @@
         [attr.cy]="node.y"
         [attr.r]="node.circleRadius"
         fill="none"/>
+
         
+        <g *ngFor="let node of graph.getCenterNodes()">
+            <g *ngIf="node.debugVectors.length > 0">
+                <line *ngFor="let vector of node.debugVectors"
+                [attr.x1]="node.x"
+                [attr.y1]="node.y"
+                [attr.x2]="vector.x * 10 + node.x"
+                [attr.y2]="vector.y * 10 + node.y"
+                stroke="#A03030"
+                />
+            </g>
+        </g>
+
         <line *ngFor="let edge of graph.getEdges()"
             [attr.x1]="edge.getFrom().x"
             [attr.y1]="edge.getFrom().y"

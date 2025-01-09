@@ -1,8 +1,10 @@
 import { Edge } from "./edge";
+import { Vector } from "./vector";
 
 export class Node {
   public edges: Edge[] = []
   public circleRadius: number;
+  public debugVectors: Vector[] = []
 
   constructor(
     public id: string,

@@ -1,106 +1,10 @@
 import { Graph } from "./graph";
 import { BBox, IGraphLayout } from "./graph-layout";
 import { Node } from "./node";
+import { Vector } from "./vector";
 
 
-class Vector {
-  public x: number = 0;
-  public y: number = 0;
 
-  constructor(x: number, y: number) {
-    this.x = x;
-    this.y = y;
-  }
-
-  abs(): Vector {
-    return new Vector(Math.abs(this.x), Math.abs(this.y));
-  }
-
-  add(other: Vector): Vector {
-    return new Vector(this.x + other.x, this.y + other.y);
-  }
-
-  sub(other: Vector): Vector {
-    return new Vector(this.x - other.x, this.y - other.y);
-  }
-
-  mul(factor: number): Vector {
-    return new Vector(this.x * factor, this.y * factor);
-  }
-
-  div(factor: number): Vector {
-    return new Vector(this.x / factor, this.y / factor);
-  }
-
-  length(): number {
-    return Math.sqrt(this.x * this.x + this.y * this.y);
-  }
-
-  normalize(): Vector {
-    return this.div(this.length());
-  }
-
-  mulSet(factor: number): Vector {
-    this.x *= factor;
-    this.y *= factor;
-    return this;
-  }
-
-  addSet(vec: Vector): Vector {
-    this.x += vec.x;
-    this.y += vec.y;
-    return this;
-  }
-
-  set(vec: Vector): Vector {
-    this.x = vec.x;
-    this.y = vec.y;
-    return this;
-  }
-
-  setXY(x: number, y: number): Vector {
-    this.x = x;
-    this.y = y;
-    return this;
-  }
-
-  distance(other: Vector): number {
-    const dx = this.x - other.x;
-    const dy = this.y - other.y;
-    return Math.sqrt(dx * dx + dy * dy);
-  }
-
-  distanceXY(x: number, y: number) {
-    const dx = this.x - x;
-    const dy = this.y - y;
-    return Math.sqrt(dx * dx + dy * dy);
-  }
-
-  clear(): Vector {
-    this.x = 0;
-    this.y = 0;
-    return this;
-  }
-
-  static zero(): Vector {
-    return new Vector(0, 0);
-  }
-
-  private static clippedRandom(scale: number = 1, minValue: number = 0, maxValue = 1): number {
-    const num = (Math.random() - 0.5) * scale;
-    if (minValue == 0)
-      return Math.min(num, maxValue);
-
-    if (num < 0)
-      return Math.max(Math.min(-minValue, num), -maxValue);
-    else
-      return Math.min(maxValue, Math.max(minValue, num));
-  }
-
-  static random(scale: number = 1, minValue: number = 0, maxValue = 1): Vector {
-    return new Vector(Vector.clippedRandom(scale, minValue, maxValue), Vector.clippedRandom(scale, minValue, maxValue));
-  }
-}
 
 const NODE_CIRCLE_PADDING = 25;
 
@@ -166,7 +70,9 @@ class Spring {
     const force = this.springLength * Math.log(distance / this.springStiffness);
     const vector = this.circle1.center.sub(this.circle2.center).normalize().mul(Math.min(force * this.forceScale, distance / this.distanceForceLimitingDivider));
     this.circle2.next.set(vector)
+   // this.circle2.node.debugVectors.push(vector)
     this.circle1.next.set(vector).mulSet(-1);
+   // this.circle1.node.debugVectors.push(vector.mul(-1)); 
   }
 }
 
@@ -241,7 +147,9 @@ export class NaiveGraphLayout implements IGraphLayout {
           const force = (this.repulsionFactor * this.repulsionFactor) / (distance * distance);
           const vector = circle1.center.sub(circle2.center).normalize().mul(Math.min(force, this.maxRepulsion));
           circle1.next.addSet(vector);
+         // circle1.node.debugVectors.push(vector.copy());
           circle2.next.addSet(vector.mulSet(-1));
+         // circle2.node.debugVectors.push(vector);
         }
       }
     }
@@ -253,6 +161,7 @@ export class NaiveGraphLayout implements IGraphLayout {
       const force = this.centerAttraction * distance;
       const vector = center.sub(circle.center).normalize().mul(Math.min(force, distance / 2));
       circle.next.addSet(vector);
+     // circle.node.debugVectors.push(vector);
     })
   }
 
@@ -263,6 +172,7 @@ export class NaiveGraphLayout implements IGraphLayout {
 
     let internalEnergy: number = 0;
     for (let i = 0; i < steps; i++) {
+      //this.nodeCircles.forEach(circle => circle.node.debugVectors.length = 0);
       this.springs.forEach(spring => spring.applyForces());
       this.applyCenterAttraction(this.nodeCircles, center);
       this.applyRepulsion(this.nodeCircles);

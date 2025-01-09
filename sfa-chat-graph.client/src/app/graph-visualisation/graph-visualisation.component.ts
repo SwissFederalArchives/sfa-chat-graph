@@ -91,7 +91,7 @@ export class GraphVisualisationComponent implements AfterViewInit {
         this.lastEnergy = energy;
         this._bbox = this._layouting.getMinimalBbox();
         console.log(`energy: ${energy}, energyDelta: ${energyDelta}`);
-        if (energy <= 7.5 || energyDelta <= 0.001){
+        if (energy <= 5 || energyDelta <= 0.0005){
           this.stopLayoutTimer();
           this.isGraphStable = true;
         }
