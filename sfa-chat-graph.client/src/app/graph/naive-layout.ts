@@ -1,5 +1,6 @@
+import { BBox } from "./bbox";
 import { Graph } from "./graph";
-import { BBox, IGraphLayout } from "./graph-layout";
+import { IGraphLayout } from "./graph-layout";
 import { Node } from "./node";
 import { Vector } from "./vector";
 
@@ -81,7 +82,7 @@ export class NaiveGraphLayout implements IGraphLayout {
   minRadius: number = 200;
   nodePadding: number = 50;
   readonly repulsionFactor: number = 300;
-  readonly maxRepulsion: number = 75;
+  readonly maxRepulsion: number = 150;
   readonly centerAttraction: number = 0.05;
   readonly maxDistance: number = 2000;
 

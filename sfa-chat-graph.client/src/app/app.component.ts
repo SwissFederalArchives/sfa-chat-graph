@@ -1,6 +1,7 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { Graph } from './graph/graph';
+import { firstValueFrom } from 'rxjs';
 
 
 @Component({
@@ -12,7 +13,48 @@ import { Graph } from './graph/graph';
 
 export class AppComponent implements OnInit {
 
-  graph: Graph;
+
+  graph?: Graph;
+
+  async queryGraph(iri: string, maxDepth: number, noFollow: string[] = [], maxChidldren: number = 25): Promise<Graph> {
+    const graph = new Graph();
+    const iriStack = [{ iri: iri, depth: 0 }]
+    const visited = new Set<string>();
+    noFollow.forEach(value => visited.add(value));
+    visited.add(iri);
+    const headers = new HttpHeaders()
+      .set('Content-Type', 'application/x-www-form-urlencoded')
+      .set("Accept", "application/x-graphdb-table-results+json");
+
+    while (iriStack.length > 0) {
+      const currentSubject = iriStack.pop()!;
+      const body = new HttpParams()
+        .set("query", `DESCRIBE <${currentSubject?.iri}>`);
+
+
+      let response = await firstValueFrom(this.http.post<any>("http://localhost:40112/repositories/TestDB", body, { headers: headers, responseType: "json" }));
+      if(response.results.bindings.length > maxChidldren)
+        continue;
+
+      for (var key in response.results.bindings) {
+        const item = response.results.bindings[key];
+        const sub = item.subject.value;
+        const pred = item.predicate.value;
+        const obj = item.object.value;
+        if (item.object.type == "uri") {
+          graph.createTriple(sub, pred, obj);
+          if (currentSubject.depth < maxDepth && pred != "http://www.w3.org/1999/02/22-rdf-syntax-ns#type" && visited.has(obj) == false) {
+            iriStack.push({ iri: obj, depth: currentSubject.depth + 1 })
+            visited.add(obj);
+          }
+        } else {
+          graph.createTripleLiteralObj(sub, pred, obj);
+        }
+      }
+    }
+
+    return graph;
+  }
 
   getSimpleGraph(): Graph {
     const graph = new Graph();
@@ -82,11 +124,15 @@ export class AppComponent implements OnInit {
   }
 
   constructor(private http: HttpClient) {
-    this.graph = this.getComplexGraph();
-    this.graph.updateModels();
+    // this.graph = this.getComplexGraph();
+    // this.graph.updateModels();
   }
 
-  ngOnInit(): void {
+  async ngOnInit() {
+    //const graph = await this.queryGraph("https://ld.admin.ch/stapfer/stapfer/Teacher/130", 5, ["https://ld.admin.ch/stapfer/stapfer/Occupation/94", "https://ld.admin.ch/stapfer/stapfer/Transcription/18", "https://ld.admin.ch/stapfer/stapfer/SchoolType/1"]);
+    const graph = this.getComplexGraph();
+    graph.updateModels();
+    this.graph = graph;
   }
 
 

@@ -10,6 +10,13 @@ const PROXY_CONFIG = [
     ],
     target,
     secure: false
+  },
+  {
+    context: [
+      "/repositories"
+    ],
+    target: "http://localhost:7200",
+    secure: false
   }
 ]
 

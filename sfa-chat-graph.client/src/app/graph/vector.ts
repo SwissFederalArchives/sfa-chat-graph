@@ -1,103 +1,110 @@
 export class Vector {
-  public x: number = 0;
-  public y: number = 0;
 
-  constructor(x: number, y: number) {
-    this.x = x;
-    this.y = y;
-  }
-  
-  copy(): Vector {
-    return new Vector(this.x, this.y);
-  }
-  
+    public x: number = 0;
+    public y: number = 0;
 
-  abs(): Vector {
-    return new Vector(Math.abs(this.x), Math.abs(this.y));
-  }
+    constructor(x: number, y: number) {
+        this.x = x;
+        this.y = y;
+    }
 
-  add(other: Vector): Vector {
-    return new Vector(this.x + other.x, this.y + other.y);
-  }
+    copy(): Vector {
+        return new Vector(this.x, this.y);
+    }
 
-  sub(other: Vector): Vector {
-    return new Vector(this.x - other.x, this.y - other.y);
-  }
 
-  mul(factor: number): Vector {
-    return new Vector(this.x * factor, this.y * factor);
-  }
+    abs(): Vector {
+        return new Vector(Math.abs(this.x), Math.abs(this.y));
+    }
 
-  div(factor: number): Vector {
-    return new Vector(this.x / factor, this.y / factor);
-  }
+    add(other: Vector): Vector {
+        return new Vector(this.x + other.x, this.y + other.y);
+    }
 
-  length(): number {
-    return Math.sqrt(this.x * this.x + this.y * this.y);
-  }
+    sub(other: Vector): Vector {
+        return new Vector(this.x - other.x, this.y - other.y);
+    }
 
-  normalize(): Vector {
-    return this.div(this.length());
-  }
+    mul(factor: number): Vector {
+        return new Vector(this.x * factor, this.y * factor);
+    }
 
-  mulSet(factor: number): Vector {
-    this.x *= factor;
-    this.y *= factor;
-    return this;
-  }
+    div(factor: number): Vector {
+        return new Vector(this.x / factor, this.y / factor);
+    }
 
-  addSet(vec: Vector): Vector {
-    this.x += vec.x;
-    this.y += vec.y;
-    return this;
-  }
+    length(): number {
+        return Math.sqrt(this.x * this.x + this.y * this.y);
+    }
 
-  set(vec: Vector): Vector {
-    this.x = vec.x;
-    this.y = vec.y;
-    return this;
-  }
+    normalize(): Vector {
+        return this.div(this.length());
+    }
 
-  setXY(x: number, y: number): Vector {
-    this.x = x;
-    this.y = y;
-    return this;
-  }
+    mulSet(factor: number): Vector {
+        this.x *= factor;
+        this.y *= factor;
+        return this;
+    }
 
-  distance(other: Vector): number {
-    const dx = this.x - other.x;
-    const dy = this.y - other.y;
-    return Math.sqrt(dx * dx + dy * dy);
-  }
+    addSet(vec: Vector): Vector {
+        this.x += vec.x;
+        this.y += vec.y;
+        return this;
+    }
 
-  distanceXY(x: number, y: number) {
-    const dx = this.x - x;
-    const dy = this.y - y;
-    return Math.sqrt(dx * dx + dy * dy);
-  }
+    addXYSet(dx: number, dy: number): Vector {
+        this.x += dx;
+        this.y += dy;
+        return this;
+    }
 
-  clear(): Vector {
-    this.x = 0;
-    this.y = 0;
-    return this;
-  }
+    set(vec: Vector): Vector {
+        this.x = vec.x;
+        this.y = vec.y;
+        return this;
+    }
 
-  static zero(): Vector {
-    return new Vector(0, 0);
-  }
+    setXY(x: number, y: number): Vector {
+        this.x = x;
+        this.y = y;
+        return this;
+    }
 
-  private static clippedRandom(scale: number = 1, minValue: number = 0, maxValue = 1): number {
-    const num = (Math.random() - 0.5) * scale;
-    if (minValue == 0)
-      return Math.min(num, maxValue);
+    distance(other: Vector): number {
+        const dx = this.x - other.x;
+        const dy = this.y - other.y;
+        return Math.sqrt(dx * dx + dy * dy);
+    }
 
-    if (num < 0)
-      return Math.max(Math.min(-minValue, num), -maxValue);
-    else
-      return Math.min(maxValue, Math.max(minValue, num));
-  }
+    distanceXY(x: number, y: number) {
+        const dx = this.x - x;
+        const dy = this.y - y;
+        return Math.sqrt(dx * dx + dy * dy);
+    }
 
-  static random(scale: number = 1, minValue: number = 0, maxValue = 1): Vector {
-    return new Vector(Vector.clippedRandom(scale, minValue, maxValue), Vector.clippedRandom(scale, minValue, maxValue));
-  }
+    clear(): Vector {
+        this.x = 0;
+        this.y = 0;
+        return this;
+    }
+
+    static zero(): Vector {
+        return new Vector(0, 0);
+    }
+
+    private static clippedRandom(scale: number = 1, minValue: number = 0, maxValue = 1): number {
+        const num = (Math.random() - 0.5) * scale;
+        if (minValue == 0)
+            return Math.min(num, maxValue);
+
+        if (num < 0)
+            return Math.max(Math.min(-minValue, num), -maxValue);
+        else
+            return Math.min(maxValue, Math.max(minValue, num));
+    }
+
+    static random(scale: number = 1, minValue: number = 0, maxValue = 1): Vector {
+        return new Vector(Vector.clippedRandom(scale, minValue, maxValue), Vector.clippedRandom(scale, minValue, maxValue));
+    }
 }
