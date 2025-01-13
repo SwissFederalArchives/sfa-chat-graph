@@ -1,5 +1,6 @@
 import { Edge } from './edge';
 import { Node } from './node';
+import { Vector } from './vector';
 
 export class Graph {
 
@@ -43,7 +44,7 @@ export class Graph {
   }
 
   createNode(id: string, label?: string, color?: string): Node {
-    const node = new Node(id, label ?? id, 0, 0, 40, color ?? "#CF60A0");
+    const node = new Node(id, label ?? id, Vector.zero(), 40, color ?? "#CF60A0");
     this.insertNode(node);
     return node;
   }

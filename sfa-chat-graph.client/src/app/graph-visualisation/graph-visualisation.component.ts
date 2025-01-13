@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, HostListener, INJECTOR, Input, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, HostListener, INJECTOR, Input, ViewChild } from '@angular/core';
 import { Graph } from '../graph/graph';
 import { NaiveGraphLayout } from '../graph/naive-layout';
 import { IGraphLayout } from '../graph/graph-layout';
@@ -8,10 +8,11 @@ import { Node } from '../graph/node';
 import { interval, take } from 'rxjs';
 import { Vector } from '../graph/vector';
 import { BBox } from '../graph/bbox';
+import { GraphVisualisationControlsComponent } from '../graph-visualisation-controls/graph-visualisation-controls.component';
 
 @Component({
   selector: 'graph',
-  imports: [NgFor, NgIf],
+  imports: [NgFor, NgIf, GraphVisualisationControlsComponent],
   standalone: true,
   templateUrl: './graph-visualisation.component.html',
   styleUrl: './graph-visualisation.component.css'
@@ -29,6 +30,9 @@ export class GraphVisualisationComponent implements AfterViewInit {
   private _panOffset: Vector = Vector.zero();
   private _zoomLevel: number = 1;
   private _svgPoint!: DOMPoint;
+  private _paused: boolean = false;
+  public readonly onCollapsed: EventEmitter<Node> = new EventEmitter<Node>();
+
   private readonly _defaultDomMatrix: DOMMatrix = new DOMMatrix();
 
   isGraphStable: boolean = false;
@@ -45,14 +49,25 @@ export class GraphVisualisationComponent implements AfterViewInit {
     }
   }
 
+  isPaused(): boolean {
+    return this._paused;
+  }
 
-
-
+  setPaused(paused: boolean) {
+    if (paused != this._paused) {
+      this._paused = paused;
+      if (paused) {
+        this.stopLayoutTimer();
+      } else {
+        this.startLayoutTimer();
+      }
+    }
+  }
 
   getTextTransform(edge: Edge) {
-    const midX = (edge.getFrom().x + edge.getTo().x) / 2;
-    const midY = (edge.getFrom().y + edge.getTo().y) / 2;
-    const angle = Math.atan2(edge.getTo().y - edge.getFrom().y, edge.getTo().x - edge.getFrom().x) * (180 / Math.PI);
+    const midX = (edge.getFrom().pos.x + edge.getTo().pos.x) / 2;
+    const midY = (edge.getFrom().pos.y + edge.getTo().pos.y) / 2;
+    const angle = Math.atan2(edge.getTo().pos.y - edge.getFrom().pos.y, edge.getTo().pos.x - edge.getFrom().pos.x) * (180 / Math.PI);
     return `rotate(${angle}, ${midX}, ${midY})`;
   }
 
@@ -64,6 +79,11 @@ export class GraphVisualisationComponent implements AfterViewInit {
     return `${(this._bbox.x + this._panOffset.x) * this._zoomLevel} ${((this._bbox.y + this._panOffset.y) * this._zoomLevel)} ${this._bbox.width * this._zoomLevel} ${this._bbox.height * this._zoomLevel}`;
   }
 
+
+  onRightClick(event: MouseEvent): boolean {
+    event.preventDefault();
+    return false;
+  }
 
 
   onScroll(event: WheelEvent) {
@@ -84,7 +104,7 @@ export class GraphVisualisationComponent implements AfterViewInit {
 
     const panX = ((currentX) / this._zoomLevel) - (currentX);
     const panY = ((currentY) / this._zoomLevel) - (currentY);
-    
+
     this.setPan(panX, panY);
   }
 
@@ -102,6 +122,12 @@ export class GraphVisualisationComponent implements AfterViewInit {
     const maxPanX = ((this._bbox.width / this._zoomLevel) - this._bbox.width);
     const maxPanY = ((this._bbox.height / this._zoomLevel) - this._bbox.height);
     this._panOffset.setXY(this.clamp(x, -maxPanX, maxPanX), this.clamp(y, -maxPanY, maxPanY));
+  }
+
+  collapseNode($event: MouseEvent, node: Node) {
+    $event.preventDefault();
+    node.setCollapsed(!node.isCollapsed());
+    this.onCollapsed?.emit(node);
   }
 
   onMouseDown(event: MouseEvent, node: any): void {
@@ -128,17 +154,33 @@ export class GraphVisualisationComponent implements AfterViewInit {
       pt.y = event.clientY;
       const svgCoords = pt.matrixTransform(this.svg.nativeElement.getScreenCTM()?.inverse() || this._defaultDomMatrix);
 
-      const dx = svgCoords.x - this.draggedNode.x;
-      const dy = svgCoords.y - this.draggedNode.y;
+      const dx = svgCoords.x - this.draggedNode.pos.x;
+      const dy = svgCoords.y - this.draggedNode.pos.y;
 
-      this.draggedNode.x += dx;
-      this.draggedNode.y += dy;
 
-      if (this.dragLeafNodes) {
-        this.draggedNode.getLeafNodes().forEach(leaf => {
-          leaf.x += dx;
-          leaf.y += dy;
-        })
+      if (this.draggedNode.isLeaf()) {
+        if (this.dragLeafNodes) {
+          const parent = this.draggedNode.getParent();
+          if (parent) {
+            this.draggedNode.moveRelative(dx, dy); 
+            const distance = this.draggedNode.pos.distance(parent.pos);
+            parent.getLeafNodes().forEach(leaf => {
+              if(leaf != this.draggedNode){
+                const vec = leaf.pos.sub(parent.pos).normalizeSet().mulSet(distance);
+                leaf.move(vec.x + parent.pos.x, vec.y + parent.pos.y);
+              }
+            })
+          }
+
+        } else {
+          this.draggedNode.moveRelative(dx, dy);
+        }
+      } else {
+        if (this.dragLeafNodes) {
+          this.draggedNode.moveRelativeWithLeafs(dx, dy);
+        } else {
+          this.draggedNode.moveRelative(dx, dy);
+        }
       }
 
       this._layouting.notifyGraphUpdated();
@@ -185,7 +227,7 @@ export class GraphVisualisationComponent implements AfterViewInit {
 
   lastEnergy: number = 0;
   startLayoutTimer() {
-    if (!this._layoutTimer) {
+    if (!this._layoutTimer && this._paused == false) {
       this._layoutTimer = setInterval(() => {
         const energy = this._layouting.layout(5, 0.075);
         const energyDelta = Math.abs(energy - this.lastEnergy);
@@ -199,10 +241,6 @@ export class GraphVisualisationComponent implements AfterViewInit {
 
       }, 25);
     }
-  }
-
-  startFadeTimer() {
-
   }
 
   stopLayoutTimer() {

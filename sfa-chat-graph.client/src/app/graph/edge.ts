@@ -1,6 +1,9 @@
 import { Node } from './node';
 
 export class Edge {
+  shouldRender(): boolean {
+    return this.getTo().shouldRender() && this.getFrom().shouldRender();
+  }
 
   getTo(): Node {
     return this.toNode!;

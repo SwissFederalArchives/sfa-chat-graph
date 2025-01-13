@@ -1,63 +1,35 @@
 <!-- <canvas ngModel #canvas width="{{width}}" height="{{height}}">
 </canvas> -->
-<div *ngIf="graphReady">
-    <svg #canvas
-        [attr.viewBox]="getViewBox()"  
-        [attr.class]="isGraphStable ? 'stable-graph' : 'updating-graph'"
-        (mousemove)="onMouseMove($event)"
-        (mouseup)="onMouseUp($event)"
-        (mousedown)="beginPan($event)"
+<div *ngIf="graphReady" class="graph-container" (contextmenu)="onRightClick($event)">
+    <svg #canvas [attr.viewBox]="getViewBox()" [attr.class]="isGraphStable ? 'stable-graph' : 'updating-graph'"
+        (mousemove)="onMouseMove($event)" (mouseup)="onMouseUp($event)" (mousedown)="beginPan($event)"
         (wheel)="onScroll($event)">
-        <circle class="node-circle" *ngFor="let node of graph.getCenterNodes()"
-        [attr.cx]="node.x"
-        [attr.cy]="node.y"
-        [attr.r]="node.circleRadius"
-        fill="none"/>
+        <circle class="node-circle" *ngFor="let node of graph.getCenterNodes()" [attr.cx]="node.pos.x" [attr.cy]="node.pos.y"
+            [attr.r]="node.circleRadius" fill="none" />
 
-        
-        <!-- <g *ngFor="let node of graph.getCenterNodes()">
-            <g *ngIf="node.debugVectors.length > 0">
-                <line *ngFor="let vector of node.debugVectors"
-                [attr.x1]="node.x"
-                [attr.y1]="node.y"
-                [attr.x2]="vector.x * 10 + node.x"
-                [attr.y2]="vector.y * 10 + node.y"
-                stroke="#A03030"
-                />
+        <g *ngFor="let edge of graph.getEdges()">
+            <g *ngIf="edge.shouldRender()">
+                <line [attr.x1]="edge.getFrom().pos.x" [attr.y1]="edge.getFrom().pos.y" [attr.x2]="edge.getTo().pos.x"
+                    [attr.y2]="edge.getTo().pos.y" [attr.stroke]="edge.color" />
+
+                <text [attr.x]="(edge.getFrom().pos.x + edge.getTo().pos.x) / 2"
+                    [attr.y]="(edge.getFrom().pos.y + edge.getTo().pos.y) / 2" text-anchor="middle" font-size="14"
+                    [attr.dy]="-5" [attr.transform]="getTextTransform(edge)" fill="black">{{edge.label}}
+                </text>
             </g>
-        </g> -->
+        </g>
 
-        <line *ngFor="let edge of graph.getEdges()"
-            [attr.x1]="edge.getFrom().x"
-            [attr.y1]="edge.getFrom().y"
-            [attr.x2]="edge.getTo().x"
-            [attr.y2]="edge.getTo().y"
-            [attr.stroke]="edge.color"/>
-        
-        <text *ngFor="let edge of graph.getEdges()"
-            [attr.x]="(edge.getFrom().x + edge.getTo().x) / 2"
-            [attr.y]="(edge.getFrom().y + edge.getTo().y) / 2"
-            text-anchor="middle"
-            font-size="14"
-            [attr.dy]="-5"
-            [attr.transform]="getTextTransform(edge)"
-            fill="black">{{edge.label}}
-        </text>
-        
-        <circle *ngFor="let node of graph.getNodes()"
-            [attr.cx]="node.x"
-            [attr.cy]="node.y"
-            [attr.r]="node.radius"
-            [attr.fill]="node.color"
-            (mousedown)="onMouseDown($event, node)"/>
 
-        <text *ngFor="let node of graph.getNodes()"
-            [attr.x]="node.x"
-            [attr.y]="node.y"
-            text-anchor="middle"
-            font-size="20"
-            fill="black" 
-            dominant-baseline="middle">{{node.label}}
-        </text>  
+        <g *ngFor="let node of graph.getNodes()">
+            <g *ngIf="node.shouldRender()">
+                <circle [attr.cx]="node.pos.x" [attr.cy]="node.pos.y" [attr.r]="node.radius" [attr.fill]="node.color"
+                    (dblclick)="collapseNode($event, node)" (mousedown)="onMouseDown($event, node)" />
+
+                <text [attr.x]="node.pos.x" [attr.y]="node.pos.y" text-anchor="middle" font-size="20" fill="black" 
+                    dominant-baseline="middle">{{node.label}}
+                </text>
+            </g>
+        </g>
     </svg>
+    <graph-visualisation-controls/>
 </div>

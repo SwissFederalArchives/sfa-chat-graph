@@ -1,36 +1,83 @@
+import { EventEmitter } from "@angular/core";
 import { Edge } from "./edge";
 import { Vector } from "./vector";
 
 export class Node {
+
+
   public edges: Edge[] = []
   public circleRadius: number;
   public debugVectors: Vector[] = []
+  public readonly onChanged: EventEmitter<Node> = new EventEmitter<Node>();
+  
+  private _shouldRender: boolean = true;
+  private _collapsed: boolean = false;
+
 
   constructor(
     public id: string,
     public label: string,
-    public x: number,
-    public y: number,
+    public pos: Vector,
     public radius: number,
     public color: string,
-  ) { 
+  ) {
     this.circleRadius = radius;
   }
 
-  moveWithLeafs(x: number, y: number): void {
-    const deltaX = x - this.x;
-    const deltaY = y - this.y;
-    this.x = x;
-    this.y = y;
+  getParent(): Node|undefined {
+    if(this.isLeaf()){
+      return this.edges[0].getOther(this);
+    }
+    return undefined;
+  }
 
-    if (this.isLeaf() == false) {
-      this.getLeafNodes().forEach(leaf => leaf.move(deltaX, deltaY));
+  shouldRender() {
+    return this._shouldRender;
+  }
+
+  setShouldRender(shouldRender: boolean){
+    if(this._shouldRender != shouldRender){
+      this._shouldRender = shouldRender;
+      this.onChanged?.emit(this);
+    } 
+  }
+  
+  setCollapsed(collapsed: boolean) {
+    if(this._collapsed != collapsed){
+      this._collapsed = collapsed;
+      this.getLeafNodes().forEach(l => l.setShouldRender(!collapsed));
+      this.onChanged?.emit(this);
     }
   }
 
-  move(x: number, y: number): void {
-    this.x += x;
-    this.y += y;
+  isCollapsed(): boolean {
+    return this._collapsed;
+  }
+
+  move(x: number, y: number) {
+    this.pos.setXY(x, y);
+    this.onChanged?.emit(this);
+  }
+
+  moveWithLeafs(x: number, y: number): void {
+    const deltaX = x - this.pos.x;
+    const deltaY = y - this.pos.y;
+    this.pos.setXY(x, y)
+    if (this.isLeaf() == false) {
+      this.getLeafNodes().forEach(leaf => leaf.moveRelative(deltaX, deltaY));
+    }
+    this.onChanged?.emit(this);
+  }
+
+  moveRelativeWithLeafs(x: number, y: number): void {
+    this.pos.addXYSet(x, y);
+    this.getLeafNodes().forEach(leaf => leaf.moveRelative(x, y)); 
+    this.onChanged?.emit(this);
+
+  }
+
+  moveRelative(x: number, y: number): void {
+    this.pos.addXYSet(x, y);
   }
 
   getSiblings(): Node[] {

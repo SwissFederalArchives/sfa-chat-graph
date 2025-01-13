@@ -1,0 +1,17 @@
+.control-bar {
+    display: flex;
+    justify-content: center;
+    gap: 1em;
+    align-items: center;
+    flex-shrink: 1;
+}
+
+.control-bar-float {
+    position: absolute;
+    left: 50%;
+    top: 90%;
+    transform: translate(-50%, -50%);
+    border-radius: .5em;
+    padding: .75em 1em;
+    background-color: hsl(0, 0%, 95%);
+}

@@ -1,5 +1,6 @@
 export class Vector {
 
+
     public x: number = 0;
     public y: number = 0;
 
@@ -12,6 +13,9 @@ export class Vector {
         return new Vector(this.x, this.y);
     }
 
+    subXY(x: number, y: number): Vector {
+        return new Vector(this.x - x, this.y - y);
+    }
 
     abs(): Vector {
         return new Vector(Math.abs(this.x), Math.abs(this.y));
@@ -41,6 +45,16 @@ export class Vector {
         return this.div(this.length());
     }
 
+    divSet(factor: number): Vector {
+        this.x /= factor;
+        this.y /= factor;
+        return this;
+    }
+
+    normalizeSet(): Vector {
+        return this.divSet(this.length());
+    }
+
     mulSet(factor: number): Vector {
         this.x *= factor;
         this.y *= factor;
@@ -68,6 +82,12 @@ export class Vector {
     setXY(x: number, y: number): Vector {
         this.x = x;
         this.y = y;
+        return this;
+    }
+
+    setCopy(other: Vector): Vector {
+        this.x = other.x;
+        this.y = other.y;
         return this;
     }
 

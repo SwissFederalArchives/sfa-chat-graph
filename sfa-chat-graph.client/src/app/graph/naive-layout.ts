@@ -22,6 +22,7 @@ class NodeCircle {
     this.node = centerNode;
     this.radius = radius;
     this.center = position;
+    this.node.onChanged.subscribe(x => this.notifyNodeUpdated());
   }
 
   applyVector() {
@@ -32,22 +33,13 @@ class NodeCircle {
   }
 
   updateNodes() {
-    const dx = this.center.x - this.node.x;
-    const dy = this.center.y - this.node.y;
-
-    this.node.x += dx;
-    this.node.y += dy;
-
-    this.node.getLeafNodes().forEach(leaf => {
-      leaf.x += dx;
-      leaf.y += dy;
-    });
+    this.node.moveWithLeafs(this.center.x, this.center.y);
   }
 
   notifyNodeUpdated(): void {
-    this.radius = Math.max(this.node.radius * 2, NODE_CIRCLE_PADDING + this.node.getLeafNodes().map(leaf => this.center.distanceXY(leaf.x, leaf.y) + leaf.radius).reduce((max, current) => Math.max(max, current), 0));
+    this.radius = this.node.isCollapsed() ? this.node.radius * 2 : Math.max(this.node.radius * 2, NODE_CIRCLE_PADDING + this.node.getLeafNodes().map(leaf => this.center.distance(leaf.pos) + leaf.radius).reduce((max, current) => Math.max(max, current), 0));
     this.node.circleRadius = this.radius;
-    this.center.setXY(this.node.x, this.node.y);
+    this.center.setCopy(this.node.pos);
   }
 }
 
@@ -105,7 +97,7 @@ export class NaiveGraphLayout implements IGraphLayout {
       this.circleMap.set(node, circle);
       leafes.forEach((leaf, index) => {
         const angle = (index / Math.max(7, leafes.length)) * 2 * Math.PI + Math.PI / 3;
-        leaf.move(node.x + this.rotateX(angle, radius - leaf.radius), node.y + this.rotateY(angle, radius - leaf.radius));
+        leaf.moveRelative(node.pos.x + this.rotateX(angle, radius - leaf.radius), node.pos.y + this.rotateY(angle, radius - leaf.radius));
       });
     }
 
@@ -193,10 +185,10 @@ export class NaiveGraphLayout implements IGraphLayout {
   }
 
   getMinimalBbox(): BBox {
-    const minX = this.graph.getNodes().map(node => node.x - node.radius).reduce((min, current) => Math.min(min, current), Number.MAX_VALUE);
-    const minY = this.graph.getNodes().map(node => node.y - node.radius).reduce((min, current) => Math.min(min, current), Number.MAX_VALUE);
-    const maxX = this.graph.getNodes().map(node => node.x + node.radius).reduce((max, current) => Math.max(max, current), Number.MIN_VALUE);
-    const maxY = this.graph.getNodes().map(node => node.y + node.radius).reduce((max, current) => Math.max(max, current), Number.MIN_VALUE);
+    const minX = this.graph.getNodes().map(node => node.pos.x - node.radius).reduce((min, current) => Math.min(min, current), Number.MAX_VALUE);
+    const minY = this.graph.getNodes().map(node => node.pos.y - node.radius).reduce((min, current) => Math.min(min, current), Number.MAX_VALUE);
+    const maxX = this.graph.getNodes().map(node => node.pos.x + node.radius).reduce((max, current) => Math.max(max, current), Number.MIN_VALUE);
+    const maxY = this.graph.getNodes().map(node => node.pos.y + node.radius).reduce((max, current) => Math.max(max, current), Number.MIN_VALUE);
 
     return new BBox(minX, minY, maxX - minX, maxY - minY);
   }

@@ -6,11 +6,13 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { GraphVisualisationComponent } from './graph-visualisation/graph-visualisation.component';
 import { ChatHistoryComponent } from './chat-history/chat-history.component';
+import { GraphVisualisationControlsComponent } from './graph-visualisation-controls/graph-visualisation-controls.component';
+import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 
 @NgModule({
   declarations: [
     AppComponent,
-    ChatHistoryComponent
+    ChatHistoryComponent,
   ],
   imports: [
     BrowserModule,
@@ -18,7 +20,9 @@ import { ChatHistoryComponent } from './chat-history/chat-history.component';
     GraphVisualisationComponent,
     AppRoutingModule
   ],
-  providers: [],
+  providers: [
+    provideAnimationsAsync()
+  ],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

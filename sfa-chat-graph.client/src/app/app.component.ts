@@ -129,11 +129,11 @@ export class AppComponent implements OnInit {
   }
 
   async ngOnInit() {
-    //const graph = await this.queryGraph("https://ld.admin.ch/stapfer/stapfer/Teacher/130", 5, ["https://ld.admin.ch/stapfer/stapfer/Occupation/94", "https://ld.admin.ch/stapfer/stapfer/Transcription/18", "https://ld.admin.ch/stapfer/stapfer/SchoolType/1"]);
-    const graph = this.getComplexGraph();
+    const graph = await this.queryGraph("https://ld.admin.ch/stapfer/stapfer/Teacher/367", 6, ["https://ld.admin.ch/stapfer/stapfer/Occupation/94", "https://ld.admin.ch/stapfer/stapfer/Transcription/18", "https://ld.admin.ch/stapfer/stapfer/SchoolType/1"]);
+    //const graph = this.getComplexGraph();
     graph.updateModels();
     this.graph = graph;
-  }
+  } 
 
 
 

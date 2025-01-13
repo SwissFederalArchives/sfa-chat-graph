@@ -1,0 +1,17 @@
+<div class="control-bar-float">
+    <div class="control-bar">
+        <button mat-mini-fab (click)="save()">
+            <mat-icon>download</mat-icon>
+        </button>
+        <button mat-mini-fab (click)="expandAll()">
+            <mat-icon fontSet="material-symbols-outlined">expand_content</mat-icon>
+        </button>
+        <button mat-mini-fab (click)="collapseAll()">
+            <mat-icon fontSet="material-symbols-outlined">collapse_content</mat-icon>
+        </button>
+        <button mat-mini-fab (click)="togglePause()">
+            <mat-icon *ngIf="isPaused()">play_arrow</mat-icon>
+            <mat-icon *ngIf="!isPaused()">stop</mat-icon>
+        </button>
+    </div>
+</div>
