@@ -26,6 +26,7 @@
     "jest-editor-support": "*",
     "run-script-os": "*",
     "rxjs": "~7.8.0",
+    "sfa-chat-graph.client": "file:",
     "tslib": "^2.3.0",
     "zone.js": "~0.15.0"
   },

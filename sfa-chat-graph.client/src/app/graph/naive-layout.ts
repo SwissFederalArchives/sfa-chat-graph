@@ -41,12 +41,12 @@ class NodeCircle {
     return radius * Math.sin(angle);
   }
 
-  relayoutLeafes(){
-    const leafes = this.node.getLeafNodes().filter(leaf => leaf.shouldRender());
-    const radius = leafes.length == 0 ? this.node.radius * 2 : Math.max(this.minRadius, this.radius - NODE_CIRCLE_PADDING, leafes.reduce((sum, current) => sum + this.leafPadding + current.radius * 2, 0) / (2 * Math.PI));
+  relayoutLeafs(){
+    const leafs = Array.from(this.node.getLeafNodes().filter(leaf => leaf.shouldRender()));
+    const radius = leafs.length == 0 ? this.node.radius * 2 : Math.max(this.minRadius, this.radius - NODE_CIRCLE_PADDING, leafs.reduce((sum, current) => sum + this.leafPadding + current.radius * 2, 0) / (2 * Math.PI));
     this.radius = radius;
-    leafes.forEach((leaf, index) => {
-      const angle = (index / Math.max(7, leafes.length)) * 2 * Math.PI + Math.PI / 3;
+    leafs.forEach((leaf, index) => {
+      const angle = (index / Math.max(7, leafs.length)) * 2 * Math.PI + Math.PI / 3;
       leaf.move(this.node.pos.x + this.rotateX(angle, radius - leaf.radius), this.node.pos.y + this.rotateY(angle, radius - leaf.radius));
     });
   }
@@ -109,7 +109,7 @@ export class NaiveGraphLayout implements IGraphLayout {
       const node = centerNodes[i];
       const leafes = node.getLeafNodes();
       const circle = new NodeCircle(node, node.radius * 2 + NODE_CIRCLE_PADDING, Vector.random(4000, leafes.length * 200, 4000 - Math.max(0, (10 - leafes.length) * 200)));
-      circle.relayoutLeafes();
+      circle.relayoutLeafs();
       node.circleRadius = circle.radius;
       this.circleMap.set(node, circle);
     }
@@ -136,7 +136,7 @@ export class NaiveGraphLayout implements IGraphLayout {
 
   relayoutLeafes(node: Node): void {
     if(this.circleMap.has(node)){
-      this.circleMap.get(node)!.relayoutLeafes();
+      this.circleMap.get(node)!.relayoutLeafs();
     }
   }
 

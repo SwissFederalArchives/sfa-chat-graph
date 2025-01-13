@@ -22,6 +22,7 @@ export class Edge {
 
   constructor(
     public id: string,
+    public iri: string,
     public label: string,
     public source: string,
     public target: string,

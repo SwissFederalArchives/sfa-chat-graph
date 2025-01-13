@@ -13,7 +13,7 @@ export class Node {
 
   private _shouldRender: boolean = true;
   private _collapsed: boolean = false;
-  private _leafesLoaded: boolean = false;
+  private _leafsLoaded: boolean = false;
   private _shouldNeverRender: boolean = false;
 
   constructor(
@@ -22,10 +22,10 @@ export class Node {
     public pos: Vector,
     public radius: number,
     public color: string,
-    leafesLoaded: boolean = false
+    leafsLoaded: boolean = false
   ) {
     this.circleRadius = radius;
-    this._leafesLoaded = leafesLoaded;
+    this._leafsLoaded = leafsLoaded;
   }
 
   setShouldNeverRender(shouldNeverRender: boolean){
@@ -36,12 +36,12 @@ export class Node {
     return this._shouldNeverRender;
   }
 
-  areLeafesLoaded(): boolean {
-    return this._leafesLoaded;
+  areLeafsLoaded(): boolean {
+    return this._leafsLoaded;
   }
 
-  markLeafesLoaded(): void {
-    this._leafesLoaded = true;
+  markLeafsLoaded(): void {
+    this._leafsLoaded = true;
   }
 
   getParent(): Node|undefined {

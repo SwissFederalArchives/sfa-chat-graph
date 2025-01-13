@@ -16,7 +16,7 @@ export class AppComponent implements OnInit {
 
   graph?: Graph;
 
-  async queryGraph(iri: string, maxDepth: number, noFollow: string[] = [], maxChidldren: number = 25): Promise<Graph> {
+  async queryGraph(iri: string, maxDepth: number, noFollow: string[] = [], maxChildren: number = 25): Promise<Graph> {
     const graph = new Graph();
     const iriStack = [{ iri: iri, depth: 0 }]
     const visited = new Set<string>();
@@ -32,8 +32,8 @@ export class AppComponent implements OnInit {
         .set("query", `DESCRIBE <${currentSubject?.iri}>`);
 
 
-      let response = await firstValueFrom(this.http.post<any>("http://localhost:40112/repositories/TestDB", body, { headers: headers, responseType: "json" }));
-      if(response.results.bindings.length > maxChidldren)
+      let response = await firstValueFrom(this.http.post<any>("http://localhost:40112/repositories/Test", body, { headers: headers, responseType: "json" }));
+      if (response.results.bindings.length > maxChildren)
         continue;
 
       for (var key in response.results.bindings) {
@@ -46,7 +46,7 @@ export class AppComponent implements OnInit {
           if (currentSubject.depth < maxDepth && pred != "http://www.w3.org/1999/02/22-rdf-syntax-ns#type" && visited.has(obj) == false) {
             iriStack.push({ iri: obj, depth: currentSubject.depth + 1 })
             visited.add(obj);
-            created.sub.markLeafesLoaded();
+            created.sub.markLeafsLoaded();
           }
         } else {
           graph.createTripleLiteralObj(sub, pred, obj);
@@ -56,25 +56,28 @@ export class AppComponent implements OnInit {
 
     graph.onNodeDetailsRequested.subscribe(async (data) => {
       const body = new HttpParams()
-        .set("query", `DESCRIBE <${data.node.id}>`);
+        .set('Content-Type', 'application/x-www-form-urlencoded')
+        .set("query", `DESCRIBE <${data.value.node.id}>`);
 
-      let response = await firstValueFrom(this.http.post<any>("http://localhost:40112/repositories/TestDB", body, { headers: headers, responseType: "json" }));
+      let response = await firstValueFrom(this.http.post<any>("http://localhost:40112/repositories/Test", body, { headers: headers, responseType: "json" }));
       let childCount = 0;
       for (var key in response.results.bindings) {
         const item = response.results.bindings[key];
         const sub = item.subject.value;
         const pred = item.predicate.value;
         const obj = item.object.value;
-        if(item.object.type == "uri"){
+        if (item.object.type == "uri") {
           const created = graph.createTriple(sub, pred, obj);
-          if(childCount++ > maxChidldren && created.objCreated)
+          if (childCount++ > maxChildren && created.objCreated)
             created.obj.setShouldNeverRender(true);
-        }else{
+        } else {
           const created = graph.createTripleLiteralObj(sub, pred, obj);
-          if(childCount++ > maxChidldren && created.objCreated)
+          if (childCount++ > maxChildren && created.objCreated)
             created.obj.setShouldNeverRender(true);
         }
       }
+      
+      data.next();
     });
 
     return graph;
@@ -157,7 +160,7 @@ export class AppComponent implements OnInit {
     //const graph = this.getComplexGraph();
     graph.updateModels();
     this.graph = graph;
-  } 
+  }
 
 
 
