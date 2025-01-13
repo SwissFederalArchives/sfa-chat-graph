@@ -8,11 +8,13 @@ export class Node {
   public edges: Edge[] = []
   public circleRadius: number;
   public debugVectors: Vector[] = []
-  public readonly onChanged: EventEmitter<Node> = new EventEmitter<Node>();
   
+  public readonly onChanged: EventEmitter<Node> = new EventEmitter<Node>();
+
   private _shouldRender: boolean = true;
   private _collapsed: boolean = false;
-
+  private _leafesLoaded: boolean = false;
+  private _shouldNeverRender: boolean = false;
 
   constructor(
     public id: string,
@@ -20,8 +22,26 @@ export class Node {
     public pos: Vector,
     public radius: number,
     public color: string,
+    leafesLoaded: boolean = false
   ) {
     this.circleRadius = radius;
+    this._leafesLoaded = leafesLoaded;
+  }
+
+  setShouldNeverRender(shouldNeverRender: boolean){
+    this._shouldNeverRender = shouldNeverRender;
+  }
+
+  getShouldNeverRender(): boolean {
+    return this._shouldNeverRender;
+  }
+
+  areLeafesLoaded(): boolean {
+    return this._leafesLoaded;
+  }
+
+  markLeafesLoaded(): void {
+    this._leafesLoaded = true;
   }
 
   getParent(): Node|undefined {
@@ -32,7 +52,7 @@ export class Node {
   }
 
   shouldRender() {
-    return this._shouldRender;
+    return this._shouldRender && this._shouldNeverRender == false;
   }
 
   setShouldRender(shouldRender: boolean){

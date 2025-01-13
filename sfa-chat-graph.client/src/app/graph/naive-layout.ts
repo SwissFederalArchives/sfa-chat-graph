@@ -10,7 +10,8 @@ import { Vector } from "./vector";
 const NODE_CIRCLE_PADDING = 25;
 
 class NodeCircle {
-
+  public readonly minRadius: number = 200;
+  public readonly leafPadding: number = 50;
   public readonly node: Node;
   public radius: number;
   public readonly adjacent: NodeCircle[] = [];
@@ -30,6 +31,24 @@ class NodeCircle {
       this.center.addSet(this.next);
       this.next.clear();
     }
+  }
+
+  private rotateX(angle: number, radius: number): number {
+    return radius * Math.cos(angle);
+  }
+
+  private rotateY(angle: number, radius: number): number {
+    return radius * Math.sin(angle);
+  }
+
+  relayoutLeafes(){
+    const leafes = this.node.getLeafNodes().filter(leaf => leaf.shouldRender());
+    const radius = leafes.length == 0 ? this.node.radius * 2 : Math.max(this.minRadius, this.radius - NODE_CIRCLE_PADDING, leafes.reduce((sum, current) => sum + this.leafPadding + current.radius * 2, 0) / (2 * Math.PI));
+    this.radius = radius;
+    leafes.forEach((leaf, index) => {
+      const angle = (index / Math.max(7, leafes.length)) * 2 * Math.PI + Math.PI / 3;
+      leaf.move(this.node.pos.x + this.rotateX(angle, radius - leaf.radius), this.node.pos.y + this.rotateY(angle, radius - leaf.radius));
+    });
   }
 
   updateNodes() {
@@ -71,8 +90,6 @@ class Spring {
 
 export class NaiveGraphLayout implements IGraphLayout {
 
-  minRadius: number = 200;
-  nodePadding: number = 50;
   readonly repulsionFactor: number = 300;
   readonly maxRepulsion: number = 150;
   readonly centerAttraction: number = 0.05;
@@ -85,20 +102,16 @@ export class NaiveGraphLayout implements IGraphLayout {
 
   constructor(graph: Graph) {
     this.graph = graph;
+    this.graph.onLeafNodesLoaded.subscribe(node => this.relayoutLeafes(node));
 
     const centerNodes = graph.getNodes().filter(node => node.isLeaf() == false);
     for (let i = 0; i < centerNodes.length; i++) {
       const node = centerNodes[i];
       const leafes = node.getLeafNodes();
-      const radius = leafes.length == 0 ? node.radius * 2 : Math.max(this.minRadius, leafes.reduce((sum, current) => sum + this.nodePadding + current.radius * 2, 0) / (2 * Math.PI));
-      const circle = new NodeCircle(node, radius + NODE_CIRCLE_PADDING, Vector.random(4000, leafes.length * 200, 4000 - Math.max(0, (10 - leafes.length) * 200)));
+      const circle = new NodeCircle(node, node.radius * 2 + NODE_CIRCLE_PADDING, Vector.random(4000, leafes.length * 200, 4000 - Math.max(0, (10 - leafes.length) * 200)));
+      circle.relayoutLeafes();
       node.circleRadius = circle.radius;
-
       this.circleMap.set(node, circle);
-      leafes.forEach((leaf, index) => {
-        const angle = (index / Math.max(7, leafes.length)) * 2 * Math.PI + Math.PI / 3;
-        leaf.moveRelative(node.pos.x + this.rotateX(angle, radius - leaf.radius), node.pos.y + this.rotateY(angle, radius - leaf.radius));
-      });
     }
 
     this.nodeCircles = Array.from(this.circleMap.values());
@@ -121,14 +134,11 @@ export class NaiveGraphLayout implements IGraphLayout {
     }
   }
 
-  private rotateX(angle: number, radius: number): number {
-    return radius * Math.cos(angle);
+  relayoutLeafes(node: Node): void {
+    if(this.circleMap.has(node)){
+      this.circleMap.get(node)!.relayoutLeafes();
+    }
   }
-
-  private rotateY(angle: number, radius: number): number {
-    return radius * Math.sin(angle);
-  }
-
 
   applyRepulsion(circles: NodeCircle[]) {
     for (let i = 0; i < circles.length - 1; i++) {

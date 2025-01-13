@@ -35,6 +35,11 @@ export class GraphVisualisationControlsComponent {
     return this._parent.isPaused();
   }
 
+  relayouLeafes(){
+    const layout = this._parent.getLayouting();
+    this._parent.graph.getCenterNodes().forEach(n => layout.relayoutLeafes(n));
+  }
+
   collapseAll() {
     this._parent.graph.getCenterNodes().forEach(n => n.setCollapsed(true));
     if(this._parent.isPaused()){

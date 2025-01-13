@@ -39,6 +39,10 @@ export class GraphVisualisationComponent implements AfterViewInit {
   graphReady: boolean = false;
   lastMousePosition?: Vector = undefined;
 
+  public getLayouting(): IGraphLayout {
+    return this._layouting;
+  }
+
   ngAfterViewInit() {
     if (this.graph) {
       this._layouting = new NaiveGraphLayout(this.graph);
@@ -124,10 +128,14 @@ export class GraphVisualisationComponent implements AfterViewInit {
     this._panOffset.setXY(this.clamp(x, -maxPanX, maxPanX), this.clamp(y, -maxPanY, maxPanY));
   }
 
-  collapseNode($event: MouseEvent, node: Node) {
-    $event.preventDefault();
-    node.setCollapsed(!node.isCollapsed());
-    this.onCollapsed?.emit(node);
+  collapseNode(event: MouseEvent, node: Node) {
+    event.preventDefault();
+    if (node.areLeafesLoaded()) {
+      node.setCollapsed(!node.isCollapsed());
+      this.onCollapsed?.emit(node);
+    }else{
+      this.graph.loadLeafes(node);
+    }
   }
 
   onMouseDown(event: MouseEvent, node: any): void {
@@ -162,10 +170,10 @@ export class GraphVisualisationComponent implements AfterViewInit {
         if (this.dragLeafNodes) {
           const parent = this.draggedNode.getParent();
           if (parent) {
-            this.draggedNode.moveRelative(dx, dy); 
+            this.draggedNode.moveRelative(dx, dy);
             const distance = this.draggedNode.pos.distance(parent.pos);
             parent.getLeafNodes().forEach(leaf => {
-              if(leaf != this.draggedNode){
+              if (leaf != this.draggedNode) {
                 const vec = leaf.pos.sub(parent.pos).normalizeSet().mulSet(distance);
                 leaf.move(vec.x + parent.pos.x, vec.y + parent.pos.y);
               }

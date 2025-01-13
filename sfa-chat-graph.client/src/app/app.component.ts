@@ -42,16 +42,40 @@ export class AppComponent implements OnInit {
         const pred = item.predicate.value;
         const obj = item.object.value;
         if (item.object.type == "uri") {
-          graph.createTriple(sub, pred, obj);
+          const created = graph.createTriple(sub, pred, obj);
           if (currentSubject.depth < maxDepth && pred != "http://www.w3.org/1999/02/22-rdf-syntax-ns#type" && visited.has(obj) == false) {
             iriStack.push({ iri: obj, depth: currentSubject.depth + 1 })
             visited.add(obj);
+            created.sub.markLeafesLoaded();
           }
         } else {
           graph.createTripleLiteralObj(sub, pred, obj);
         }
       }
     }
+
+    graph.onNodeDetailsRequested.subscribe(async (data) => {
+      const body = new HttpParams()
+        .set("query", `DESCRIBE <${data.node.id}>`);
+
+      let response = await firstValueFrom(this.http.post<any>("http://localhost:40112/repositories/TestDB", body, { headers: headers, responseType: "json" }));
+      let childCount = 0;
+      for (var key in response.results.bindings) {
+        const item = response.results.bindings[key];
+        const sub = item.subject.value;
+        const pred = item.predicate.value;
+        const obj = item.object.value;
+        if(item.object.type == "uri"){
+          const created = graph.createTriple(sub, pred, obj);
+          if(childCount++ > maxChidldren && created.objCreated)
+            created.obj.setShouldNeverRender(true);
+        }else{
+          const created = graph.createTripleLiteralObj(sub, pred, obj);
+          if(childCount++ > maxChidldren && created.objCreated)
+            created.obj.setShouldNeverRender(true);
+        }
+      }
+    });
 
     return graph;
   }

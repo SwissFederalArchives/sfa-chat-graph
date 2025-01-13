@@ -1,41 +1,56 @@
+import { EventEmitter } from '@angular/core';
 import { Edge } from './edge';
 import { Node } from './node';
 import { Vector } from './vector';
 
 export class Graph {
 
-
   private _nodes: Map<string, Node> = new Map();
   private _edges: Map<string, Edge> = new Map();
   private _adjacencies: Map<[Node, Node], Edge> = new Map();
+  public readonly onNodeDetailsRequested: EventEmitter<{ graph: Graph, node: Node }> = new EventEmitter<{ graph: Graph, node: Node }>();
+  public readonly onLeafNodesLoaded: EventEmitter<Node> = new EventEmitter<Node>();
+
+  loadLeafes(node: Node): void {
+    if (node.areLeafesLoaded() == false) {
+      this.onNodeDetailsRequested.emit({ graph: this, node: node });
+      node.markLeafesLoaded();
+      this.updateModels();
+      this.onLeafNodesLoaded.emit(node);
+    }
+  }
 
   getEdges() {
     return Array.from(this._edges.values());
   }
 
-  getOrCreateNode(id: string, label?: string, color?: string) {
+  getOrCreateNode(id: string, label?: string, color?: string): { node: Node, created: boolean } {
     let node = this.getNode(id);
+    let created = false;
     if (!node) {
       node = this.createNode(id, label, color);
-    } 
-    
-    return node;
+      created = true;
+    }
+
+    return {node: node, created: created};
   }
 
   readonly splitExp: RegExp = new RegExp("\\/#");
-  createTripleLiteralObj(subIri: string, predIri: string, obj: string) {
+  createTripleLiteralObj(subIri: string, predIri: string, obj: string): { sub: Node, obj: Node, subCreated: boolean, objCreated: boolean } {
     const node1 = this.getOrCreateNode(subIri, subIri.split("/").slice(-2).join("/"));
     const node2 = this.createNode(`${subIri}@${predIri}=${obj}`, obj, "#CFA060");
-    this.createEdge(node1.id, node2.id, predIri, predIri.split("#").slice(-1).join("/"));
-  }
-  
-  createTriple(subIri: string, predIri: string, objIri: string) {
-    const node1 = this.getOrCreateNode(subIri, subIri.split("/").slice(-2).join("/"));
-    const node2 = this.getOrCreateNode(objIri, objIri.split("/").slice(-2).join("/"));
-    this.createEdge(node1.id, node2.id, predIri, predIri.split("#").slice(-1).join("/"));
+    this.createEdge(node1.node.id, node2.id, predIri, predIri.split("#").slice(-1).join("/"));
+    return { sub: node1.node, subCreated: node1.created, obj: node2, objCreated: true };
   }
 
-  isAdjacant(node1: Node, node2: Node):boolean {
+  createTriple(subIri: string, predIri: string, objIri: string): { sub: Node, subCreated: boolean, obj: Node, objCreated: boolean } {
+    const node1 = this.getOrCreateNode(subIri, subIri.split("/").slice(-2).join("/"));
+    const node2 = this.getOrCreateNode(objIri, objIri.split("/").slice(-2).join("/"));
+    this.createEdge(node1.node.id, node2.node.id, predIri, predIri.split("#").slice(-1).join("/"));
+    return { sub: node1.node, subCreated: node1.created, obj: node2.node, objCreated: node2.created };
+  }
+
+  isAdjacant(node1: Node, node2: Node): boolean {
     return node1.edges.some((edge, _) => edge.getOther(node1) == node2);
   }
 
@@ -57,7 +72,7 @@ export class Graph {
     return Array.from(this._nodes.values());
   }
 
-  getCenterNodes(): Node[]{
+  getCenterNodes(): Node[] {
     return this.getNodes().filter(node => node.isLeaf() == false)
   }
 
