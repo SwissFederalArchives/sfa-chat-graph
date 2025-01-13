@@ -4,8 +4,7 @@
     <svg #canvas [attr.viewBox]="getViewBox()" [attr.class]="isGraphStable ? 'stable-graph' : 'updating-graph'"
         (mousemove)="onMouseMove($event)" (mouseup)="onMouseUp($event)" (mousedown)="beginPan($event)"
         (wheel)="onScroll($event)">
-        <circle class="node-circle" *ngFor="let node of graph.getCenterNodes()" [attr.cx]="node.pos.x" [attr.cy]="node.pos.y"
-            [attr.r]="node.circleRadius" fill="none" />
+        
 
         <g *ngFor="let edge of graph.getEdges()">
             <g *ngIf="edge.shouldRender()">
@@ -22,6 +21,9 @@
 
         <g *ngFor="let node of graph.getNodes()">
             <g *ngIf="node.shouldRender()">
+                <circle *ngIf="node.isLeaf() == false" class="node-circle" [attr.cx]="node.pos.x" [attr.cy]="node.pos.y"
+                    [attr.r]="node.circleRadius" fill="none" />
+
                 <circle [attr.cx]="node.pos.x" [attr.cy]="node.pos.y" [attr.r]="node.radius" [attr.fill]="node.color"
                     (dblclick)="collapseNode($event, node)" (mousedown)="onMouseDown($event, node)" />
 

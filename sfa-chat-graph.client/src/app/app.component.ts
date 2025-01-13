@@ -3,6 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { Graph } from './graph/graph';
 import { firstValueFrom } from 'rxjs';
 
+const DATABASE = "TestDB";
 
 @Component({
   selector: 'app-root',
@@ -10,7 +11,6 @@ import { firstValueFrom } from 'rxjs';
   standalone: false,
   styleUrl: './app.component.css'
 })
-
 export class AppComponent implements OnInit {
 
 
@@ -32,7 +32,7 @@ export class AppComponent implements OnInit {
         .set("query", `DESCRIBE <${currentSubject?.iri}>`);
 
 
-      let response = await firstValueFrom(this.http.post<any>("http://localhost:40112/repositories/Test", body, { headers: headers, responseType: "json" }));
+      let response = await firstValueFrom(this.http.post<any>(`http://localhost:40112/repositories/${DATABASE}`, body, { headers: headers, responseType: "json" }));
       if (response.results.bindings.length > maxChildren)
         continue;
 
@@ -59,7 +59,7 @@ export class AppComponent implements OnInit {
         .set('Content-Type', 'application/x-www-form-urlencoded')
         .set("query", `DESCRIBE <${data.value.node.id}>`);
 
-      let response = await firstValueFrom(this.http.post<any>("http://localhost:40112/repositories/Test", body, { headers: headers, responseType: "json" }));
+      let response = await firstValueFrom(this.http.post<any>(`http://localhost:40112/repositories/${DATABASE}`, body, { headers: headers, responseType: "json" }));
       let childCount = 0;
       for (var key in response.results.bindings) {
         const item = response.results.bindings[key];

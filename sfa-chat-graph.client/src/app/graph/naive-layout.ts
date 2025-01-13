@@ -78,6 +78,9 @@ class Spring {
   }
 
   applyForces() {
+    if(this.circle1.node.shouldRender() == false || this.circle2.node.shouldRender() == false)
+      return;
+
     const distance = Math.max(0.1, this.circle1.center.distance(this.circle2.center) - this.circle1.radius - this.circle2.radius);
     const force = this.springLength * Math.log(distance / this.springStiffness);
     const vector = this.circle1.center.sub(this.circle2.center).normalize().mul(Math.min(force * this.forceScale, distance / this.distanceForceLimitingDivider));
@@ -98,27 +101,32 @@ export class NaiveGraphLayout implements IGraphLayout {
   readonly graph: Graph;
   readonly springs: Spring[] = [];
   readonly circleMap: Map<Node, NodeCircle> = new Map<Node, NodeCircle>();
-  readonly nodeCircles: NodeCircle[];
+  private nodeCircles: NodeCircle[];
 
   constructor(graph: Graph) {
     this.graph = graph;
-    this.graph.onLeafNodesLoaded.subscribe(node => this.relayoutLeafes(node));
+    this.nodeCircles = [];
+    this.updateCircles();
+    this.graph.onLeafNodesLoaded.subscribe(node => {
+      this.relayoutLeafes(node)
+      this.updateCircles();
+    });
+  }
 
-    const centerNodes = graph.getNodes().filter(node => node.isLeaf() == false);
-    for (let i = 0; i < centerNodes.length; i++) {
-      const node = centerNodes[i];
+  updateCircles() {
+    const newNodes = this.graph.getNodes().filter(node => node.getShouldNeverRender() == false && node.isLeaf() == false && this.circleMap.has(node) == false);
+    newNodes.forEach(node => {
       const leafes = node.getLeafNodes();
       const circle = new NodeCircle(node, node.radius * 2 + NODE_CIRCLE_PADDING, Vector.random(4000, leafes.length * 200, 4000 - Math.max(0, (10 - leafes.length) * 200)));
-      circle.relayoutLeafs();
       node.circleRadius = circle.radius;
+      this.nodeCircles.push(circle);
       this.circleMap.set(node, circle);
-    }
-
-    this.nodeCircles = Array.from(this.circleMap.values());
+      circle.relayoutLeafs();
+      circle.updateNodes();
+    });
 
     const visited = new Set<Node>();
-    for (let i = 0; i < centerNodes.length; i++) {
-      const node = centerNodes[i];
+    newNodes.forEach(node => {
       const circle = this.circleMap.get(node)!;
       visited.add(node);
       node.getSiblings().forEach(sibling => {
@@ -131,7 +139,7 @@ export class NaiveGraphLayout implements IGraphLayout {
           }
         }
       });
-    }
+    });
   }
 
   relayoutLeafes(node: Node): void {
@@ -145,6 +153,9 @@ export class NaiveGraphLayout implements IGraphLayout {
       for (let j = i + 1; j < circles.length; j++) {
         const circle1 = circles[i];
         const circle2 = circles[j];
+        if (circle1.node.shouldRender() == false || circle2.node.shouldRender() == false)
+          continue;
+
         const distance = Math.max(0.1, circle1.center.distance(circle2.center) - circle1.radius - circle2.radius);
         if (distance < this.maxDistance) {
           const force = (this.repulsionFactor * this.repulsionFactor) / (distance * distance);
@@ -159,7 +170,7 @@ export class NaiveGraphLayout implements IGraphLayout {
   }
 
   applyCenterAttraction(circles: NodeCircle[], center: Vector) {
-    circles.forEach(circle => {
+    circles.filter(x => x.node.shouldRender()).forEach(circle => {
       const distance = Math.max(0.1, circle.center.distance(center) - circle.radius);
       const force = this.centerAttraction * distance;
       const vector = center.sub(circle.center).normalize().mul(Math.min(force, distance / 2));
