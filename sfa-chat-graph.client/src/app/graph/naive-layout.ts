@@ -42,9 +42,10 @@ class NodeCircle {
   }
 
   relayoutLeafs(){
-    const leafs = Array.from(this.node.getLeafNodes().filter(leaf => leaf.shouldRender()));
+    const leafs = Array.from(this.node.getVisibleLeafs());
     const radius = leafs.length == 0 ? this.node.radius * 2 : Math.max(this.minRadius, this.radius - NODE_CIRCLE_PADDING, leafs.reduce((sum, current) => sum + this.leafPadding + current.radius * 2, 0) / (2 * Math.PI));
     this.radius = radius;
+    this.node.circleRadius = radius;
     leafs.forEach((leaf, index) => {
       const angle = (index / Math.max(7, leafs.length)) * 2 * Math.PI + Math.PI / 3;
       leaf.move(this.node.pos.x + this.rotateX(angle, radius - leaf.radius), this.node.pos.y + this.rotateY(angle, radius - leaf.radius));
@@ -56,7 +57,8 @@ class NodeCircle {
   }
 
   notifyNodeUpdated(): void {
-    this.radius = this.node.isCollapsed() ? this.node.radius * 2 : Math.max(this.node.radius * 2, NODE_CIRCLE_PADDING + this.node.getLeafNodes().map(leaf => this.center.distance(leaf.pos) + leaf.radius).reduce((max, current) => Math.max(max, current), 0));
+    const leafs = Array.from(this.node.getVisibleLeafs());
+    this.radius = leafs.length == 0 ? this.node.radius * 2 : Math.max(this.node.radius * 2, NODE_CIRCLE_PADDING + leafs.map(leaf => this.center.distance(leaf.pos) + leaf.radius).reduce((max, current) => Math.max(max, current), 0));
     this.node.circleRadius = this.radius;
     this.center.setCopy(this.node.pos);
   }
@@ -116,7 +118,7 @@ export class NaiveGraphLayout implements IGraphLayout {
   updateCircles() {
     const newNodes = this.graph.getNodes().filter(node => node.getShouldNeverRender() == false && node.isLeaf() == false && this.circleMap.has(node) == false);
     newNodes.forEach(node => {
-      const leafes = node.getLeafNodes();
+      const leafes = node.getVisibleLeafs();
       const circle = new NodeCircle(node, node.radius * 2 + NODE_CIRCLE_PADDING, Vector.random(4000, leafes.length * 200, 4000 - Math.max(0, (10 - leafes.length) * 200)));
       node.circleRadius = circle.radius;
       this.nodeCircles.push(circle);

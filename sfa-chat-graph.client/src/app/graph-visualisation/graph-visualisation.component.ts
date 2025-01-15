@@ -9,10 +9,11 @@ import { interval, take } from 'rxjs';
 import { Vector } from '../graph/vector';
 import { BBox } from '../graph/bbox';
 import { GraphVisualisationControlsComponent } from '../graph-visualisation-controls/graph-visualisation-controls.component';
+import { GraphDetailComponentComponent } from '../graph-detail-component/graph-detail-component.component';
 
 @Component({
   selector: 'graph',
-  imports: [NgFor, NgIf, GraphVisualisationControlsComponent],
+  imports: [NgFor, NgIf, GraphVisualisationControlsComponent, GraphDetailComponentComponent],
   standalone: true,
   templateUrl: './graph-visualisation.component.html',
   styleUrl: './graph-visualisation.component.css'
@@ -23,6 +24,7 @@ export class GraphVisualisationComponent implements AfterViewInit {
   @Input() graph!: Graph;
   @Input() showDebug: boolean = false;
   @ViewChild("canvas") svg!: ElementRef<SVGSVGElement>;
+  @ViewChild("detail") detail!: GraphDetailComponentComponent;
 
   private _layouting!: IGraphLayout;
   private _bbox!: BBox;
@@ -31,6 +33,9 @@ export class GraphVisualisationComponent implements AfterViewInit {
   private _zoomLevel: number = 1;
   private _svgPoint!: DOMPoint;
   private _paused: boolean = false;
+  private _distanceMoved: number = 0;
+  private _wasMoving: boolean = false;
+
   public readonly onCollapsed: EventEmitter<Node> = new EventEmitter<Node>();
 
   private readonly _defaultDomMatrix: DOMMatrix = new DOMMatrix();
@@ -76,7 +81,7 @@ export class GraphVisualisationComponent implements AfterViewInit {
   }
 
   private draggedNode?: Node;
-  private dragLeafNodes: boolean = false;
+  private isLeftClick: boolean = false;
   private isPan: boolean = false;
 
   getViewBox(): string {
@@ -133,7 +138,7 @@ export class GraphVisualisationComponent implements AfterViewInit {
     if (node.areLeafsLoaded()) {
       node.setCollapsed(!node.isCollapsed());
       this.onCollapsed?.emit(node);
-    }else{
+    } else {
       await this.graph.loadLeafs(node);
     }
   }
@@ -141,9 +146,11 @@ export class GraphVisualisationComponent implements AfterViewInit {
   onMouseDown(event: MouseEvent, node: any): void {
     event.preventDefault();
     this.draggedNode = node;
+    this._wasMoving = this._layoutTimer != undefined;
     this.stopLayoutTimer();
-    this.dragLeafNodes = event.button == 0;
+    this.isLeftClick = event.button == 0;
     this.isGraphStable = false
+    this._distanceMoved = 0;
   }
 
   getSvgPoint() {
@@ -153,6 +160,7 @@ export class GraphVisualisationComponent implements AfterViewInit {
 
     return this._svgPoint;
   }
+
 
   onMouseMove(event: MouseEvent): void {
     if (this.draggedNode) {
@@ -164,10 +172,10 @@ export class GraphVisualisationComponent implements AfterViewInit {
 
       const dx = svgCoords.x - this.draggedNode.pos.x;
       const dy = svgCoords.y - this.draggedNode.pos.y;
-
+      this._distanceMoved += Math.sqrt(dx * dx + dy * dy);
 
       if (this.draggedNode.isLeaf()) {
-        if (this.dragLeafNodes) {
+        if (this.isLeftClick) {
           const parent = this.draggedNode.getParent();
           if (parent) {
             this.draggedNode.moveRelative(dx, dy);
@@ -184,7 +192,7 @@ export class GraphVisualisationComponent implements AfterViewInit {
           this.draggedNode.moveRelative(dx, dy);
         }
       } else {
-        if (this.dragLeafNodes) {
+        if (this.isLeftClick) {
           this.draggedNode.moveRelativeWithLeafs(dx, dy);
         } else {
           this.draggedNode.moveRelative(dx, dy);
@@ -214,9 +222,17 @@ export class GraphVisualisationComponent implements AfterViewInit {
   onMouseUp(event: MouseEvent): void {
     if (this.draggedNode) {
       event.preventDefault();
+      if (this._distanceMoved > 1 || this._wasMoving) {
+        this.startLayoutTimer();
+      }
+
+      if (this._distanceMoved <= 1 && this.draggedNode.isLeaf() == false && this.isLeftClick == false) {
+        this.detail.setNode(this.draggedNode);
+      }
       this.draggedNode = undefined;
-      this.startLayoutTimer();
     }
+
+
 
     if (this.isPan) {
       event.preventDefault();
@@ -229,6 +245,7 @@ export class GraphVisualisationComponent implements AfterViewInit {
     if (!this.draggedNode && this.isPan == false) {
       event.preventDefault();
       this.isPan = true;
+      this.detail.close();
     }
   }
 

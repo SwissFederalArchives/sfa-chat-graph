@@ -4,6 +4,7 @@ import { Graph } from './graph/graph';
 import { firstValueFrom } from 'rxjs';
 
 const DATABASE = "TestDB";
+const MAX_LOAD_COUNT: number = 15;
 
 @Component({
   selector: 'app-root',
@@ -12,7 +13,6 @@ const DATABASE = "TestDB";
   styleUrl: './app.component.css'
 })
 export class AppComponent implements OnInit {
-
 
   graph?: Graph;
 
@@ -49,7 +49,8 @@ export class AppComponent implements OnInit {
             created.sub.markLeafsLoaded();
           }
         } else {
-          graph.createTripleLiteralObj(sub, pred, obj);
+          const created = graph.createTripleLiteralObj(sub, pred, obj);
+          created.sub.markLeafsLoaded();
         }
       }
     }
@@ -61,19 +62,29 @@ export class AppComponent implements OnInit {
 
       let response = await firstValueFrom(this.http.post<any>(`http://localhost:40112/repositories/${DATABASE}`, body, { headers: headers, responseType: "json" }));
       let childCount = 0;
-      for (var key in response.results.bindings) {
+      for (var key in response.results.bindings.sort((a: any, b: any) => a.object.type.localeCompare(b.object.type))) {
         const item = response.results.bindings[key];
         const sub = item.subject.value;
         const pred = item.predicate.value;
         const obj = item.object.value;
         if (item.object.type == "uri") {
           const created = graph.createTriple(sub, pred, obj);
-          if (childCount++ > maxChildren && created.objCreated)
-            created.obj.setShouldNeverRender(true);
+          if (childCount++ > MAX_LOAD_COUNT){
+            if(created.subCreated)
+              created.sub.setShouldNeverRender(true);
+
+            if(created.objCreated)
+              created.obj.setShouldNeverRender(true);
+          }
         } else {
           const created = graph.createTripleLiteralObj(sub, pred, obj);
-          if (childCount++ > maxChildren && created.objCreated)
-            created.obj.setShouldNeverRender(true);
+          if (childCount++ > MAX_LOAD_COUNT){
+            if(created.subCreated)
+              created.sub.setShouldNeverRender(true);
+
+            if(created.objCreated)
+              created.obj.setShouldNeverRender(true);
+          }
         }
       }
       

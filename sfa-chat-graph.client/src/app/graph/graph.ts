@@ -28,11 +28,11 @@ export class Graph {
     return Array.from(this._edges.values());
   }
 
-  getOrCreateNode(id: string, label?: string, color?: string): { node: Node, created: boolean } {
+  getOrCreateNode(id: string, iri: string, label?: string, color?: string): { node: Node, created: boolean } {
     let node = this.getNode(id);
     let created = false;
     if (!node) {
-      node = this.createNode(id, label, color);
+      node = this.createNode(id, iri, label, color);
       this.onNodeCreated.emit(node);
       created = true;
     }
@@ -42,15 +42,15 @@ export class Graph {
 
   readonly splitExp: RegExp = new RegExp("\\/#");
   createTripleLiteralObj(subIri: string, predIri: string, obj: string): { sub: Node, obj: Node, subCreated: boolean, objCreated: boolean } {
-    const node1 = this.getOrCreateNode(subIri, subIri.split("/").slice(-2).join("/"));
-    const node2 = this.createNode(`${subIri}@${predIri}=${obj}`, obj, "#CFA060");
+    const node1 = this.getOrCreateNode(subIri, subIri, subIri.split("/").slice(-2).join("/"));
+    const node2 = this.createNode(crypto.randomUUID(), obj, obj, "#CFA060");
     this.getOrCreateEdge(node1.node.id, node2.id, predIri, predIri.split("#").slice(-1).join("/"));
     return { sub: node1.node, subCreated: node1.created, obj: node2, objCreated: true };
   }
 
   createTriple(subIri: string, predIri: string, objIri: string): { sub: Node, subCreated: boolean, obj: Node, objCreated: boolean } {
-    const node1 = this.getOrCreateNode(subIri, subIri.split("/").slice(-2).join("/"));
-    const node2 = this.getOrCreateNode(objIri, objIri.split("/").slice(-2).join("/"));
+    const node1 = this.getOrCreateNode(subIri, subIri, subIri.split("/").slice(-2).join("/"));
+    const node2 = this.getOrCreateNode(objIri, objIri, objIri.split("/").slice(-2).join("/"));
     this.getOrCreateEdge(node1.node.id, node2.node.id, predIri, predIri.split("#").slice(-1).join("/"));
     return { sub: node1.node, subCreated: node1.created, obj: node2.node, objCreated: node2.created };
   }
@@ -63,8 +63,8 @@ export class Graph {
     this._nodes.set(node.id, node);
   }
 
-  createNode(id: string, label?: string, color?: string): Node {
-    const node = new Node(id, label ?? id, Vector.zero(), 40, color ?? "#CF60A0");
+  createNode(id: string, iri: string, label?: string, color?: string): Node {
+    const node = new Node(id, iri, label ?? id, Vector.zero(), 40, color ?? "#CF60A0");
     this.insertNode(node);
     return node;
   }

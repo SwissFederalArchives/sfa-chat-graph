@@ -5,6 +5,7 @@ import { Vector } from "./vector";
 export class Node {
 
 
+
   public edges: Edge[] = []
   public circleRadius: number;
   public debugVectors: Vector[] = []
@@ -18,6 +19,7 @@ export class Node {
 
   constructor(
     public id: string,
+    public iri: string,
     public label: string,
     public pos: Vector,
     public radius: number,
@@ -28,8 +30,14 @@ export class Node {
     this._leafsLoaded = leafsLoaded;
   }
 
+  getOutgoingEdges(): Edge[] {
+    return this.edges.filter(edge => edge.getFrom() == this);
+  }
+
   setShouldNeverRender(shouldNeverRender: boolean){
     this._shouldNeverRender = shouldNeverRender;
+    this.getLeafNodes().forEach(leaf => leaf.setShouldNeverRender(shouldNeverRender));
+    this.onChanged?.emit(this);
   }
 
   getShouldNeverRender(): boolean {
@@ -106,6 +114,10 @@ export class Node {
 
   getLeafNodes(): Node[] {
     return this.edges.map(edge => edge.getOther(this)!).filter(other => other.isLeaf());
+  }
+
+  getVisibleLeafs() {
+    return this.getLeafNodes().filter(leaf => leaf.shouldRender());
   }
 
   isLeaf(): boolean {

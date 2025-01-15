@@ -1,0 +1,54 @@
+.node-detail {
+    position: absolute;
+    z-index: 1;
+    background-color: white;
+    height: 100%; /* Full height to cover the viewport */
+    width: 50%; /* Width of the side pane */
+    top: 0;
+    right: 0;
+    display: flex;
+    flex-direction: row;
+}
+
+.node-detail-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 1em;
+    padding: 0.5em;
+    flex-shrink: 0; /* Prevent shrinking of this section */
+}
+
+.inner {
+    display: block;
+    overflow-y: scroll!important;
+    flex-direction: column; /* Align children vertically */
+}
+
+table {
+    overflow-y: hidden;
+    table-layout: fixed;
+    width: 100%;
+    border-collapse: collapse; /* Optional: For cleaner table styles */
+}
+
+table thead {
+    background-color: #f1f1f1;
+}
+
+table thead th {
+    padding: 1em;
+}
+
+table tbody tr:nth-child(even) {
+    background-color: #eaeaea;
+    
+}
+
+table tr {
+    text-align: left;
+}
+
+table tr td {
+    padding: 1em;
+    word-wrap: break-word;
+}
