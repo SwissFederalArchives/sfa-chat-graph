@@ -12,14 +12,15 @@ import { provideAnimationsAsync } from '@angular/platform-browser/animations/asy
 @NgModule({
   declarations: [
     AppComponent,
-    ChatHistoryComponent,
   ],
   imports: [
+    ChatHistoryComponent,
     BrowserModule,
     HttpClientModule,
     GraphVisualisationComponent,
-    AppRoutingModule
-  ],
+    AppRoutingModule,
+    ChatHistoryComponent
+],
   providers: [
     provideAnimationsAsync()
   ],
