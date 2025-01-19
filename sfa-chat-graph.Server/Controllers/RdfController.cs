@@ -1,13 +1,13 @@
-﻿using J2N.Text;
+﻿using AwosFramework.Generators.FunctionCalling;
 using Microsoft.AspNetCore.Mvc;
 using OpenAI.Chat;
+using sfa_chat_graph.Server.Models;
 using SfaChatGraph.Server.Models;
 using SfaChatGraph.Server.RDF;
 using SfaChatGraph.Server.RDF.Models;
+using SfaChatGraph.Server.Utils;
 using System.Text;
-using VDS.RDF;
-using VDS.RDF.Storage;
-using VDS.RDF.Storage.Management;
+using System.Text.Json;
 
 namespace SfaChatGraph.Server.Controllers
 {
@@ -22,8 +22,10 @@ namespace SfaChatGraph.Server.Controllers
 		private SystemChatMessage _answerSysMessage;
 		private Task _initTask;
 		private ILogger _logger;
+		private readonly FunctionCallRegistry _functionCallingRegistry;
+		private readonly Lazy<ChatTool[]> _chatTools;
 
-		public RdfController(IGraphRag graphDb, ChatClient chatClient, ILoggerFactory loggerFactory, IServiceProvider serviceProvider)
+		public RdfController(IGraphRag graphDb, ChatClient chatClient, ILoggerFactory loggerFactory, IServiceProvider serviceProvider, FunctionCallRegistry functionCallingRegistry)
 		{
 			_graphDb=graphDb;
 			_logger=loggerFactory.CreateLogger<RdfController>();
@@ -35,6 +37,8 @@ namespace SfaChatGraph.Server.Controllers
 
 			_answerSysMessage=new SystemChatMessage("Your job is to answer the user's question given the result of a knowledgegraph lookup. If the question can't be answered with the given data clearly state so");
 			_serviceProvider=serviceProvider;
+			_functionCallingRegistry=functionCallingRegistry;
+			_chatTools = new Lazy<ChatTool[]>(() => _functionCallingRegistry.GetFunctionCallMetas().Select(x => x.AsChatTool()).ToArray());
 		}
 
 		[HttpGet("describe")]
@@ -45,12 +49,14 @@ namespace SfaChatGraph.Server.Controllers
 			if (graph.Results.Length==0)
 				return NotFound();
 
+			
+
 			return Ok(graph);
 		}
 
 
 		[HttpPost("chat")]
-		[ProducesResponseType<ApiChatMessage[]>(StatusCodes.Status200OK)]
+		[ProducesResponseType<ApiMessage[]>(StatusCodes.Status200OK)]
 		public async Task<IActionResult> ChatAsync([FromBody] ApiChatRequest chat)
 		{
 			var sysPrompt = $"""
@@ -60,20 +66,20 @@ namespace SfaChatGraph.Server.Controllers
 			""";
 
 			var options = new ChatCompletionOptions();
-			foreach (var cf in _graphDb.CallableFunctions)
+			foreach (var cf in _chatTools.Value)
 				options.Tools.Add(cf);
 
 			List<ChatMessage> messages = [ChatMessage.CreateSystemMessage(sysPrompt)];
-			messages.AddRange(chat.History.Select(x => x.ToChatMessage()));
-			var apiMessages = new List<ApiChatMessage>();
+			messages.AddRange(chat.History.Select(x => x.AsOpenAIMessage()));
+			var apiMessages = new List<ApiMessage>();
 
 			bool requiresAction = true;
 			do
 			{
 				var response = await _chatClient.CompleteChatAsync(messages, options);
-				var message = AssistantChatMessage.CreateAssistantMessage(response);
-				apiMessages.Add(ApiChatMessage.FromChatMessage(message));
+				var message = ChatMessage.CreateAssistantMessage(response);
 				messages.Add(message);
+				apiMessages.Add(message.AsApiMessage());
 
 				switch (response.Value.FinishReason)
 				{
@@ -89,13 +95,14 @@ namespace SfaChatGraph.Server.Controllers
 							{
 								try
 								{
-									var toolResponse = await _graphDb.CallFunctionAsync(_serviceProvider, toolCall.FunctionName, toolCall.FunctionArguments.ToString());
+									var toolParameters = JsonDocument.Parse(toolCall.FunctionArguments);
+									var toolResponse = await _functionCallingRegistry.CallFunctionAsync(toolCall.Id, toolParameters);
 
 									if (toolResponse is string stringData)
 									{
 										var toolMessage = ToolChatMessage.CreateToolMessage(toolCall.Id, stringData);
-										apiMessages.Add(ApiChatMessage.FromChatMessage(toolMessage));
 										messages.Add(toolMessage);
+										apiMessages.Add(toolMessage.AsApiMessage());
 									}
 									else if (toolResponse is SparqlStarResult graphData)
 									{
@@ -105,8 +112,8 @@ namespace SfaChatGraph.Server.Controllers
 											builder.AppendLine(string.Join(";", graphData.Head.Vars.Select(x => row[x]?.Value)));
 
 										var toolMessage = ToolChatMessage.CreateToolMessage(toolCall.Id, builder.ToString());
-										apiMessages.Add(ApiChatMessage.FromChatMessage(toolMessage, graphData));
 										messages.Add(toolMessage);
+										apiMessages.Add(toolMessage.AsApiMessage());
 									}
 								}
 								catch (Exception ex)
@@ -118,8 +125,8 @@ namespace SfaChatGraph.Server.Controllers
 									else
 									{
 										var toolMessage = ToolChatMessage.CreateToolMessage(toolCall.Id, $"You're tool call yielded an error: {ex.Message}\nthis is most likel due to malformed sparql or forgotten prefixes ");
-										apiMessages.Add(ApiChatMessage.FromChatMessage(toolMessage));
 										messages.Add(toolMessage);
+										apiMessages.Add(toolMessage.AsApiMessage());
 									}
 								}
 							}

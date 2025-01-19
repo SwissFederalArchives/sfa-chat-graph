@@ -5,6 +5,6 @@
 		User,
 		Assistant,
 		ToolCall,
-		Tool
+		ToolResponse
 	}
 }

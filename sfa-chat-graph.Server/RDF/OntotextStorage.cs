@@ -1,7 +1,6 @@
 ﻿using Json.Schema.Generation.Intents;
 using Microsoft.EntityFrameworkCore.Migrations.Operations.Builders;
 using OpenAI.Chat;
-using SfaChatGraph.Server.FunctionCalling;
 using SfaChatGraph.Server.RDF.Models;
 using System.Collections.Frozen;
 using System.ComponentModel;
@@ -16,6 +15,7 @@ using VDS.RDF.Parsing.Handlers;
 using VDS.RDF.Query;
 using VDS.RDF.Storage;
 using VDS.RDF.Storage.Management;
+using AwosFramework.Generators.FunctionCalling;
 
 namespace SfaChatGraph.Server.RDF
 {
@@ -28,20 +28,11 @@ namespace SfaChatGraph.Server.RDF
 		public string Graph { get; private set; }
 
 		public IAsyncStorageServer AsyncParentServer { get; init; }
-		public IEnumerable<ChatTool> CallableFunctions => _callableFunctions.Values.Select(x => x.ChatTool);
 
-		private static readonly FrozenDictionary<string, CallableFunction> _callableFunctions;
 		private JsonSerializerOptions _jsonOptions = new JsonSerializerOptions { Converters = { new SparqlStarConverter() } };
-		private static readonly TypeFactory _typeFactory = new TypeFactory("SfaChatGraph.Server.RDF.FunctionCalling");
 
 		static OntotextStorage()
 		{
-			var schemaFunction = new CallableFunction(typeof(OntotextStorage).GetMethod(nameof(FunctionCall_GetSchema), BindingFlags.Instance | BindingFlags.Public), _typeFactory);
-			var queryFunction = new CallableFunction(typeof(OntotextStorage).GetMethod(nameof(FunctionCall_QueryAsync), BindingFlags.Instance | BindingFlags.Public), _typeFactory);
-			var dict = new Dictionary<string, CallableFunction>();
-			//dict.Add(schemaFunction.ChatTool.FunctionName, schemaFunction);
-			dict.Add(queryFunction.ChatTool.FunctionName, queryFunction);
-			_callableFunctions = dict.ToFrozenDictionary();
 		}
 
 		public OntotextStorage(IAsyncStorageServer parent, string endpoint, string repository)
@@ -56,22 +47,15 @@ namespace SfaChatGraph.Server.RDF
 
 		}
 
-		public async Task<object> CallFunctionAsync(IServiceProvider provider, string function, string json)
-		{
-			if(_callableFunctions.TryGetValue(function, out var callableFunction) == false)
-				throw new ArgumentException($"Function {function} not found", nameof(function));
 
-			return await callableFunction.CallAsync(json, provider);
-		}
-
-
-
+		[FunctionCall("schema")]
 		[Description("Gets a description of the ontology of the curren rdf database")]
 		public string FunctionCall_GetSchema()
 		{
 			return Schema;
 		}
 
+		[FunctionCall("query_async")]
 		[Description("Function to query the database using valid sparql code. Use the schema supplied to you to check if the IRI's you use actually exist. You can use Prefixes to tidy your code, just make sure to define them as well. Prefixed IRI cannot contain further slashes, prefix:part is legal prefix:part/part is not. Make sure to not use slashes when using prefixes.")]
 		public async Task<SparqlStarResult> FunctionCall_QueryAsync([Description("The sparql code")]string query)
 		{

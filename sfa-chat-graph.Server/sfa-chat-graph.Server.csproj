@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
@@ -14,29 +14,29 @@
 
   <ItemGroup>
     <PackageReference Include="DotNetEnv" Version="3.1.1" />
-    <PackageReference Include="dotNetRdf" Version="3.3.0" />
+    <PackageReference Include="dotNetRdf" Version="3.3.1" />
     <PackageReference Include="JsonSchema.Net" Version="7.3.1" />
     <PackageReference Include="JsonSchema.Net.Generation" Version="5.0.0" />
     <PackageReference Include="Microsoft.AspNet.WebApi.Core" Version="5.3.0" />
-    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.1" />
     <PackageReference Include="Microsoft.AspNetCore.SpaProxy">
       <Version>9.*-*</Version>
     </PackageReference>
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.0" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Abstractions" Version="9.0.0" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Analyzers" Version="9.0.0" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.0">
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.1" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Abstractions" Version="9.0.1" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Analyzers" Version="9.0.1" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.1">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Proxies" Version="9.0.0" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="9.0.0" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.0">
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Proxies" Version="9.0.1" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="9.0.1" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.1">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.21.0" />
-    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.2" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.3" />
     <PackageReference Include="OpenAI" Version="2.1.0" />
     <PackageReference Include="Swashbuckle.AspNetCore.Swagger" Version="7.2.0" />
     <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="7.2.0" />
@@ -44,6 +44,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\AwosFramework.Generators.FunctionCalling\AwosFramework.Generators.FunctionCalling.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    
     <ProjectReference Include="..\sfa-chat-graph.client\sfa-chat-graph.client.esproj">
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
