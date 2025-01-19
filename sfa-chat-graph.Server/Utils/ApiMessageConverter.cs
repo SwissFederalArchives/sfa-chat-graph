@@ -19,13 +19,13 @@ namespace sfa_chat_graph.Server.Utils
 					switch (role)
 					{
 						case ChatRole.User:
-							return JsonSerializer.Deserialize<ApiMessage>(ref reader, options);
+							return JsonSerializer.Deserialize<ApiMessage>(ref reader);
 						case ChatRole.ToolCall:
-							return JsonSerializer.Deserialize<ApiToolCallMessage>(ref reader, options);
+							return JsonSerializer.Deserialize<ApiToolCallMessage>(ref reader);
 						case ChatRole.ToolResponse:
-							return JsonSerializer.Deserialize<ApiToolResponseMessage>(ref reader, options);
+							return JsonSerializer.Deserialize<ApiToolResponseMessage>(ref reader);
 						case ChatRole.Assistant:
-							return JsonSerializer.Deserialize<ApiAssistantMessage>(ref reader, options);
+							return JsonSerializer.Deserialize<ApiAssistantMessage>(ref reader);
 					}
 				}
 			}

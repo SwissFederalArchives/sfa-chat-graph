@@ -49,7 +49,7 @@ namespace SfaChatGraph.Server.Controllers
 			if (graph.Results.Length==0)
 				return NotFound();
 
-			
+
 
 			return Ok(graph);
 		}
@@ -61,6 +61,7 @@ namespace SfaChatGraph.Server.Controllers
 		{
 			var sysPrompt = $"""
 			You are an helpfull assistant which answers questions with the help of generating sparql queries for the current database. Use your tool calls to query the database with sparql.
+			When querying the graph database, try to include the IRI's in the query response as well even if not directly needed. This is important to know which part of the graph was used for the answer.
 			The scheme of the current database is:
 			{_graphDb.Schema}
 			""";
@@ -96,7 +97,7 @@ namespace SfaChatGraph.Server.Controllers
 								try
 								{
 									var toolParameters = JsonDocument.Parse(toolCall.FunctionArguments);
-									var toolResponse = await _functionCallingRegistry.CallFunctionAsync(toolCall.Id, toolParameters);
+									var toolResponse = await _functionCallingRegistry.CallFunctionAsync(toolCall.FunctionName, toolParameters);
 
 									if (toolResponse is string stringData)
 									{
@@ -106,6 +107,8 @@ namespace SfaChatGraph.Server.Controllers
 									}
 									else if (toolResponse is SparqlStarResult graphData)
 									{
+
+										
 										var builder = new StringBuilder();
 										builder.AppendLine(string.Join(";", graphData.Head.Vars));
 										foreach (var row in graphData.Results)
@@ -113,7 +116,7 @@ namespace SfaChatGraph.Server.Controllers
 
 										var toolMessage = ToolChatMessage.CreateToolMessage(toolCall.Id, builder.ToString());
 										messages.Add(toolMessage);
-										apiMessages.Add(toolMessage.AsApiMessage());
+										apiMessages.Add(toolMessage.AsApiMessage(graphData));
 									}
 								}
 								catch (Exception ex)
@@ -126,7 +129,9 @@ namespace SfaChatGraph.Server.Controllers
 									{
 										var toolMessage = ToolChatMessage.CreateToolMessage(toolCall.Id, $"You're tool call yielded an error: {ex.Message}\nthis is most likel due to malformed sparql or forgotten prefixes ");
 										messages.Add(toolMessage);
-										apiMessages.Add(toolMessage.AsApiMessage());
+
+										// remove error from api response
+										apiMessages.RemoveAll(x => x is ApiToolCallMessage tcm && tcm.ToolCalls.Any(y => y.ToolCallId ==toolCall.Id));
 									}
 								}
 							}
