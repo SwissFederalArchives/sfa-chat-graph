@@ -7,9 +7,9 @@ namespace sfa_chat_graph.Server.Models
 	public class ApiToolResponseMessage : ApiMessage
 	{
 		public string ToolCallId { get; set; }
+
 		public SparqlStarResult Graph { get; set; }
 
-		[JsonConstructor]
 		public ApiToolResponseMessage() : base(ChatRole.ToolResponse, null)
 		{
 

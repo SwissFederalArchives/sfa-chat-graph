@@ -4,58 +4,25 @@ using System.Text;
 using VDS.RDF;
 using VDS.RDF.Dynamic;
 using VDS.RDF.Nodes;
+using VDS.RDF.Parsing;
 using VDS.RDF.Query;
 using VDS.RDF.Storage;
 
-var server = new OntotextStorageServer("http://localhost:7200");
-var db = await server.GetStoreAsync("TestDB") as IAsyncQueryableStorage;
 
-//var graphs = (await db.ListGraphsAsync(CancellationToken.None)).ToArray();
+var query = """
+PREFIX teacher: <https://ld.admin.ch/stapfer/stapfer/Teacher/predicates#>
+PREFIX ts: <https://ld.admin.ch/stapfer/stapfer/TeacherSchool/predicates#>
 
-var query = $$"""
-		select distinct ?st ?p ?ot where { 
-	    graph <http://ld.admin.ch/stapfer-ai> {
-	       ?s a ?st .
-	       optional { 
-	            ?s ?p ?o .
-	       		optional { 
-					?o a ?ot . 
-				}  
-	        }
-	    }
-	}
+SELECT ?teacher ?teacherName (COUNT(?school) AS ?schoolCount)
+WHERE { 
+    ?teacher teacher:hasTeacher ?teacherSchool .
+    ?teacherSchool ts:belongsToSchool ?school .
+    ?teacher teacher:hasName ?teacherName .}
+GROUP BY ?teacher ?teacherName 
+ORDER BY DESC(?schoolCount)
+LIMIT 1
 """;
 
-var rdfType = new Uri("http://www.w3.org/1999/02/22-rdf-syntax-ns#type");
-
-var data = await db.QueryAsync(query, CancellationToken.None) as SparqlResultSet;
-var builder = new StringBuilder();
-foreach (var group in data.Results.GroupBy(x => (x["st"] as IUriNode).Uri))
-{
-	builder.AppendLine($"{group.Key}: [");
-	foreach (var row in group)
-	{
-		var predicate = (row["p"] as IUriNode).Uri;
-		if (predicate.Equals(rdfType))
-			continue;
-		
-		var ot = row["ot"];
-		builder.Append($"\t{predicate} -> ");
-		switch (ot)
-		{
-			case IUriNode uriNode:
-					builder.Append(uriNode.Uri);
-				break;
-
-			default:
-				builder.Append("literal");
-				break;
-		}
-
-		builder.AppendLine();
-	}
-	builder.AppendLine("]");
-	builder.AppendLine();
-}
-
-Console.WriteLine(builder.ToString());
+var parser = new SparqlQueryParser();
+var sparql = parser.ParseFromString(query);
+Console.WriteLine(sparql.ToString());

@@ -14,6 +14,7 @@ namespace SfaChatGraph.Server.RDF.Models
 
 		public bool ContainsKey(string key) => _termMapping.ContainsKey(key);
 
+		public IEnumerable<SparqlStarTerm> GetTerms() => _terms;
 		public IEnumerable<(int index, SparqlStarTerm term)> GetIndexedTerms() => _terms.Enumerate();
 		public IEnumerable<(string key, SparqlStarTerm term)> GetNamedTerms() => _termMapping.Select(key => (key.Key, _terms[key.Value]));
 

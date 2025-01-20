@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using OpenAI.Chat;
 using sfa_chat_graph.Server.Models;
+using sfa_chat_graph.Server.RDF.Models;
 using SfaChatGraph.Server.Models;
 using SfaChatGraph.Server.RDF;
 using SfaChatGraph.Server.RDF.Models;
@@ -105,10 +106,9 @@ namespace SfaChatGraph.Server.Controllers
 										messages.Add(toolMessage);
 										apiMessages.Add(toolMessage.AsApiMessage());
 									}
-									else if (toolResponse is SparqlStarResult graphData)
+									else if (toolResponse is GraphRagQueryResult graphRagRes)
 									{
-
-										
+										var graphData = graphRagRes.RagResult;
 										var builder = new StringBuilder();
 										builder.AppendLine(string.Join(";", graphData.Head.Vars));
 										foreach (var row in graphData.Results)
@@ -116,7 +116,7 @@ namespace SfaChatGraph.Server.Controllers
 
 										var toolMessage = ToolChatMessage.CreateToolMessage(toolCall.Id, builder.ToString());
 										messages.Add(toolMessage);
-										apiMessages.Add(toolMessage.AsApiMessage(graphData));
+										apiMessages.Add(toolMessage.AsApiMessage(graphRagRes.VisualisationResult));
 									}
 								}
 								catch (Exception ex)

@@ -16,12 +16,18 @@ using VDS.RDF.Query;
 using VDS.RDF.Storage;
 using VDS.RDF.Storage.Management;
 using AwosFramework.Generators.FunctionCalling;
+using VDS.RDF.Parsing;
+using VDS.RDF.Query.Patterns;
+using Lucene.Net.Util;
+using sfa_chat_graph.Server.RDF.Models;
 
 namespace SfaChatGraph.Server.RDF
 {
 	public class OntotextStorage : IAsyncQueryableStorage, IGraphRag
 	{
 		private HttpClient _client;
+		private readonly SparqlQueryParser _parser = new SparqlQueryParser();
+
 		public string Repository { get; init; }
 		public string Endpoint { get; init; }
 		public string Schema { get; private set; }
@@ -57,9 +63,40 @@ namespace SfaChatGraph.Server.RDF
 
 		[FunctionCall("query_async")]
 		[Description("Function to query the database using valid sparql code. Use the schema supplied to you to check if the IRI's you use actually exist. You can use Prefixes to tidy your code, just make sure to define them as well. Prefixed IRI cannot contain further slashes, prefix:part is legal prefix:part/part is not. Make sure to not use slashes when using prefixes.")]
-		public async Task<SparqlStarResult> FunctionCall_QueryAsync([Description("The sparql code")]string query)
+		public async Task<GraphRagQueryResult> FunctionCall_QueryAsync([Description("The sparql code")] string query)
 		{
-			return await QueryRepositoryAsSparqlStarAsync(query);
+			var sparql = _parser.ParseFromString(query);
+			var resultVars = sparql.Variables
+				.Where(x => x.IsResultVariable)
+				.Select(x => x.Name)
+				.ToFrozenSet();
+
+			var predicates = sparql.RootGraphPattern.TriplePatterns.OfType<TriplePattern>()
+				.Where(x => x.PatternType == TriplePatternType.Match &&
+					x.Subject is VariablePattern subPattern &&
+					resultVars.Contains(subPattern.VariableName) &&
+					x.Predicate is NodeMatchPattern predPattern &&
+					predPattern.IsFixed &&
+					predPattern.Node is UriNode &&
+					x.Object.IsFixed == false
+				).Select(x => ((UriNode)((NodeMatchPattern)x.Predicate).Node).Uri.ToString()).Distinct().ToArray();
+
+			var res = await QueryRepositoryAsSparqlStarAsync(query);
+			var iris = res.Results.SelectMany(x => x.GetNamedTerms()).Where(x => x.term.Type == "uri" && resultVars.Contains(x.key));
+			var visualisationQuery = $$"""
+			select ?s ?p ?o where {
+				?s ?p ?o .
+				filter(?s in ({{string.Join(", ", iris.Select(x => $"<{x.term.Value}>"))}}))
+				filter(?p in ({{string.Join(", ", predicates.Select(x => $"<{x}>"))}}))
+			}
+			""";
+
+			var visResult = await QueryRepositoryAsSparqlStarAsync(visualisationQuery);
+
+			return new GraphRagQueryResult {
+				RagResult = res,
+				VisualisationResult = visResult
+			};
 		}
 
 		public async Task ChangeGraphAsync(string grah)
@@ -147,8 +184,8 @@ namespace SfaChatGraph.Server.RDF
 		{
 			var sparqlStar = await QueryRepositoryAsSparqlStarAsync(sparqlQuery);
 			var factory = new NodeFactory();
-			var result = new SparqlResultSet(sparqlStar.Results.Select (
-				x => new SparqlResult(x.GetNamedTerms().Select (
+			var result = new SparqlResultSet(sparqlStar.Results.Select(
+				x => new SparqlResult(x.GetNamedTerms().Select(
 					nt => new KeyValuePair<string, INode>(nt.key, nt.term?.GetNode(factory) ?? factory.CreateBlankNode()))
 				)
 			));
@@ -313,7 +350,7 @@ namespace SfaChatGraph.Server.RDF
 
 		public async Task InitAsync(bool ignoreExisting = false)
 		{
-			if(string.IsNullOrEmpty(Schema) == false && ignoreExisting == false)
+			if (string.IsNullOrEmpty(Schema) == false && ignoreExisting == false)
 				return;
 
 			var query = $$"""

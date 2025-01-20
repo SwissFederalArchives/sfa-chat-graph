@@ -6,7 +6,10 @@ namespace sfa_chat_graph.Server.Models
 {
 	public class ApiMessage
 	{
-		[JsonConstructor]
+
+		public ChatRole Role { get; set; }
+		public string Content { get; set; }
+
 		public ApiMessage() : this(ChatRole.User, null)
 		{
 
@@ -21,8 +24,5 @@ namespace sfa_chat_graph.Server.Models
 		public static ApiMessage UserMessage(string content) => new ApiMessage(ChatRole.User, content);
 		public static ApiToolResponseMessage ToolResponse(string id, string content) => new ApiToolResponseMessage(id, content);
 
-
-		public ChatRole Role { get; set; }
-		public string Content { get; set; }
 	}
 }

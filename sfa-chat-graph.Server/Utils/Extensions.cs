@@ -35,7 +35,7 @@ namespace SfaChatGraph.Server.Utils
 			{
 				AssistantChatMessage assistantChatMessage => (
 					assistantChatMessage.ToolCalls?.Count > 0 ?
-					new ApiToolCallMessage(assistantChatMessage.ToolCalls.Select(x => new ApiToolCall(x.Id, x.FunctionName, JsonDocument.Parse(x.FunctionArguments)))) :
+					new ApiToolCallMessage(assistantChatMessage.ToolCalls.Select(x => new ApiToolCall(x.FunctionName, x.Id, JsonDocument.Parse(x.FunctionArguments)))) :
 					new ApiAssistantMessage(assistantChatMessage.Content.First().Text)
 				),
 				ToolChatMessage toolMessage => new ApiToolResponseMessage(toolMessage.ToolCallId, toolMessage.Content.First().Text, graphResult),

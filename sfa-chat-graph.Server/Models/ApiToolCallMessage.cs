@@ -7,7 +7,6 @@ namespace sfa_chat_graph.Server.Models
 	{
 		public ApiToolCall[] ToolCalls { get; set; }
 
-		[JsonConstructor]
 		public ApiToolCallMessage() : base(ChatRole.ToolCall, null)
 		{
 		}

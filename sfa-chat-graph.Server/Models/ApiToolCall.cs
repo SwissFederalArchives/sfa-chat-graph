@@ -5,7 +5,6 @@ namespace sfa_chat_graph.Server.Models
 {
 	public class ApiToolCall
 	{
-		[JsonConstructor]
 		public ApiToolCall()
 		{
 		}
