@@ -18,3 +18,7 @@ table {
   flex-direction: row;
   flex-wrap: nowrap;
 }
+
+.container > * {
+    width: 50%;
+}

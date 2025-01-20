@@ -55,6 +55,10 @@ export class GraphVisualisationComponent implements AfterViewInit {
       this._bbox = this._layouting.getMinimalBbox();
       this.graphReady = true;
       this.startLayoutTimer();
+
+      this.graph.onGraphUpdated.subscribe(() => {
+        this.startLayoutTimer();
+      });
     }
   }
 
@@ -254,17 +258,17 @@ export class GraphVisualisationComponent implements AfterViewInit {
   startLayoutTimer() {
     if (!this._layoutTimer && this._paused == false) {
       this._layoutTimer = setInterval(() => {
-        const energy = this._layouting.layout(5, 0.075);
+        const energy = this._layouting.layout(5, 0.1);
         const energyDelta = Math.abs(energy - this.lastEnergy);
         this.lastEnergy = energy;
         this._bbox = this._layouting.getMinimalBbox();
         console.log(`energy: ${energy}, energyDelta: ${energyDelta}`);
-        if (energy <= 5 || energyDelta <= 0.0005) {
+        if (Number.isNaN(energy) || energy <= 5 || energyDelta <= 0.00075) {
           this.stopLayoutTimer();
           this.isGraphStable = true;
         }
 
-      }, 25);
+      }, 50);
     }
   }
 

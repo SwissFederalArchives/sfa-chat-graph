@@ -2,6 +2,7 @@ import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { Graph } from './graph/graph';
 import { firstValueFrom } from 'rxjs';
+import { ApiClientService } from './services/api-client/api-client.service';
 
 const DATABASE = "TestDB";
 const MAX_LOAD_COUNT: number = 15;
@@ -13,6 +14,7 @@ const MAX_LOAD_COUNT: number = 15;
   styleUrl: './app.component.css'
 })
 export class AppComponent implements OnInit {
+
 
   graph?: Graph;
 
@@ -55,7 +57,7 @@ export class AppComponent implements OnInit {
       }
     }
 
-    graph.onNodeDetailsRequested.subscribe(async (data) => {
+    graph.onNodeDetailsRequested.subscribe(async (data: { value: any, next: () => void }) => {
       const body = new HttpParams()
         .set('Content-Type', 'application/x-www-form-urlencoded')
         .set("query", `DESCRIBE <${data.value.node.id}>`);
@@ -69,25 +71,25 @@ export class AppComponent implements OnInit {
         const obj = item.object.value;
         if (item.object.type == "uri") {
           const created = graph.createTriple(sub, pred, obj);
-          if (childCount++ > MAX_LOAD_COUNT){
-            if(created.subCreated)
+          if (childCount++ > MAX_LOAD_COUNT) {
+            if (created.subCreated)
               created.sub.setShouldNeverRender(true);
 
-            if(created.objCreated)
+            if (created.objCreated)
               created.obj.setShouldNeverRender(true);
           }
         } else {
           const created = graph.createTripleLiteralObj(sub, pred, obj);
-          if (childCount++ > MAX_LOAD_COUNT){
-            if(created.subCreated)
+          if (childCount++ > MAX_LOAD_COUNT) {
+            if (created.subCreated)
               created.sub.setShouldNeverRender(true);
 
-            if(created.objCreated)
+            if (created.objCreated)
               created.obj.setShouldNeverRender(true);
           }
         }
       }
-      
+
       data.next();
     });
 
@@ -161,16 +163,23 @@ export class AppComponent implements OnInit {
     return graph;
   }
 
-  constructor(private http: HttpClient) {
-    // this.graph = this.getComplexGraph();
-    // this.graph.updateModels();
+  constructor(private http: HttpClient, private _apiClient: ApiClientService) {
+
+    this.graph = new Graph();
+    this.graph.onNodeDetailsRequested.subscribe(async (data) => {
+      if (data.value) {
+        const graph = data.value.graph;
+        let response = await this._apiClient.describeAsync(data.value.node.id); 
+        graph.loadFromSparqlStar(response, 20, data.value.node.subGraphId, response.head.vars);
+        data.next(graph);
+      }
+    });
   }
 
   async ngOnInit() {
-    const graph = await this.queryGraph("https://ld.admin.ch/stapfer/stapfer/Teacher/367", 6, ["https://ld.admin.ch/stapfer/stapfer/Occupation/94", "https://ld.admin.ch/stapfer/stapfer/Transcription/18", "https://ld.admin.ch/stapfer/stapfer/SchoolType/1"]);
-    //const graph = this.getComplexGraph();
-    graph.updateModels();
-    this.graph = graph;
+    // const graph = await this.queryGraph("https://ld.admin.ch/stapfer/stapfer/Teacher/367", 6, ["https://ld.admin.ch/stapfer/stapfer/Occupation/94", "https://ld.admin.ch/stapfer/stapfer/Transcription/18", "https://ld.admin.ch/stapfer/stapfer/SchoolType/1"]);
+    // graph.updateModels();
+    // this.graph = graph;
   }
 
 

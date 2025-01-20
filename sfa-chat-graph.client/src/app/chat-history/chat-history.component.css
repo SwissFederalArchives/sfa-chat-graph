@@ -4,6 +4,7 @@
     background-color: hsl(0, 0%, 5%);
     color: whitesmoke;
     align-self: flex-start;
+    text-align: left;
 }
 
 .chat-message-right {
@@ -12,6 +13,7 @@
     background-color: whitesmoke;
     color: hsl(0, 0%, 5%);
     align-self: flex-end;
+    text-align: right;
 }
 
 
@@ -28,7 +30,7 @@
     overflow-y: scroll;
     overflow-x: hidden;
     flex-direction: column;
-    gap: .5em;
+    gap: 2em;
     flex-grow: 1;
 }
 
@@ -38,6 +40,7 @@
     display: flex;
     flex-direction: column;
     gap: .5em;
+    padding: 1em;
 }
 
 .chat-input {

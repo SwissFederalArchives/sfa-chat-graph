@@ -1,13 +1,13 @@
 import { EventEmitter } from "@angular/core";
 
-export class AwaitableEventEmitter<T> extends EventEmitter {
+export class AwaitableEventEmitter<T, R> extends EventEmitter<{ value?: T, next: (value: R) => void }> {
     constructor(isAsync?: boolean) {
         super(isAsync);
     }
 
-    override emit(value?: T) {
-        let next: (value: unknown) => void = () => { };
-        const promise = new Promise((resolve) => {
+    emitAsync(value?: T): Promise<R> {
+        let next: (value: R) => void = (value: R) => { return value; };
+        const promise = new Promise<R>((resolve) => {
             next = resolve;
         });
 

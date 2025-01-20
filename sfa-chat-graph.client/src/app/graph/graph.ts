@@ -4,23 +4,64 @@ import { Node } from './node';
 import { Vector } from './vector';
 import { firstValueFrom } from 'rxjs';
 import { AwaitableEventEmitter } from '../utils/awaitable-event-emitter';
+import { SparqlStarResult } from '../services/api-client/sparql-star-result.model';
+
+export class SubGraph {
+  public readonly nodes: Node[] = [];
+
+  constructor(public readonly id: string, public readonly nodeColor: string, public readonly leafColor: string) {
+  }
+
+}
 
 export class Graph {
 
   private _nodes: Map<string, Node> = new Map();
   private _edges: Map<string, Edge> = new Map();
   private _adjacencies: Map<[Node, Node], Edge> = new Map();
-  public readonly onNodeDetailsRequested: AwaitableEventEmitter<{ graph: Graph, node: Node }> = new AwaitableEventEmitter<{ graph: Graph, node: Node }>(true);
+  private _subGraphs: Map<string, SubGraph> = new Map();
+
+  public readonly onNodeDetailsRequested: AwaitableEventEmitter<{ graph: Graph, node: Node }, unknown> = new AwaitableEventEmitter<{ graph: Graph, node: Node }, unknown>(true);
   public readonly onLeafNodesLoaded: EventEmitter<Node> = new EventEmitter<Node>();
   public readonly onNodeCreated: EventEmitter<Node> = new EventEmitter<Node>();
   public readonly onEdgeCreated: EventEmitter<Edge> = new EventEmitter<Edge>();
+  public readonly onGraphUpdated: EventEmitter<Graph> = new EventEmitter<Graph>();
 
   async loadLeafs(node: Node): Promise<void> {
     if (node.areLeafsLoaded() == false) {
-      await this.onNodeDetailsRequested.emit({ graph: this, node: node })
+      await this.onNodeDetailsRequested.emitAsync({ graph: this, node: node })
       node.markLeafsLoaded();
       this.updateModels();
       this.onLeafNodesLoaded.emit(node);
+    }
+  }
+
+  loadFromSparqlStar(sparqlStar: SparqlStarResult, maxVisisbleChildren: number = 20, subGraphId?: string, headerVars: string[] = ['s', 'p', 'o']): void {
+    let childCount = 0;
+    for (var key in sparqlStar.results.bindings.sort((a: any, b: any) => a[headerVars[2]].type.localeCompare(b[headerVars[2]].type))) {
+      const item = sparqlStar.results.bindings[key];
+      const sub = item[headerVars[0]].value;
+      const pred = item[headerVars[1]].value;
+      const obj = item[headerVars[2]].value;
+      if (item[headerVars[2]].type == "uri") {
+        const created = this.createTriple(sub, pred, obj, subGraphId);
+        if (childCount++ > maxVisisbleChildren) {
+          if (created.subCreated)
+            created.sub.setShouldNeverRender(true);
+
+          if (created.objCreated)
+            created.obj.setShouldNeverRender(true);
+        }
+      } else {
+        const created = this.createTripleLiteralObj(sub, pred, obj, subGraphId);
+        if (childCount++ > maxVisisbleChildren) {
+          if (created.subCreated)
+            created.sub.setShouldNeverRender(true);
+
+          if (created.objCreated)
+            created.obj.setShouldNeverRender(true);
+        }
+      }
     }
   }
 
@@ -28,12 +69,27 @@ export class Graph {
     return Array.from(this._edges.values());
   }
 
-  getOrCreateNode(id: string, iri: string, label?: string, color?: string): { node: Node, created: boolean } {
+  getOrCreateSubGraph(id?: string): SubGraph | undefined {
+    if (id == undefined)
+      return undefined;
+
+    if (this._subGraphs.has(id) == false) {
+      const hue = Math.floor(Math.random() * 360);
+      const nodeColor = `hsl(${hue}, 100%, 70%)`;
+      const leafColor = `hsl(${hue}, 100%, 50%)`;
+      const subGraph = new SubGraph(id, nodeColor, leafColor);
+      this._subGraphs.set(id, subGraph);
+      return subGraph;
+    } else {
+      return this._subGraphs.get(id)!;
+    }
+  }
+
+  getOrCreateNode(id: string, iri: string, label?: string, subGraphId?: string, isLeaf: boolean = false): { node: Node, created: boolean } {
     let node = this.getNode(id);
     let created = false;
     if (!node) {
-      node = this.createNode(id, iri, label, color);
-      this.onNodeCreated.emit(node);
+      node = this.createNode(id, iri, label, subGraphId, isLeaf);
       created = true;
     }
 
@@ -41,16 +97,16 @@ export class Graph {
   }
 
   readonly splitExp: RegExp = new RegExp("\\/#");
-  createTripleLiteralObj(subIri: string, predIri: string, obj: string): { sub: Node, obj: Node, subCreated: boolean, objCreated: boolean } {
-    const node1 = this.getOrCreateNode(subIri, subIri, subIri.split("/").slice(-2).join("/"));
-    const node2 = this.createNode(crypto.randomUUID(), obj, obj, "#CFA060");
-    this.getOrCreateEdge(node1.node.id, node2.id, predIri, predIri.split("#").slice(-1).join("/"));
-    return { sub: node1.node, subCreated: node1.created, obj: node2, objCreated: true };
+  createTripleLiteralObj(subIri: string, predIri: string, obj: string, subGraphId?: string): { sub: Node, obj: Node, subCreated: boolean, objCreated: boolean } {
+    const node1 = this.getOrCreateNode(subIri, subIri, subIri.split("/").slice(-2).join("/"), subGraphId);
+    const node2 = this.getOrCreateNode(`LITERAL(${subIri}@${predIri})`, obj, obj, subGraphId, true);
+    this.getOrCreateEdge(node1.node.id, node2.node.id, predIri, predIri.split("#").slice(-1).join("/"));
+    return { sub: node1.node, subCreated: node1.created, obj: node2.node, objCreated: node2.created };
   }
 
-  createTriple(subIri: string, predIri: string, objIri: string): { sub: Node, subCreated: boolean, obj: Node, objCreated: boolean } {
-    const node1 = this.getOrCreateNode(subIri, subIri, subIri.split("/").slice(-2).join("/"));
-    const node2 = this.getOrCreateNode(objIri, objIri, objIri.split("/").slice(-2).join("/"));
+  createTriple(subIri: string, predIri: string, objIri: string, subGraphId?: string): { sub: Node, subCreated: boolean, obj: Node, objCreated: boolean } {
+    const node1 = this.getOrCreateNode(subIri, subIri, subIri.split("/").slice(-2).join("/"), subGraphId);
+    const node2 = this.getOrCreateNode(objIri, objIri, objIri.split("/").slice(-2).join("/"), subGraphId);
     this.getOrCreateEdge(node1.node.id, node2.node.id, predIri, predIri.split("#").slice(-1).join("/"));
     return { sub: node1.node, subCreated: node1.created, obj: node2.node, objCreated: node2.created };
   }
@@ -63,9 +119,12 @@ export class Graph {
     this._nodes.set(node.id, node);
   }
 
-  createNode(id: string, iri: string, label?: string, color?: string): Node {
-    const node = new Node(id, iri, label ?? id, Vector.zero(), 40, color ?? "#CF60A0");
+  createNode(id: string, iri: string, label?: string, subGraphId?: string, isLeaf: boolean = false): Node {
+    const subGraph = this.getOrCreateSubGraph(subGraphId);
+    const node = new Node(id, iri, label ?? id, Vector.zero(), 40, isLeaf ? (subGraph?.leafColor ?? "#CFA060") : (subGraph?.nodeColor ?? "#CF60A0"), false, subGraphId, !isLeaf);
+    subGraph?.nodes.push(node);
     this.insertNode(node);
+    this.onNodeCreated.emit(node);
     return node;
   }
 
@@ -114,5 +173,7 @@ export class Graph {
       edge.fromNode?.edges?.push(edge);
       edge.toNode?.edges?.push(edge);
     }
+
+    this.onGraphUpdated.emit(this);
   }
 }

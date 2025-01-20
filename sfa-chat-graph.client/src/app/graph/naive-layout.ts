@@ -109,8 +109,12 @@ export class NaiveGraphLayout implements IGraphLayout {
     this.graph = graph;
     this.nodeCircles = [];
     this.updateCircles();
+
     this.graph.onLeafNodesLoaded.subscribe(node => {
       this.relayoutLeafes(node)
+    });
+
+    this.graph.onGraphUpdated.subscribe(() => {
       this.updateCircles();
     });
   }
@@ -200,7 +204,7 @@ export class NaiveGraphLayout implements IGraphLayout {
     }
 
     this.nodeCircles.forEach(circle => circle.updateNodes());
-    return internalEnergy / (this.nodeCircles.length / 3);
+    return internalEnergy / (this.nodeCircles.length / 3.0);
   }
 
   notifyGraphUpdated(): void {

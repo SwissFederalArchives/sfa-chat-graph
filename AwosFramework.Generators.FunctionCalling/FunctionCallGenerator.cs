@@ -82,7 +82,7 @@ namespace AwosFramework.Generators.FunctionCalling
 		public static void GenerateFunctionCallRegistry(SourceProductionContext context, ImmutableArray<FunctionCall?> maybeFunctionCalls)
 		{
 			
-			var handlerDictValues = string.Join(",\r\n", maybeFunctionCalls.Where(x => x!= null).Select(x => x.Value).Select(x => $"\t\t\t\t{{\"{x.FunctionId}\", new {Constants.FunctionCallMetadataName}(\"{x.FunctionId}\", \"{x.Description}\", {x.ModelClassName}.{Constants.SchemaFieldName}, {x.ModelClassName}.{Constants.ResolveAndHandleFunctionName})}}"));
+			var handlerDictValues = string.Join(",\r\n", maybeFunctionCalls.Where(x => x!= null).Select(x => x.Value).Select(x => $"\t\t\t\t{{\"{x.FunctionId}\", new {Constants.FunctionCallMetadataName}(\"{x.FunctionId}\", \"{x.Description.ToLiteral()}\", {x.ModelClassName}.{Constants.SchemaFieldName}, {x.ModelClassName}.{Constants.ResolveAndHandleFunctionName})}}"));
 
 			var registryClass = $$"""
 			using System.Collections.Frozen;

@@ -1,17 +1,14 @@
 <div class="chat-container">
     <div class="chat-history">
-        <div class="chat-message-left chat-message">
-            <p>This is a test message</p>
-        </div>
-        <div class="chat-message-right chat-message">
-            <p>This is a response</p>
+        <div *ngFor="let msg of getDisplayMessage()" class="chat-message" [class]="msg.cls">
+            <p>{{msg.message}}</p>
         </div>
     </div>
     <form>
         <mat-form-field  class="chat-input">
             <mat-label>Type a message...</mat-label>
-            <input class="chat-input" [(ngModel)]="message" matInput type="textarea" />
-            <button matSuffix mat-icon-button (click)="send()" aria-label="Send">
+            <input name="message" [(ngModel)]="message" class="chat-input" matInput type="text"  />
+            <button [disabled]="waitingForResponse" matSuffix mat-icon-button (click)="send()" aria-label="Send">
                 <mat-icon fontSet="material-symbols-outlined">send</mat-icon>
             </button>
         </mat-form-field>

@@ -5,7 +5,7 @@
       "type": "msedge",
       "request": "launch",
       "name": "localhost (Edge)",
-      "url": "http://localhost:40112",
+      "url": "https://localhost:40112",
       "webRoot": "${workspaceFolder}"
     },
     {

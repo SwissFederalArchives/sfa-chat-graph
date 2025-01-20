@@ -62,7 +62,7 @@ namespace SfaChatGraph.Server.RDF
 		}
 
 		[FunctionCall("query_async")]
-		[Description("Function to query the database using valid sparql code. Use the schema supplied to you to check if the IRI's you use actually exist. You can use Prefixes to tidy your code, just make sure to define them as well. Prefixed IRI cannot contain further slashes, prefix:part is legal prefix:part/part is not. Make sure to not use slashes when using prefixes.")]
+		[Description("Function to query the database using valid sparql code. Use the schema supplied to you to check if the IRI's you use actually exist. You can use Prefixes to tidy your code, just make sure to define them as well. Prefixed IRI cannot contain further slashes, prefix:part is legal prefix:part/part is not. Make sure to not use slashes when using prefixes.\ntry to include the IRI's in the query response as well even if not directly needed. This is important to know which part of the graph was used for the answer.")]
 		public async Task<GraphRagQueryResult> FunctionCall_QueryAsync([Description("The sparql code")] string query)
 		{
 			var sparql = _parser.ParseFromString(query);
@@ -73,8 +73,10 @@ namespace SfaChatGraph.Server.RDF
 
 			var predicates = sparql.RootGraphPattern.TriplePatterns.OfType<TriplePattern>()
 				.Where(x => x.PatternType == TriplePatternType.Match &&
-					x.Subject is VariablePattern subPattern &&
-					resultVars.Contains(subPattern.VariableName) &&
+					((x.Subject is VariablePattern subPattern &&
+					resultVars.Contains(subPattern.VariableName)) ||
+					(x.Object is VariablePattern objPattern) &&
+					resultVars.Contains(objPattern.VariableName)) &&
 					x.Predicate is NodeMatchPattern predPattern &&
 					predPattern.IsFixed &&
 					predPattern.Node is UriNode &&
@@ -82,11 +84,13 @@ namespace SfaChatGraph.Server.RDF
 				).Select(x => ((UriNode)((NodeMatchPattern)x.Predicate).Node).Uri.ToString()).Distinct().ToArray();
 
 			var res = await QueryRepositoryAsSparqlStarAsync(query);
-			var iris = res.Results.SelectMany(x => x.GetNamedTerms()).Where(x => x.term.Type == "uri" && resultVars.Contains(x.key));
+			var iris = res.Results.SelectMany(x => x.GetNamedTerms()).Where(x => x.term != null && x.term.Type == "uri" && resultVars.Contains(x.key));
+			var iriList = string.Join(", ", iris.Select(x => $"<{x.term.Value}>"));
+
 			var visualisationQuery = $$"""
 			select ?s ?p ?o where {
 				?s ?p ?o .
-				filter(?s in ({{string.Join(", ", iris.Select(x => $"<{x.term.Value}>"))}}))
+				filter(?s in ({{iriList}}) || ?o in ({{iriList}}))
 				filter(?p in ({{string.Join(", ", predicates.Select(x => $"<{x}>"))}}))
 			}
 			""";
@@ -127,7 +131,7 @@ namespace SfaChatGraph.Server.RDF
 			var formContent = new FormUrlEncodedContent(data);
 			var request = new HttpRequestMessage(HttpMethod.Post, $"/repositories/{Repository}");
 			request.Content = formContent;
-			request.Headers.Add("Accept", "application/json");
+			request.Headers.Add("Accept", "application/x-graphdb-table-results+json,application/json");
 
 			var response = await _client.SendAsync(request);
 			response.EnsureSuccessStatusCode();

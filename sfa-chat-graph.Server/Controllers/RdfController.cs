@@ -63,6 +63,7 @@ namespace SfaChatGraph.Server.Controllers
 			var sysPrompt = $"""
 			You are an helpfull assistant which answers questions with the help of generating sparql queries for the current database. Use your tool calls to query the database with sparql.
 			When querying the graph database, try to include the IRI's in the query response as well even if not directly needed. This is important to know which part of the graph was used for the answer.
+			To include IRI's try to also select intermediate values as response as long as they don't mess with the query, for example if you get a list of names, get a list of names and the respective iris of the subjects.
 			The scheme of the current database is:
 			{_graphDb.Schema}
 			""";

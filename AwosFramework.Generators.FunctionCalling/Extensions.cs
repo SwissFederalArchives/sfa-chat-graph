@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.CodeAnalysis.CSharp;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -12,6 +13,8 @@ namespace AwosFramework.Generators.FunctionCalling
 				return str;
 			return char.ToUpperInvariant(str[0]) + str.Substring(1);
 		}
+
+		public static string ToLiteral(this string @string) => SymbolDisplay.FormatLiteral(@string, false);
 
 		private static char[] SplitSymbols = "_-".ToCharArray();
 

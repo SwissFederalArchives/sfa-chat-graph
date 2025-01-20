@@ -4,8 +4,6 @@ import { Vector } from "./vector";
 
 export class Node {
 
-
-
   public edges: Edge[] = []
   public circleRadius: number;
   public debugVectors: Vector[] = []
@@ -24,7 +22,9 @@ export class Node {
     public pos: Vector,
     public radius: number,
     public color: string,
-    leafsLoaded: boolean = false
+    leafsLoaded: boolean = false,
+    public subGraphId?: string,
+    public isNoLeaf: boolean = false
   ) {
     this.circleRadius = radius;
     this._leafsLoaded = leafsLoaded;
@@ -121,6 +121,6 @@ export class Node {
   }
 
   isLeaf(): boolean {
-    return this.edges.length <= 1;
+    return this.isNoLeaf == false && this.edges.length <= 1;
   }
 }
