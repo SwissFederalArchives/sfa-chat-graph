@@ -1,12 +1,19 @@
 <div class="chat-container">
     <div #chatHistory class="chat-history">
-        <div *ngFor="let msg of getDisplayMessage()" class="chat-message" [class]="msg.cls">
-            <p>{{msg.message}}</p>
+        @for(msg of history; track msg){
+        @if(shouldDisplayMessage(msg.role)){
+        <div class="chat-message" [class]="getMessageClass(msg.role)">
+            <markdown [katex]="true" [emoji]="true" [clipboard]="true" [lineNumbers]="true" ngPreserveWhitespaces>
+                {{msg.content}}</markdown>
         </div>
+        }
+        }
+
     </div>
     <form>
         <div class="control-container form-row">
-            <textarea placeholder="Type a message..." name="message" [(ngModel)]="message" class="form-textarea grow" type="text"></textarea>
+            <textarea placeholder="Type a message..." name="message" [(ngModel)]="message" class="form-textarea grow"
+                type="text"></textarea>
             <button class="inverted-icon-button" [disabled]="waitingForResponse" (click)="send()" aria-label="Send">
                 <mat-icon fontSet="material-symbols-outlined">send</mat-icon>
 

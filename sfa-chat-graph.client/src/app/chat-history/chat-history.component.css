@@ -16,12 +16,8 @@
     text-align: right;
 }
 
-
-.chat-message p {
-    margin: 4px 8px;
-}
 .chat-message {
-    padding: 1em 1em; 
+    padding: 0 1em;
     max-width: 75%;
     margin: .5em 1em;
 }

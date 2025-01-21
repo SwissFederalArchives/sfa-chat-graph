@@ -66,6 +66,9 @@ namespace SfaChatGraph.Server.Controllers
 			When querying the graph database, try to include the IRI's in the query response as well even if not directly needed. This is important to know which part of the graph was used for the answer.
 			To include IRI's try to also select intermediate values as response as long as they don't mess with the query, for example if you get a list of names, get a list of names and the respective iris of the subjects.
 			If you encounter any query issues, try fixing them yourselve by using the provided exception message and calling the tool again.
+			
+			Format your answers in markdown. Use tables or codeblocks where you see fit.
+			
 			The scheme of the current database is:
 			{_graphDb.Schema}
 			""";

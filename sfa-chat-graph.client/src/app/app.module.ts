@@ -8,6 +8,7 @@ import { GraphVisualisationComponent } from './graph-visualisation/graph-visuali
 import { ChatHistoryComponent } from './chat-history/chat-history.component';
 import { GraphVisualisationControlsComponent } from './graph-visualisation-controls/graph-visualisation-controls.component';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
+import { provideMarkdown } from 'ngx-markdown';
 
 @NgModule({
   declarations: [
@@ -22,7 +23,8 @@ import { provideAnimationsAsync } from '@angular/platform-browser/animations/asy
     ChatHistoryComponent
 ],
   providers: [
-    provideAnimationsAsync()
+    provideAnimationsAsync(),
+    provideMarkdown()
   ],
   bootstrap: [AppComponent]
 })
