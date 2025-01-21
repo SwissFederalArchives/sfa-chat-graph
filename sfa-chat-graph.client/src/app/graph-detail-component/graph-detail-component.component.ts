@@ -8,10 +8,11 @@ import { MatIconButton } from '@angular/material/button';
 import { MatIcon } from '@angular/material/icon';
 import { Edge } from '../graph/edge';
 import { GraphVisualisationComponent } from '../graph-visualisation/graph-visualisation.component';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'node-detail',
-  imports: [NgFor, NgIf, MatDividerModule, MatButtonModule, MatIcon],
+  imports: [NgFor, NgIf, MatDividerModule, MatButtonModule, MatIcon, FormsModule],
   templateUrl: './graph-detail-component.component.html',
   styleUrl: './graph-detail-component.component.css'
 })
@@ -20,13 +21,23 @@ export class GraphDetailComponentComponent {
 
 
   public selectedNode?: Node
+  filter?: string = undefined;
 
   constructor(private _parent: GraphVisualisationComponent) {
 
   }
 
+  getEdges(): Iterable<Edge> {
+    if(this.filter){
+      const regexp = new RegExp(this.filter, 'i');
+      return this.selectedNode!.getOutgoingEdges().filter(edge => regexp.test(edge.iri) || regexp.test(edge.getTo().iri));
+    }else{
+      return this.selectedNode!.getOutgoingEdges();
+    }
+  }
+
   hideNode(node: Node) {
-    node.setShouldNeverRender(true);
+    node.setHidden(true);
     if (node.isLeaf() == false || this.selectedNode!.getVisibleLeafs().length == 0) {
       this._parent.startLayoutTimer();
     }
@@ -35,7 +46,7 @@ export class GraphDetailComponentComponent {
   }
 
   showNode(node: Node) {
-    node.setShouldNeverRender(false);
+    node.setHidden(false);
     if (node.isLeaf() == false || this.selectedNode!.getVisibleLeafs().length == 1) {
       this._parent.startLayoutTimer();
     }

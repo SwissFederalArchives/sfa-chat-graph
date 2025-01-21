@@ -1,0 +1,13 @@
+<div class="sub-graph-selection-float control-container">
+  <div class="sub-graph-selection">
+    <div class="checkbox-container" *ngFor="let subGraph of getSubGraphs()">
+      <span class="tooltip" data-text="Toggle visibility">
+        <svg class="checkbox" (click)="toggleSubgraph(subGraph)" viewBox="0 0 30 30">
+          <circle class="checkbox-outer" cx="15" cy="15" r="15" [attr.fill]="subGraph.leafColor"/>
+          <circle class="checkbox-ring" cx="15" cy="15" r="10"/>
+          <circle class="checkbox-dot" cx="15" cy="15" r="6" [attr.data-checked]="!subGraph.isHidden()" [attr.fill]="subGraph.leafColor"/>
+        </svg>
+      </span>
+    </div>
+  </div>
+</div>

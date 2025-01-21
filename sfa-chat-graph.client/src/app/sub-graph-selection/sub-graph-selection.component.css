@@ -1,0 +1,48 @@
+.sub-graph-selection {
+  display: flex;
+  justify-content: center;
+  gap: 1em;
+  align-items: center;
+  flex-shrink: 1;
+}
+
+.sub-graph-selection-float {
+  position: absolute;
+  left: 5%;
+  top: 5%;
+  transform: translate(-50%, 0%);
+}
+
+.checkbox-container {
+  display: inline-block;
+  font-size: 0;
+}
+
+.checkbox-ring {
+  fill: var(--app-control-background-dark);
+}
+
+.checkbox {
+  width: 2rem;
+  height: 2rem;
+}
+.checkbox-dot[data-checked="false"] {
+  display: none;
+}
+
+.checkbox {
+  filter: brightness(100%);
+  border: var(--app-control-background-dark) 1px solid;
+  border-radius: 100%;
+}
+
+.checkbox-dot {
+  transition: filter 0.3s ease-in-out;
+  filter: brightness(100%);
+}
+
+.checkbox:hover .checkbox-dot {
+  filter: brightness(90%);
+  transition: filter 0.3s ease-in-out;
+  display: block;
+}

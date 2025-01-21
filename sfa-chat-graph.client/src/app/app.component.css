@@ -2,7 +2,8 @@
     text-align: center;
 }
 
-th, td {
+th,
+td {
     padding-left: 1rem;
     padding-right: 1rem;
 }
@@ -12,13 +13,11 @@ table {
 }
 
 .container {
-  width: 100%; /* Full viewport width */
-  height: 99.5vh; /* Full viewport height */
-  display: flex;
-  flex-direction: row;
-  flex-wrap: nowrap;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    height: 99vh;
 }
 
-.container > * {
-    width: 50%;
+.container > *{
+    height: 99vh;
 }

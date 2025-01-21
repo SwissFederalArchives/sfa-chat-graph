@@ -1,4 +1,170 @@
 /* You can add global styles to this file, and also import other style files */
 
-html, body { height: 100%; }
-body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+html,
+body {}
+
+body {
+    margin: 0;
+    font-family: Roboto, "Helvetica Neue", sans-serif;
+}
+
+:root {
+    --app-container: #f4f4f4;
+    --app-background: #ffffff;
+    --app-text-color: #202020;
+    --app-text-color-dark: #f0f0f0;
+    --app-background-dark: #202020;
+    --app-control-background: #f4f4f4;
+    --app-control-hover: #d9d9d9;
+    --app-control-background-dark: #262626;
+    --app-control-hover-dark: #494949;
+    --app-control-text: #262626;
+    --app-control-text-dark: #fcfcfc;
+}
+
+.inverted-icon-button {
+    border: none;
+    background-color: var(--app-control-background-dark);
+    color: var(--app-control-text-dark);
+    width: 2.5rem;
+    height: 2.5rem;
+    align-items: center;
+    justify-content: center;
+    display: flex;
+    border-radius: 100%;
+    transition: background-color 0.3s ease-in-out;
+}
+
+.inverted-icon-button:hover {
+    background-color: var(--app-control-hover-dark);
+    transition: background-color 0.3s ease-in-out;
+}
+
+.form-row {
+    display: flex;
+    gap: 1em;
+    align-items: center;
+}
+
+.grow {
+    flex-grow: 1;
+}
+
+.form-input {
+    padding: .5em;
+    border-radius: .5em;
+    border: 1px solid #a0a0a0;
+    background-color: var(--app-control-background);
+    color: var(--app-control-text);
+    transition: background-color 0.3s ease-in-out;
+    font-size: medium;
+}
+
+.form-textarea {
+    padding: .5em;
+    border-radius: .5em;
+    border: 1px solid #a0a0a0;
+    background-color: var(--app-control-background);
+    color: var(--app-control-text);
+    transition: background-color 0.3s ease-in-out;
+    height: max-content;
+    field-sizing: content;
+    font-size: medium;
+}
+
+.icon-button {
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+    width: 2.5rem;
+    height: 2.5rem;
+    align-items: center;
+    justify-content: center;
+    display: flex;
+    border-radius: 1em;
+    background-color: var(--app-control-background);
+    color: var(--app-control-text);
+    transition: background-color 0.3s ease-in-out;
+}
+
+.icon-button:hover {
+    background-color: var(--app-control-hover);
+    transition: background-color 0.3s ease-in-out;
+}
+
+.control-container {
+    background-color: var(--app-container);
+    border-radius: .5em;
+    padding: .5em .5em;
+    background-color: var(--app-container);
+}
+
+.tooltip {
+    position: relative;
+    padding: 0;
+    margin: 0;
+    /* making the .tooltip span a container for the tooltip text */
+    /* little indicater to indicate it's hoverable */
+}
+
+.tooltip:before {
+    content: attr(data-text);
+    /* here's the magic */
+    position: absolute;
+
+    /* vertically center */
+    top: 50%;
+    transform: translateY(-100%);
+
+    /* move to right */
+    left: 100%;
+    margin-left: 15px;
+    /* and add a small left margin */
+
+    /* basic styles */
+    width: 100px;
+    padding: .5em;
+    border-radius: 10px;
+    background: var(--app-background-dark);
+    color: var(--app-text-color-dark);
+    text-align: center;
+    font-size: small;
+
+    display: none;
+    /* hide by default */
+    -webkit-animation: fade-in-fwd 0.6s ease-in-out 5s alternate-reverse forwards;
+    animation: fade-in-fwd 0.6s ease-in-out 5s alternate-reverse forwards;
+    animation: name duration timing-function delay iteration-count direction fill-mode;
+}
+
+.tooltip:hover:before {
+    display: block;
+}
+
+@-webkit-keyframes fade-in-fwd {
+    0% {
+        -webkit-transform: translateZ(-80px);
+        transform: translateZ(-80px);
+        opacity: 0;
+    }
+
+    100% {
+        -webkit-transform: translateZ(0);
+        transform: translateZ(0);
+        opacity: 1;
+    }
+}
+
+@keyframes fade-in-fwd {
+    0% {
+        -webkit-transform: translateZ(-80px);
+        transform: translateZ(-80px);
+        opacity: 0;
+    }
+
+    100% {
+        -webkit-transform: translateZ(0);
+        transform: translateZ(0);
+        opacity: 1;
+    }
+}

@@ -5,14 +5,7 @@ import { Vector } from './vector';
 import { firstValueFrom } from 'rxjs';
 import { AwaitableEventEmitter } from '../utils/awaitable-event-emitter';
 import { SparqlStarResult } from '../services/api-client/sparql-star-result.model';
-
-export class SubGraph {
-  public readonly nodes: Node[] = [];
-
-  constructor(public readonly id: string, public readonly nodeColor: string, public readonly leafColor: string) {
-  }
-
-}
+import { SubGraph } from './sub-graph';
 
 export class Graph {
 
@@ -36,6 +29,10 @@ export class Graph {
     }
   }
 
+  public getSubGraphs(): Iterable<SubGraph> {
+    return this._subGraphs.values();
+  }
+
   loadFromSparqlStar(sparqlStar: SparqlStarResult, maxVisisbleChildren: number = 20, subGraphId?: string, headerVars: string[] = ['s', 'p', 'o']): void {
     let childCount = 0;
     for (var key in sparqlStar.results.bindings.sort((a: any, b: any) => a[headerVars[2]].type.localeCompare(b[headerVars[2]].type))) {
@@ -47,19 +44,19 @@ export class Graph {
         const created = this.createTriple(sub, pred, obj, subGraphId);
         if (childCount++ > maxVisisbleChildren) {
           if (created.subCreated)
-            created.sub.setShouldNeverRender(true);
+            created.sub.setHidden(true);
 
           if (created.objCreated)
-            created.obj.setShouldNeverRender(true);
+            created.obj.setHidden(true);
         }
       } else {
         const created = this.createTripleLiteralObj(sub, pred, obj, subGraphId);
         if (childCount++ > maxVisisbleChildren) {
           if (created.subCreated)
-            created.sub.setShouldNeverRender(true);
+            created.sub.setHidden(true);
 
           if (created.objCreated)
-            created.obj.setShouldNeverRender(true);
+            created.obj.setHidden(true);
         }
       }
     }
@@ -120,8 +117,9 @@ export class Graph {
   }
 
   createNode(id: string, iri: string, label?: string, subGraphId?: string, isLeaf: boolean = false): Node {
-    const subGraph = this.getOrCreateSubGraph(subGraphId);
-    const node = new Node(id, iri, label ?? id, Vector.zero(), 40, isLeaf ? (subGraph?.leafColor ?? "#CFA060") : (subGraph?.nodeColor ?? "#CF60A0"), false, subGraphId, !isLeaf);
+    const subGraph = this.getOrCreateSubGraph(subGraphId ?? "default");
+    const color = isLeaf ? (subGraph?.leafColor ?? "#CFA060") : (subGraph?.nodeColor ?? "#CF60A0");
+    const node = new Node(id, iri, label ?? id, Vector.zero(), 40, color, subGraph, false, !isLeaf);
     subGraph?.nodes.push(node);
     this.insertNode(node);
     this.onNodeCreated.emit(node);

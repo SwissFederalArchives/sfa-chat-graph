@@ -1,4 +1,4 @@
-import { Component, Input, signal, Signal, WritableSignal } from '@angular/core';
+import { Component, Input, signal, Signal, ViewChild, WritableSignal } from '@angular/core';
 import { MatIcon } from '@angular/material/icon';
 import { MatButton } from '@angular/material/button';
 import { MatIconButton } from '@angular/material/button';
@@ -22,6 +22,7 @@ export class ChatHistoryComponent {
   history: ApiMessage[] = [];
   waitingForResponse: boolean = false;
   message?: string = undefined;
+  @ViewChild('chatHistory') chatHistory!: HTMLElement;
 
   getDisplayMessage(): { message: string, cls: string }[] {
     return this.history.filter(m => m.role == ChatRole.User || m.role == ChatRole.Assitant)
@@ -50,6 +51,12 @@ export class ChatHistoryComponent {
         this.graph.updateModels();
       
       this.history.push(...response);
+      if(this.chatHistory){
+        this.chatHistory.scroll({
+          top: this.chatHistory.scrollHeight,
+          behavior: 'smooth'
+        });
+      }
     } catch (e) {
       console.error(e);
     } finally {

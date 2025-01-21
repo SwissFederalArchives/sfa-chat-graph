@@ -10,10 +10,11 @@ import { Vector } from '../graph/vector';
 import { BBox } from '../graph/bbox';
 import { GraphVisualisationControlsComponent } from '../graph-visualisation-controls/graph-visualisation-controls.component';
 import { GraphDetailComponentComponent } from '../graph-detail-component/graph-detail-component.component';
+import { SubGraphSelectionComponent } from "../sub-graph-selection/sub-graph-selection.component";
 
 @Component({
   selector: 'graph',
-  imports: [NgFor, NgIf, GraphVisualisationControlsComponent, GraphDetailComponentComponent],
+  imports: [NgFor, NgIf, GraphVisualisationControlsComponent, GraphDetailComponentComponent, SubGraphSelectionComponent],
   standalone: true,
   templateUrl: './graph-visualisation.component.html',
   styleUrl: './graph-visualisation.component.css'
@@ -25,6 +26,8 @@ export class GraphVisualisationComponent implements AfterViewInit {
   @Input() showDebug: boolean = false;
   @ViewChild("canvas") svg!: ElementRef<SVGSVGElement>;
   @ViewChild("detail") detail!: GraphDetailComponentComponent;
+
+  private readonly MOVE_THRESHOLD: number = 5;
 
   private _layouting!: IGraphLayout;
   private _bbox!: BBox;
@@ -226,11 +229,11 @@ export class GraphVisualisationComponent implements AfterViewInit {
   onMouseUp(event: MouseEvent): void {
     if (this.draggedNode) {
       event.preventDefault();
-      if (this._distanceMoved > 1 || this._wasMoving) {
+      if (this._distanceMoved > this.MOVE_THRESHOLD || this._wasMoving) {
         this.startLayoutTimer();
       }
 
-      if (this._distanceMoved <= 1 && this.draggedNode.isLeaf() == false && this.isLeftClick == false) {
+      if (this._distanceMoved <= this.MOVE_THRESHOLD && this.draggedNode.isLeaf() == false && this.isLeftClick == false) {
         this.detail.setNode(this.draggedNode);
       }
       this.draggedNode = undefined;

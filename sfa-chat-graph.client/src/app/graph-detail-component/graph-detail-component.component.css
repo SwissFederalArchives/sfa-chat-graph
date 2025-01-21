@@ -2,8 +2,10 @@
     position: absolute;
     z-index: 1;
     background-color: white;
-    height: 100%; /* Full height to cover the viewport */
-    width: 50%; /* Width of the side pane */
+    height: 100%;
+    /* Full height to cover the viewport */
+    width: 70%;
+    /* Width of the side pane */
     top: 0;
     right: 0;
     display: flex;
@@ -15,20 +17,37 @@
     flex-direction: column;
     gap: 1em;
     padding: 0.5em;
-    flex-shrink: 0; /* Prevent shrinking of this section */
+    flex-shrink: 0;
+    /* Prevent shrinking of this section */
 }
 
-.inner {
+
+.form-input {
+    width: 95%;
+}
+
+.flex-col {
+    display: flex;
+    flex-direction: column;
+    justify-content: stretch;
+    align-items: start;
+    width: 100%;
+    gap: .5em;
+}
+
+.scroll-container {
     display: block;
-    overflow-y: scroll!important;
-    flex-direction: column; /* Align children vertically */
+    overflow-y: scroll !important;
+    flex-direction: column;
+    /* Align children vertically */
 }
 
 table {
     overflow-y: hidden;
     table-layout: fixed;
     width: 100%;
-    border-collapse: collapse; /* Optional: For cleaner table styles */
+    border-collapse: collapse;
+    /* Optional: For cleaner table styles */
 }
 
 table thead {
@@ -41,7 +60,7 @@ table thead th {
 
 table tbody tr:nth-child(even) {
     background-color: #eaeaea;
-    
+
 }
 
 table tr {

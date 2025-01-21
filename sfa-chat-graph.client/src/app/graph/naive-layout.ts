@@ -120,7 +120,7 @@ export class NaiveGraphLayout implements IGraphLayout {
   }
 
   updateCircles() {
-    const newNodes = this.graph.getNodes().filter(node => node.getShouldNeverRender() == false && node.isLeaf() == false && this.circleMap.has(node) == false);
+    const newNodes = this.graph.getNodes().filter(node => node.isHidden() == false && node.isLeaf() == false && this.circleMap.has(node) == false);
     newNodes.forEach(node => {
       const leafes = node.getVisibleLeafs();
       const circle = new NodeCircle(node, node.radius * 2 + NODE_CIRCLE_PADDING, Vector.random(4000, leafes.length * 200, 4000 - Math.max(0, (10 - leafes.length) * 200)));

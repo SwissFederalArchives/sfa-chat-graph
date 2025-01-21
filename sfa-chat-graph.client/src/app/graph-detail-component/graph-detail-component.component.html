@@ -1,47 +1,52 @@
 <div class="node-detail" *ngIf="selectedNode">
     <div class="node-detail-actions">
-        <button mat-mini-fab (click)="close()"><mat-icon color="black"
+        <button class="inverted-icon-button" (click)="close()"><mat-icon color="black"
                 fontSet="material-symbols-outlined">close</mat-icon></button>
-        <button mat-mini-fab (click)="download()"><mat-icon>download</mat-icon></button>
-        <button *ngIf="selectedNode.isCollapsed()" mat-mini-fab (click)="expandNode()">
+        <button class="icon-button" (click)="download()"><mat-icon>download</mat-icon></button>
+        <button *ngIf="selectedNode.isCollapsed()" class="icon-button" (click)="expandNode()">
             <mat-icon fontSet="material-symbols-outlined">expand_content</mat-icon>
         </button>
-        <button *ngIf="!selectedNode.isCollapsed()" mat-mini-fab (click)="collapseNode()">
+        <button *ngIf="!selectedNode.isCollapsed()" class="icon-button" (click)="collapseNode()">
             <mat-icon fontSet="material-symbols-outlined">collapse_content</mat-icon>
         </button>
-        <button *ngIf="selectedNode.getShouldNeverRender()" mat-mini-fab (click)="showNode(selectedNode)">
+        <button *ngIf="selectedNode.isHidden()" class="icon-button" (click)="showNode(selectedNode)">
             <mat-icon fontSet="material-symbols-outlined">visibility_off</mat-icon>
         </button>
-        <button *ngIf="!selectedNode.getShouldNeverRender()" mat-mini-fab (click)="hideNode(selectedNode)">
+        <button *ngIf="!selectedNode.isHidden()" class="icon-button" (click)="hideNode(selectedNode)">
             <mat-icon fontSet="material-symbols-outlined">visibility</mat-icon>
         </button>
     </div>
-    <div class="inner">
-        <h2>{{selectedNode.iri}}</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>Predicate</th>
-                    <th>Object</th>
-                    <th style="width: 10%;">Shown</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr *ngFor="let edge of selectedNode.getOutgoingEdges()">
-                    <td><a href="{{edge.iri}}">{{edge.iri}}</a></td>
-                    <td>{{edge.getTo().iri}}</td>
-                    <td>
-                        <button *ngIf="edge.getTo().getShouldNeverRender()" mat-icon-button
-                            (click)="showNode(edge.getTo())">
-                            <mat-icon fontSet="material-symbols-outlined">visibility_off</mat-icon>
-                        </button>
-                        <button *ngIf="!edge.getTo().getShouldNeverRender()" mat-icon-button
-                            (click)="hideNode(edge.getTo())">
-                            <mat-icon fontSet="material-symbols-outlined">visibility</mat-icon>
-                        </button>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+    <div class="flex-col" >
+        <h3>{{selectedNode.iri}}</h3>
+        <input class="form-input grow" placeholder="type to filter..." name="filter" [(ngModel)]="filter"/>
+        <div class="scroll-container">
+            <div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Predicate</th>
+                            <th>Object</th>
+                            <th style="width: 10%;">Shown</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let edge of getEdges()">
+                            <td><a href="{{edge.iri}}">{{edge.iri}}</a></td>
+                            <td>{{edge.getTo().iri}}</td>
+                            <td>
+                                <button *ngIf="edge.getTo().isHidden()" mat-icon-button
+                                    (click)="showNode(edge.getTo())">
+                                    <mat-icon fontSet="material-symbols-outlined">visibility_off</mat-icon>
+                                </button>
+                                <button *ngIf="!edge.getTo().isHidden()" mat-icon-button
+                                    (click)="hideNode(edge.getTo())">
+                                    <mat-icon fontSet="material-symbols-outlined">visibility</mat-icon>
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 </div>

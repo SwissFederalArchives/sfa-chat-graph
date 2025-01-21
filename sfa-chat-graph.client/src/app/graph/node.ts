@@ -1,6 +1,7 @@
 import { EventEmitter } from "@angular/core";
 import { Edge } from "./edge";
 import { Vector } from "./vector";
+import { SubGraph } from "./sub-graph";
 
 export class Node {
 
@@ -13,7 +14,8 @@ export class Node {
   private _shouldRender: boolean = true;
   private _collapsed: boolean = false;
   private _leafsLoaded: boolean = false;
-  private _shouldNeverRender: boolean = false;
+  private _hidden: boolean = false;
+
 
   constructor(
     public id: string,
@@ -22,8 +24,8 @@ export class Node {
     public pos: Vector,
     public radius: number,
     public color: string,
+    private _subGraph?: SubGraph,
     leafsLoaded: boolean = false,
-    public subGraphId?: string,
     public isNoLeaf: boolean = false
   ) {
     this.circleRadius = radius;
@@ -34,14 +36,15 @@ export class Node {
     return this.edges.filter(edge => edge.getFrom() == this);
   }
 
-  setShouldNeverRender(shouldNeverRender: boolean){
-    this._shouldNeverRender = shouldNeverRender;
-    this.getLeafNodes().forEach(leaf => leaf.setShouldNeverRender(shouldNeverRender));
+
+  setHidden(shouldNeverRender: boolean){
+    this._hidden = shouldNeverRender;
+    this.getLeafNodes().forEach(leaf => leaf.setHidden(shouldNeverRender));
     this.onChanged?.emit(this);
   }
 
-  getShouldNeverRender(): boolean {
-    return this._shouldNeverRender;
+  isHidden(): boolean {
+    return this._hidden;
   }
 
   areLeafsLoaded(): boolean {
@@ -60,7 +63,7 @@ export class Node {
   }
 
   shouldRender() {
-    return this._shouldRender && this._shouldNeverRender == false;
+    return this._shouldRender && this._hidden == false && this._subGraph?.isHidden() == false;
   }
 
   setShouldRender(shouldRender: boolean){

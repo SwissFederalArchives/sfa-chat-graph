@@ -25,24 +25,26 @@
     max-width: 80%;
 }
 
+.chat-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: .5em;
+}
+
+
+.control-container {
+    width: 80%;
+    justify-self: center;
+}
+
 .chat-history {
     display: flex;
-    overflow-y: scroll;
+    overflow-y: auto;
+    scrollbar-color: var(--app-control-background-dark) transparent;
     overflow-x: hidden;
     flex-direction: column;
     gap: 2em;
     flex-grow: 1;
-}
-
-.chat-container {
-    height: 100%;
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: .5em;
-    padding: 1em;
-}
-
-.chat-input {
-    width: 80%;
 }

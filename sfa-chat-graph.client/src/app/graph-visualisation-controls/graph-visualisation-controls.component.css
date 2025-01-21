@@ -11,7 +11,4 @@
     left: 50%;
     top: 90%;
     transform: translate(-50%, -50%);
-    border-radius: .5em;
-    padding: .75em 1em;
-    background-color: hsl(0, 0%, 95%);
 }

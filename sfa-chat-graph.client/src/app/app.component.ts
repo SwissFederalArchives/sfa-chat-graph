@@ -73,19 +73,19 @@ export class AppComponent implements OnInit {
           const created = graph.createTriple(sub, pred, obj);
           if (childCount++ > MAX_LOAD_COUNT) {
             if (created.subCreated)
-              created.sub.setShouldNeverRender(true);
+              created.sub.setHidden(true);
 
             if (created.objCreated)
-              created.obj.setShouldNeverRender(true);
+              created.obj.setHidden(true);
           }
         } else {
           const created = graph.createTripleLiteralObj(sub, pred, obj);
           if (childCount++ > MAX_LOAD_COUNT) {
             if (created.subCreated)
-              created.sub.setShouldNeverRender(true);
+              created.sub.setHidden(true);
 
             if (created.objCreated)
-              created.obj.setShouldNeverRender(true);
+              created.obj.setHidden(true);
           }
         }
       }
@@ -110,6 +110,7 @@ export class AppComponent implements OnInit {
     graph.createTriple("pflanzen/frucht/apfelsine", "ist", "synonym");
     graph.createTriple("pflanzen/frucht/apfelsine", "synonym für", "pflanzen/frucht/orange");
     graph.createTripleLiteralObj("pflanzen/frucht/apfelsine", "region", "nördlich der Spreyerer Linie");
+    graph.updateModels();
     return graph;
   }
 
@@ -160,11 +161,11 @@ export class AppComponent implements OnInit {
     graph.createTripleLiteralObj("https://ld.admin.ch/stapfer/stapfer/Occupation/94", "https://ld.admin.ch/stapfer/stapfer/Occupation/predicates#hasOccupationId", "94")
     graph.createTripleLiteralObj("https://ld.admin.ch/stapfer/stapfer/Occupation/94", "https://ld.admin.ch/stapfer/stapfer/Occupation/predicates#hasNormalizedOccupdation", "Schneider")
     graph.createTriple("https://ld.admin.ch/stapfer/stapfer/Occupation/94", "rdf:type", "https://ld.admin.ch/stapfer/stapfer/Occupation")
+    graph.updateModels();
     return graph;
   }
 
   constructor(private http: HttpClient, private _apiClient: ApiClientService) {
-
     this.graph = new Graph();
     this.graph.onNodeDetailsRequested.subscribe(async (data) => {
       if (data.value) {
