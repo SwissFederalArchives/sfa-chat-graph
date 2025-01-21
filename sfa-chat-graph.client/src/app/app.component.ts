@@ -171,7 +171,7 @@ export class AppComponent implements OnInit {
       if (data.value) {
         const graph = data.value.graph;
         let response = await this._apiClient.describeAsync(data.value.node.id); 
-        graph.loadFromSparqlStar(response, 20, data.value.node.subGraphId, response.head.vars);
+        graph.loadFromSparqlStar(response, 20, data.value.node.subGraph?.id, response.head.vars);
         data.next(graph);
       }
     });

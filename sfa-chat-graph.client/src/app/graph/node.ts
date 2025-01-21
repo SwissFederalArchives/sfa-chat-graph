@@ -24,7 +24,7 @@ export class Node {
     public pos: Vector,
     public radius: number,
     public color: string,
-    private _subGraph?: SubGraph,
+    public readonly subGraph?: SubGraph,
     leafsLoaded: boolean = false,
     public isNoLeaf: boolean = false
   ) {
@@ -63,7 +63,7 @@ export class Node {
   }
 
   shouldRender() {
-    return this._shouldRender && this._hidden == false && this._subGraph?.isHidden() == false;
+    return this._shouldRender && this._hidden == false && this.subGraph?.isHidden() == false;
   }
 
   setShouldRender(shouldRender: boolean){
