@@ -29,8 +29,8 @@ export class Graph {
     }
   }
 
-  public getSubGraphs(): Iterable<SubGraph> {
-    return this._subGraphs.values();
+  public getSubGraphs(): SubGraph[] {
+    return Array.from(this._subGraphs.values());
   }
 
   loadFromSparqlStar(sparqlStar: SparqlStarResult, maxVisisbleChildren: number = 20, subGraphId?: string, headerVars: string[] = ['s', 'p', 'o']): void {

@@ -7,6 +7,7 @@ using SfaChatGraph.Server.Models;
 using SfaChatGraph.Server.RDF;
 using SfaChatGraph.Server.RDF.Models;
 using SfaChatGraph.Server.Utils;
+using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
 
@@ -64,6 +65,7 @@ namespace SfaChatGraph.Server.Controllers
 			You are an helpfull assistant which answers questions with the help of generating sparql queries for the current database. Use your tool calls to query the database with sparql.
 			When querying the graph database, try to include the IRI's in the query response as well even if not directly needed. This is important to know which part of the graph was used for the answer.
 			To include IRI's try to also select intermediate values as response as long as they don't mess with the query, for example if you get a list of names, get a list of names and the respective iris of the subjects.
+			If you encounter any query issues, try fixing them yourselve by using the provided exception message and calling the tool again.
 			The scheme of the current database is:
 			{_graphDb.Schema}
 			""";
@@ -134,6 +136,8 @@ namespace SfaChatGraph.Server.Controllers
 										// remove error from api response
 										apiMessages.RemoveAll(x => x is ApiToolCallMessage tcm && tcm.ToolCalls.Any(y => y.ToolCallId ==toolCall.Id));
 									}
+
+									Debug.WriteLine(ex);
 								}
 							}
 							break;

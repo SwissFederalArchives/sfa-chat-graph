@@ -1,8 +1,8 @@
 .chat-message-left {
     border-radius: .5em;
     border-top-left-radius: 0;
-    background-color: hsl(0, 0%, 5%);
-    color: whitesmoke;
+    background-color: var(--app-background-dark);
+    color: var(--app-text-color-dark);
     align-self: flex-start;
     text-align: left;
 }
@@ -10,8 +10,8 @@
 .chat-message-right {
     border-radius: .5em;
     border-top-right-radius: 0%;
-    background-color: whitesmoke;
-    color: hsl(0, 0%, 5%);
+    background-color: var(--app-text-color-dark);
+    color: var(--app-text-color);
     align-self: flex-end;
     text-align: right;
 }
@@ -21,8 +21,9 @@
     margin: 4px 8px;
 }
 .chat-message {
-    padding: .5em .25em; 
-    max-width: 80%;
+    padding: 1em 1em; 
+    max-width: 75%;
+    margin: .5em 1em;
 }
 
 .chat-container {
@@ -30,7 +31,6 @@
     height: 100%;
     display: flex;
     flex-direction: column;
-    gap: .5em;
 }
 
 

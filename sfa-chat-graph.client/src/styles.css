@@ -17,6 +17,7 @@ body {
     --app-control-background: #f4f4f4;
     --app-control-hover: #d9d9d9;
     --app-control-background-dark: #262626;
+    --app-control-disabled-dark: #505050;
     --app-control-hover-dark: #494949;
     --app-control-text: #262626;
     --app-control-text-dark: #fcfcfc;
@@ -40,6 +41,10 @@ body {
     transition: background-color 0.3s ease-in-out;
 }
 
+.inverted-icon-button:disabled{
+    background-color: var(--app-control-disabled-dark);
+}
+
 .form-row {
     display: flex;
     gap: 1em;
@@ -58,6 +63,7 @@ body {
     color: var(--app-control-text);
     transition: background-color 0.3s ease-in-out;
     font-size: medium;
+    font-family: Roboto, "Helvetica Neue", sans-serif;
 }
 
 .form-textarea {
@@ -70,6 +76,7 @@ body {
     height: max-content;
     field-sizing: content;
     font-size: medium;
+    font-family: Roboto, "Helvetica Neue", sans-serif;
 }
 
 .icon-button {
@@ -97,6 +104,7 @@ body {
     border-radius: .5em;
     padding: .5em .5em;
     background-color: var(--app-container);
+    filter: drop-shadow(0px 0px 5px rgba(0, 0, 0, 0.3));
 }
 
 .tooltip {

@@ -189,14 +189,14 @@ export class NaiveGraphLayout implements IGraphLayout {
 
   layout(steps: number, scale: number = 1): number {
     const center: Vector = Vector.zero();
-
+    const renderingCircles = this.nodeCircles.filter(circle => circle.node.shouldRender());
     let internalEnergy: number = 0;
     for (let i = 0; i < steps; i++) {
       //this.nodeCircles.forEach(circle => circle.node.debugVectors.length = 0);
       this.springs.forEach(spring => spring.applyForces());
       this.applyCenterAttraction(this.nodeCircles, center);
       this.applyRepulsion(this.nodeCircles);
-      this.nodeCircles.forEach(circle => {
+      renderingCircles.forEach(circle => {
         circle.next.mulSet(scale);
         internalEnergy += circle.next.length();
         circle.applyVector()
@@ -204,7 +204,7 @@ export class NaiveGraphLayout implements IGraphLayout {
     }
 
     this.nodeCircles.forEach(circle => circle.updateNodes());
-    return internalEnergy / (this.nodeCircles.length / 3.0);
+    return internalEnergy / (renderingCircles.length / 3.0);
   }
 
   notifyGraphUpdated(): void {
@@ -212,10 +212,11 @@ export class NaiveGraphLayout implements IGraphLayout {
   }
 
   getMinimalBbox(): BBox {
-    const minX = this.graph.getNodes().map(node => node.pos.x - node.radius).reduce((min, current) => Math.min(min, current), Number.MAX_VALUE);
-    const minY = this.graph.getNodes().map(node => node.pos.y - node.radius).reduce((min, current) => Math.min(min, current), Number.MAX_VALUE);
-    const maxX = this.graph.getNodes().map(node => node.pos.x + node.radius).reduce((max, current) => Math.max(max, current), Number.MIN_VALUE);
-    const maxY = this.graph.getNodes().map(node => node.pos.y + node.radius).reduce((max, current) => Math.max(max, current), Number.MIN_VALUE);
+    const renderingNodes = this.graph.getNodes().filter(node => node.shouldRender());
+    const minX = renderingNodes.map(node => node.pos.x - node.radius).reduce((min, current) => Math.min(min, current), Number.MAX_VALUE);
+    const minY = renderingNodes.map(node => node.pos.y - node.radius).reduce((min, current) => Math.min(min, current), Number.MAX_VALUE);
+    const maxX = renderingNodes.map(node => node.pos.x + node.radius).reduce((max, current) => Math.max(max, current), Number.MIN_VALUE);
+    const maxY = renderingNodes.map(node => node.pos.y + node.radius).reduce((max, current) => Math.max(max, current), Number.MIN_VALUE);
 
     return new BBox(minX, minY, maxX - minX, maxY - minY);
   }
