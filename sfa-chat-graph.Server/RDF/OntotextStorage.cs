@@ -85,7 +85,7 @@ namespace SfaChatGraph.Server.RDF
 
 			var res = await QueryRepositoryAsSparqlStarAsync(query);
 			var iris = res.Results.SelectMany(x => x.GetNamedTerms()).Where(x => x.term != null && x.term.Type == "uri" && resultVars.Contains(x.key));
-			var iriList = string.Join(", ", iris.Take(25).Select(x => $"<{x.term.Value}>"));
+			var iriList = string.Join(", ", iris.Select(x => $"<{x.term.Value}>"));
 
 			var visualisationQuery = $$"""
 			select ?s ?p ?o where {
@@ -93,6 +93,8 @@ namespace SfaChatGraph.Server.RDF
 				filter(?s in ({{iriList}}) || ?o in ({{iriList}}))
 				filter(?p in ({{string.Join(", ", predicates.Select(x => $"<{x}>"))}}))
 			}
+			order by (IF(isLiteral(?o), 0, 1))
+			limit 25
 			""";
 
 			var visResult = await QueryRepositoryAsSparqlStarAsync(visualisationQuery);
