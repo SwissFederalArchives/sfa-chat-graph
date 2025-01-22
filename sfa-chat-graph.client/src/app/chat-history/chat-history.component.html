@@ -1,22 +1,26 @@
 <div class="chat-container">
     <div #chatHistory class="chat-history">
-        @for(msg of history; track msg){
-        @if(shouldDisplayMessage(msg.role)){
-        <div class="chat-message" [class]="getMessageClass(msg.role)">
-            <markdown [katex]="true" [emoji]="true" [clipboard]="true" [lineNumbers]="true" ngPreserveWhitespaces>
-                {{msg.content}}</markdown>
+        @for(msg of displayHistory; track msg){
+        <div id="msg-{{msg.id}}" class="chat-message" [class]="msg.cls">
+            <markdown [katex]="true" [emoji]="true" [clipboard]="true" [lineNumbers]="true" (ready)="scrollToBottom()" ngPreserveWhitespaces>
+                {{msg.message}}
+            </markdown>
+            <div class="marker-container">
+                <span *ngFor="let marker of msg.markers" class="tooltip-long" [attr.data-text]="'Subgraph ' + marker.label">
+                    <svg class="marker" viewBox="0 0 30 30" >
+                        <circle cx="15" cy="15" r="15" [attr.fill]="marker.color"/>
+                    </svg>
+                </span>
+            </div>
         </div>
         }
-        }
-
     </div>
     <form>
         <div class="control-container form-row">
             <textarea placeholder="Type a message..." name="message" [(ngModel)]="message" class="form-textarea grow"
-                type="text"></textarea>
+                type="text" [disabled]="!message"></textarea>
             <button class="inverted-icon-button" [disabled]="waitingForResponse" (click)="send()" aria-label="Send">
                 <mat-icon fontSet="material-symbols-outlined">send</mat-icon>
-
             </button>
         </div>
     </form>

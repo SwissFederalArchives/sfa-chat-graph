@@ -7,6 +7,18 @@
     text-align: left;
 }
 
+.marker-container {
+    padding: 1em 0em 0em 1em;
+    display: flex;
+    flex-direction: column;
+    gap: 1em;
+}
+
+.marker {
+    width: 1em;
+    height: 1em;
+}
+
 .chat-message-right {
     border-radius: .5em;
     border-top-right-radius: 0%;
@@ -17,9 +29,11 @@
 }
 
 .chat-message {
-    padding: 0 1em;
+    padding: 0em 1em 1em 1em;
     max-width: 75%;
     margin: .5em 1em;
+    display: flex;
+    flex-direction: row;
 }
 
 .chat-container {

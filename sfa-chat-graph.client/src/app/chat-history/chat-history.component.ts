@@ -1,4 +1,4 @@
-import { Component, Input, signal, Signal, ViewChild, WritableSignal } from '@angular/core';
+import { Component, ElementRef, Input, signal, Signal, ViewChild, WritableSignal } from '@angular/core';
 import { MatIcon } from '@angular/material/icon';
 import { MatButton } from '@angular/material/button';
 import { MatIconButton } from '@angular/material/button';
@@ -11,6 +11,25 @@ import { ApiClientService } from '../services/api-client/api-client.service';
 import { ChatRequest } from '../services/api-client/chat-request.model';
 import { MarkdownModule } from 'ngx-markdown';
 
+
+class SubGraphMarker {
+  constructor(public readonly id: string, public readonly color: string, public label: string) { }
+}
+
+class DisplayMessage {
+  id: string;
+  message: string;
+  cls: string;
+  markers: SubGraphMarker[];
+
+  constructor(id: string, message: string, cls: string, markers: SubGraphMarker[] | undefined = undefined) {
+    this.message = message;
+    this.cls = cls;
+    this.id = id;
+    this.markers = markers ?? [];
+  }
+}
+
 @Component({
   selector: 'chat-history',
   standalone: true,
@@ -21,23 +40,37 @@ import { MarkdownModule } from 'ngx-markdown';
 export class ChatHistoryComponent {
   @Input() graph!: Graph;
   history: ApiMessage[] = [];
+  displayHistory: DisplayMessage[] = [];
+
   waitingForResponse: boolean = false;
   message?: string = undefined;
-  @ViewChild('chatHistory') chatHistory!: HTMLElement;
+  @ViewChild('chatHistory') chatHistory!: ElementRef<HTMLElement>;
   roles = ChatRole;
 
+  addMessageToHistory(message: ApiMessage) {
+    this.history.push(message);
+    if (message.role == ChatRole.Assitant) {
 
-  getMessageClass(role: ChatRole) {
-    return role == ChatRole.User ? 'chat-message-right' : 'chat-message-left';
+      const previousResponseIndex = this.history.slice(0, -1).reverse().findIndex(m => m.role == ChatRole.Assitant);
+      const subGraphs = this.history.slice(Math.max(0, previousResponseIndex), -1)
+        .filter(m => m.role == ChatRole.ToolResponse && m.graph && m.toolCallId)
+        .map(msg => this.graph.getSubGraph(msg.toolCallId!))
+        .filter(x => x)
+        .map(subGraph => new SubGraphMarker(subGraph!.id, subGraph!.leafColor, subGraph!.id));
+
+      this.displayHistory.push(new DisplayMessage(message.id, message.content!, 'chat-message-left', subGraphs));
+    } else if (message.role == ChatRole.User) {
+      this.displayHistory.push(new DisplayMessage(message.id, message.content!, 'chat-message-right', undefined));
+    }
   }
 
-  shouldDisplayMessage(role: ChatRole) {
-    return role == ChatRole.User || role == ChatRole.Assitant;
-  }
-
-  getDisplayMessage() {
-    return this.history.filter(m => m.role == ChatRole.User || m.role == ChatRole.Assitant)
-      .map(m => ({ message: m.content!, cls: m.role == ChatRole.User ? 'chat-message-right' : 'chat-message-left' }));
+  scrollToBottom(){
+    if (this.chatHistory) {
+      this.chatHistory.nativeElement.scroll({
+        top: this.chatHistory.nativeElement.scrollHeight,
+        behavior: 'smooth'
+      });
+    }
   }
 
   constructor(private _apiClient: ApiClientService) {
@@ -47,8 +80,7 @@ export class ChatHistoryComponent {
   async send() {
     this.waitingForResponse = true;
     try {
-      const msg = new ApiMessage(this.message);
-      this.history.push(msg);
+      this.addMessageToHistory(new ApiMessage(this.message));
       const request = new ChatRequest(this.history);
       const response = await this._apiClient.chatAsync(request);
       let sparqlLoaded: boolean = false;
@@ -61,13 +93,7 @@ export class ChatHistoryComponent {
       if (sparqlLoaded)
         this.graph.updateModels();
 
-      this.history.push(...response);
-      if (this.chatHistory) {
-        this.chatHistory.scroll({
-          top: this.chatHistory.scrollHeight,
-          behavior: 'smooth'
-        });
-      }
+      response.forEach(this.addMessageToHistory, this);
     } catch (e) {
       console.error(e);
     } finally {

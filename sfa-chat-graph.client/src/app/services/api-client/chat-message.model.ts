@@ -1,6 +1,7 @@
 import { SparqlStarResult } from "./sparql-star-result.model";
 
 export class ApiMessage {
+    public id!: string;
     public content?: string;
     public role!: ChatRole;
     public timestamp: Date = new Date(Date.now());

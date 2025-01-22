@@ -6,7 +6,7 @@ namespace sfa_chat_graph.Server.Models
 {
 	public class ApiMessage
 	{
-
+		public Guid Id { get; set; } = Guid.NewGuid();
 		public ChatRole Role { get; set; }
 		public string Content { get; set; }
 		public DateTime TimeStamp { get; set; } = DateTime.UtcNow;
