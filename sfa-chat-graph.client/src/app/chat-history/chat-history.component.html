@@ -18,8 +18,8 @@
     <form>
         <div class="control-container form-row">
             <textarea placeholder="Type a message..." name="message" [(ngModel)]="message" class="form-textarea grow"
-                type="text" [disabled]="!message"></textarea>
-            <button class="inverted-icon-button" [disabled]="waitingForResponse" (click)="send()" aria-label="Send">
+                type="text"></textarea>
+            <button class="inverted-icon-button" [disabled]="waitingForResponse||!message" (click)="send()" aria-label="Send">
                 <mat-icon fontSet="material-symbols-outlined">send</mat-icon>
             </button>
         </div>
