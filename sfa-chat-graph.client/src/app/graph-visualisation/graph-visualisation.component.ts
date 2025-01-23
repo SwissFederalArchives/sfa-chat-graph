@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, EventEmitter, HostListener, INJECTOR, Input, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, EventEmitter, HostListener, INJECTOR, Input, ViewChild } from '@angular/core';
 import { Graph } from '../graph/graph';
 import { NaiveGraphLayout } from '../graph/naive-layout';
 import { IGraphLayout } from '../graph/graph-layout';
@@ -16,6 +16,7 @@ import { SubGraphSelectionComponent } from "../sub-graph-selection/sub-graph-sel
   selector: 'graph',
   imports: [NgFor, NgIf, GraphVisualisationControlsComponent, GraphDetailComponentComponent, SubGraphSelectionComponent],
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './graph-visualisation.component.html',
   styleUrl: './graph-visualisation.component.css'
 })
@@ -46,6 +47,10 @@ export class GraphVisualisationComponent implements AfterViewInit {
   isGraphStable: boolean = false;
   graphReady: boolean = false;
   lastMousePosition?: Vector = undefined;
+
+  constructor(private cdr: ChangeDetectorRef) {
+
+  }
 
   public getLayouting(): IGraphLayout {
     return this._layouting;
@@ -132,12 +137,14 @@ export class GraphVisualisationComponent implements AfterViewInit {
     const maxPanX = ((this._bbox.width / this._zoomLevel) - this._bbox.width);
     const maxPanY = ((this._bbox.height / this._zoomLevel) - this._bbox.height);
     this._panOffset.setXY(this.clamp(this._panOffset.x, -maxPanX, maxPanX), this.clamp(this._panOffset.y, -maxPanY, maxPanY));
+    this.cdr.detectChanges();
   }
 
   setPan(x: number, y: number) {
     const maxPanX = ((this._bbox.width / this._zoomLevel) - this._bbox.width);
     const maxPanY = ((this._bbox.height / this._zoomLevel) - this._bbox.height);
     this._panOffset.setXY(this.clamp(x, -maxPanX, maxPanX), this.clamp(y, -maxPanY, maxPanY));
+    this.cdr.detectChanges();
   }
 
   async collapseNode(event: MouseEvent, node: Node) {
@@ -148,6 +155,8 @@ export class GraphVisualisationComponent implements AfterViewInit {
     } else {
       await this.graph.loadLeafs(node);
     }
+
+    this.cdr.detectChanges();
   }
 
   onMouseDown(event: MouseEvent, node: any): void {
@@ -208,6 +217,7 @@ export class GraphVisualisationComponent implements AfterViewInit {
 
       this._layouting.notifyGraphUpdated();
       this._bbox = this._layouting.getMinimalBbox();
+      this.cdr.detectChanges();
     } else if (this.isPan) {
       const pt = this.getSvgPoint();
       pt.x = event.clientX;
@@ -265,6 +275,7 @@ export class GraphVisualisationComponent implements AfterViewInit {
         const energyDelta = Math.abs(energy - this.lastEnergy);
         this.lastEnergy = energy;
         this._bbox = this._layouting.getMinimalBbox();
+        this.cdr.detectChanges();
         console.log(`energy: ${energy}, energyDelta: ${energyDelta}`);
         if (Number.isNaN(energy) || energy <= 5 || energyDelta <= 0.00075) {
           this.stopLayoutTimer();

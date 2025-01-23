@@ -33,7 +33,7 @@ export class Graph {
     return Array.from(this._subGraphs.values());
   }
 
-  public getSubGraph(id: string): SubGraph|undefined {
+  public getSubGraph(id: string): SubGraph | undefined {
     return this._subGraphs.get(id);
   }
 
@@ -59,7 +59,7 @@ export class Graph {
           if (created.subCreated)
             created.sub.setHidden(true);
 
-          if (created.objCreated)
+          if (created.objCreated || created.sub.isHidden())
             created.obj.setHidden(true);
         }
       }
