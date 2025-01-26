@@ -113,6 +113,26 @@ export class AppComponent implements OnInit {
     graph.updateModels();
     return graph;
   }
+ 
+  private randomChoice<T>(array: T[]): T {
+    return array[Math.floor(Math.random() * array.length)];
+  }
+
+  getRandomGraph(nodeCount: number = 100, edgeCount: number = 150, subGraphs: string[] = ['default']): Graph {
+    const graph = new Graph();
+    for (let i = 0; i < nodeCount; i++) {
+      graph.createNode(`N${i}`, `https://example.com/node/${i}`, `Node ${i}`, this.randomChoice(subGraphs), true);
+    }
+
+    for (let i = 0; i < edgeCount; i++) {
+      const fromId = `N${Math.floor(Math.random() * nodeCount)}`;
+      const toId = `N${Math.floor(Math.random() * nodeCount)}`;
+      graph.getOrCreateEdge(fromId, toId, `E${i}`, `Edge ${i}`);
+    }
+
+    graph.updateModels();
+    return graph;
+  }
 
   getComplexGraph(): Graph {
     const graph = new Graph();
@@ -166,15 +186,16 @@ export class AppComponent implements OnInit {
   }
 
   constructor(private http: HttpClient, private _apiClient: ApiClientService) {
-    this.graph = new Graph();
-    this.graph.onNodeDetailsRequested.subscribe(async (data) => {
-      if (data.value) {
-        const graph = data.value.graph;
-        let response = await this._apiClient.describeAsync(data.value.node.id); 
-        graph.loadFromSparqlStar(response, 20, data.value.node.subGraph?.id, response.head.vars);
-        data.next(graph);
-      }
-    });
+    this.graph = this.getRandomGraph();
+    //this.graph = new Graph();
+    //this.graph.onNodeDetailsRequested.subscribe(async (data) => {
+    //  if (data.value) {
+    //    const graph = data.value.graph;
+    //    let response = await this._apiClient.describeAsync(data.value.node.id); 
+    //    graph.loadFromSparqlStar(response, 20, data.value.node.subGraph?.id, response.head.vars);
+    //    data.next(graph);
+    //  }
+    //});
   }
 
   async ngOnInit() {

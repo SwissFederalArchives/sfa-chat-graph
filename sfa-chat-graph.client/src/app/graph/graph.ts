@@ -176,6 +176,12 @@ export class Graph {
       edge.toNode?.edges?.push(edge);
     }
 
+    this._nodes.forEach(node => {
+      if (node.subGraph) {
+        node.color = node.isLeaf() ? node.subGraph.leafColor : node.subGraph.nodeColor;
+      }
+    });
+
     this.onGraphUpdated.emit(this);
   }
 }

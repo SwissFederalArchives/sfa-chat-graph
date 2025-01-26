@@ -28,10 +28,12 @@
     "jest-editor-support": "*",
     "marked": "^15.0.6",
     "ngx-markdown": "^19.0.0",
+    "pixi.js": "^8.7.2",
     "prismjs": "^1.29.0",
     "run-script-os": "*",
     "rxjs": "~7.8.0",
     "sfa-chat-graph.client": "file:",
+    "tower-defense": "github:martinsik/pixijs-8-typescript",
     "tslib": "^2.3.0",
     "zone.js": "~0.15.0"
   },
