@@ -2,24 +2,40 @@
     <div #chatHistory class="chat-history">
         @for(msg of displayHistory; track msg){
         <div id="msg-{{msg.id}}" class="chat-message" [class]="msg.cls">
-            <markdown [katex]="true" [emoji]="true" [clipboard]="true" [lineNumbers]="true" (ready)="scrollToBottom()" ngPreserveWhitespaces>
-                {{msg.message}}
-            </markdown>
+            <div class="message-content">
+                <markdown [katex]="true" [emoji]="true" [clipboard]="true" [lineNumbers]="true"
+                    (ready)="scrollToBottom()" ngPreserveWhitespaces>
+                    {{msg.message}}
+                </markdown>
+                <div *ngIf="msg.queries.length > 0" class="sparql-container">
+                    <collapse-container [collapsed]="false" title="Sparql Queries">
+                        <markdown *ngFor="let query of msg.queries" [katex]="true" [clipboard]="true"
+                            [lineNumbers]="true" ngPreserveWhitespaces>
+
+                            {{query}} 
+                        </markdown>
+                    </collapse-container>
+                </div>
+            </div>
             <div class="marker-container">
-                <span *ngFor="let marker of msg.markers" class="tooltip-long" [attr.data-text]="'Subgraph ' + marker.label">
-                    <svg class="marker" viewBox="0 0 30 30" >
-                        <circle cx="15" cy="15" r="15" [attr.fill]="marker.color"/>
+                <span *ngFor="let marker of msg.markers" class="tooltip-long"
+                    [attr.data-text]="'Subgraph ' + marker.label">
+                    <svg class="marker" viewBox="0 0 30 30">
+                        <circle cx="15" cy="15" r="15" [attr.fill]="marker.color" />
                     </svg>
                 </span>
             </div>
         </div>
+
+
         }
     </div>
     <form>
         <div class="control-container form-row">
             <textarea placeholder="Type a message..." name="message" [(ngModel)]="message" class="form-textarea grow"
                 type="text"></textarea>
-            <button class="inverted-icon-button" [disabled]="waitingForResponse||!message" (click)="send()" aria-label="Send">
+            <button class="inverted-icon-button" [disabled]="waitingForResponse||!message" (click)="send()"
+                aria-label="Send">
                 <mat-icon fontSet="material-symbols-outlined">send</mat-icon>
             </button>
         </div>

@@ -377,7 +377,7 @@ namespace SfaChatGraph.Server.RDF
 
 			var data = await this.QueryAsync(query, CancellationToken.None) as SparqlResultSet;
 			var builder = new StringBuilder();
-			foreach (var group in data.Results.GroupBy(x => (x["st"] as IUriNode).Uri))
+			foreach (var group in data.Results.GroupBy(x => (x["st"] as IUriNode).Uri.ToString()))
 			{
 				builder.AppendLine($"<{group.Key}>: [");
 				foreach (var row in group)

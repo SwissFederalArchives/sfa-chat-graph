@@ -17,9 +17,9 @@ export class ApiMessage {
 }
 
 export class ApiToolCall {
-    public toolCall?: string;
+    public toolId?: string;
     public toolCallId?: string;
-    public arguments?: object;
+    public arguments?: any;
 }
 
 export enum ChatRole {

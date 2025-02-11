@@ -13,7 +13,7 @@ export class ApiClientService {
   constructor(private _httpClient: HttpClient) { }
 
   public async describeAsync(iri: string): Promise<SparqlStarResult> {
-    return await firstValueFrom(this._httpClient.get<SparqlStarResult>(`https://localhost:40112/api/v1/rdf/describe?subject=${encodeURI(iri)}`));
+    return await firstValueFrom(this._httpClient.get<SparqlStarResult>(`https://localhost:40112/api/v1/rdf/describe?subject=${encodeURIComponent(iri)}`));
   }
 
   public async chatAsync(request: ChatRequest): Promise<ApiMessage[]>{

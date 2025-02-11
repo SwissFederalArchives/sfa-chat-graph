@@ -1,0 +1,22 @@
+.collapse-container {
+    display: flex;
+    flex-direction: column;
+    gap: .5em;
+}
+
+.collapse-header {
+    display: flex;
+    flex-direction: row;
+    gap: .5em;
+    justify-content: space-between;
+}
+
+.collapse-button {
+    transform: rotate(0deg);
+    transition: transform .3s;
+}
+
+.arrow-rotated {
+    transform: rotate(180deg);
+    transition: transform .3s;
+}

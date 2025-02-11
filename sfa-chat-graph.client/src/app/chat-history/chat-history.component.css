@@ -43,6 +43,12 @@
     flex-direction: column;
 }
 
+.message-content {
+    display: flex;
+    flex-direction: column;
+    gap: .5em;
+    width: 100%;
+}
 
 .control-container {
     width: 80%;

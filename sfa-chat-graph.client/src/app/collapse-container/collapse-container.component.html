@@ -1,0 +1,11 @@
+<div class="collapse-container">
+    <div class="collapse-header">
+        <h3>{{title}}</h3>
+        <button class="collapse-button icon-button" [class.arrow-rotated]="collapsed" (click)="toggle()">
+            <mat-icon  fontSet="material-symbols-outlined">keyboard_arrow_up</mat-icon>
+        </button>
+    </div>
+    <div *ngIf="collapsed" class="collapse-content">
+        <ng-content></ng-content>
+    </div>
+</div>

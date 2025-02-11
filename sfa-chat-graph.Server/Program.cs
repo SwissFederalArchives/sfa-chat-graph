@@ -13,8 +13,8 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 
 var server = new OntotextStorageServer("http://localhost:7200");
-var store = (OntotextStorage)await server.GetStoreAsync("TestDB");
-await store.ChangeGraphAsync("http://ld.admin.ch/stapfer-ai");
+var store = (OntotextStorage)await server.GetStoreAsync("Movies");
+await store.ChangeGraphAsync("http://neo4j.org/movies/");
 
 builder.Services.AddSingleton<IAsyncStorageServer>(server);
 builder.Services.AddSingleton<OntotextStorage>(store);

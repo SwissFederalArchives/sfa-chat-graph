@@ -10,6 +10,7 @@ import { Graph } from '../graph/graph';
 import { ApiClientService } from '../services/api-client/api-client.service';
 import { ChatRequest } from '../services/api-client/chat-request.model';
 import { MarkdownModule } from 'ngx-markdown';
+import { CollapseContainerComponent } from "../collapse-container/collapse-container.component";
 
 
 class SubGraphMarker {
@@ -21,19 +22,21 @@ class DisplayMessage {
   message: string;
   cls: string;
   markers: SubGraphMarker[];
+  queries: string[];
 
-  constructor(id: string, message: string, cls: string, markers: SubGraphMarker[] | undefined = undefined) {
+  constructor(id: string, message: string, cls: string, markers: SubGraphMarker[] | undefined = undefined, queries: string[] | undefined = undefined) {
     this.message = message;
     this.cls = cls;
     this.id = id;
     this.markers = markers ?? [];
+    this.queries = queries ?? [];
   }
 }
 
 @Component({
   selector: 'chat-history',
   standalone: true,
-  imports: [MatIcon, FormsModule, MarkdownModule, MatButton, MatIconButton, NgIf, NgFor, MatInputModule],
+  imports: [MatIcon, FormsModule, MarkdownModule, MatButton, MatIconButton, NgIf, NgFor, MatInputModule, CollapseContainerComponent],
   templateUrl: './chat-history.component.html',
   styleUrl: './chat-history.component.css'
 })
@@ -58,7 +61,13 @@ export class ChatHistoryComponent {
         .filter(x => x)
         .map(subGraph => new SubGraphMarker(subGraph!.id, subGraph!.leafColor, subGraph!.id));
 
-      this.displayHistory.push(new DisplayMessage(message.id, message.content!, 'chat-message-left', subGraphs));
+      const queries = this.history.slice(Math.max(0, previousResponseIndex), -1)
+        .filter(m => m.role == ChatRole.ToolCall && m.toolCalls)
+        .flatMap(msg => msg.toolCalls)
+        .filter(call => call?.toolId == 'query_async')
+        .map(call => `\`\`\`sparql\n${call!.arguments?.Query}\n\`\`\``);
+
+      this.displayHistory.push(new DisplayMessage(message.id, message.content!, 'chat-message-left', subGraphs, queries));
     } else if (message.role == ChatRole.User) {
       this.displayHistory.push(new DisplayMessage(message.id, message.content!, 'chat-message-right', undefined));
     }
