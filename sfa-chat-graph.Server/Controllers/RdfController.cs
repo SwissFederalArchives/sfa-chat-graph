@@ -12,6 +12,7 @@ using SfaChatGraph.Server.Utils;
 using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
+using VDS.RDF;
 using VDS.RDF.Query;
 using VDS.RDF.Query.Datasets;
 using VDS.RDF.Writing.Formatting;
@@ -144,6 +145,16 @@ namespace SfaChatGraph.Server.Controllers
 												var toolMessage = ToolChatMessage.CreateToolMessage(toolCall.Id, csv);
 												messages.Add(toolMessage);
 												apiMessages.Add(toolMessage.AsApiMessage(visualisation));
+												break;
+											}
+
+										case "describe":
+											{
+												var graph = (IGraph)toolResponse;
+												var csv = SparqlResultFormatter.ToCSV(graph);
+												var toolMessage = ToolChatMessage.CreateToolMessage(toolCall.Id, csv);
+												messages.Add(toolMessage);
+												apiMessages.Add(toolMessage.AsApiMessage());
 												break;
 											}
 									}

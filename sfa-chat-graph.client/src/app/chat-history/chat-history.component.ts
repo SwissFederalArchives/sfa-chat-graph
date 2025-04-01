@@ -64,7 +64,7 @@ export class ChatHistoryComponent {
       const queries = this.history.slice(Math.max(0, previousResponseIndex), -1)
         .filter(m => m.role == ChatRole.ToolCall && m.toolCalls)
         .flatMap(msg => msg.toolCalls)
-        .filter(call => call?.toolId == 'query_async')
+        .filter(call => call?.toolId == 'query')
         .map(call => `\`\`\`sparql\n${call!.arguments?.Query}\n\`\`\``);
 
       this.displayHistory.push(new DisplayMessage(message.id, message.content!, 'chat-message-left', subGraphs, queries));

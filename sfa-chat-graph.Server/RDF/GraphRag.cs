@@ -35,6 +35,7 @@ namespace sfa_chat_graph.Server.RDF
 			do
 			{
 				page = await _endpoint.QueryAsync(Queries.GraphSchemaQuery(graph, offset, limit));
+				offset += limit;
 				result.Results.AddRange(page.Results);
 			} while (page.Count >= limit);
 

@@ -34,6 +34,19 @@ namespace sfa_chat_graph.Server.Utils
 			return str;
 		}
 
+		public static string ToCSV(IGraph graph)
+		{
+			if (graph.Triples.Count == 0)
+				return "Query yielded empty collection";
+
+			var builder = new StringBuilder();
+			builder.AppendLine("subject;predicate;object");
+			foreach(var triple in graph.Triples)
+				builder.AppendLine($"{CsvFormatNode(triple.Subject)};{CsvFormatNode(triple.Predicate)};{CsvFormatNode(triple.Object)}");
+
+			return builder.ToString();
+		}
+
 		public static string ToCSV(SparqlResultSet resultSet)
 		{
 			if (resultSet.ResultsType == SparqlResultsType.Boolean)
