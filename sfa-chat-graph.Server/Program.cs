@@ -6,29 +6,30 @@ using System.Collections.Frozen;
 using VDS.RDF.Storage.Management;
 using AwosFramework.Generators.FunctionCalling;
 using sfa_chat_graph.Server.Utils;
+using Json.Schema.Generation.DataAnnotations;
+using sfa_chat_graph.Server.RDF;
+using sfa_chat_graph.Server.RDF.Endpoints;
 
 DotNetEnv.Env.Load();
+DataAnnotationsSupport.AddDataAnnotations();
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
-var server = new OntotextStorageServer("http://localhost:7200");
-var store = (OntotextStorage)await server.GetStoreAsync("Movies");
-await store.ChangeGraphAsync("http://neo4j.org/movies/");
-
-builder.Services.AddSingleton<IAsyncStorageServer>(server);
-builder.Services.AddSingleton<OntotextStorage>(store);
-builder.Services.AddSingleton<IGraphRag>(store);
 var client = new OpenAIClient(System.Environment.GetEnvironmentVariable("OPENAI_KEY"));
 builder.Services.AddSingleton<OpenAIClient>(client);
 builder.Services.AddScoped(x => x.GetRequiredService<OpenAIClient>().GetChatClient("gpt-4o"));
 builder.Services.AddScoped(x => x.AsIParentResolver());
 builder.Services.AddScoped<FunctionCallRegistry>();
 
+builder.Services.AddSingleton<ISparqlEndpoint>(new StardogEndpoint("https://lindas.admin.ch/query"));
+builder.Services.AddSingleton<IGraphRag, GraphRag>();
+
 builder.Services.AddControllers()
 	.AddJsonOptions(opts =>
 	{
 		opts.JsonSerializerOptions.Converters.Add(new SparqlStarConverter());
+		opts.JsonSerializerOptions.Converters.Add(new SparqlResultSetConverter());
 		opts.JsonSerializerOptions.Converters.Add(new ApiMessageConverter());
 	});
 

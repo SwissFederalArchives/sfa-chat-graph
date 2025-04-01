@@ -6,6 +6,7 @@ using SfaChatGraph.Server.Models;
 using SfaChatGraph.Server.RDF.Models;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
+using VDS.RDF.Query;
 
 namespace SfaChatGraph.Server.Utils
 {
@@ -29,7 +30,7 @@ namespace SfaChatGraph.Server.Utils
 
 		}
 
-		public static ApiMessage AsApiMessage(this ChatMessage msg, SparqlStarResult graphResult = null)
+		public static ApiMessage AsApiMessage(this ChatMessage msg, SparqlResultSet graphResult = null)
 		{
 			return msg switch
 			{
@@ -43,6 +44,11 @@ namespace SfaChatGraph.Server.Utils
 				_ => throw new System.NotImplementedException()
 			};
 		}
+
+		public static IEnumerable<TResult> SelectWhere<TSource, TResult>(this IEnumerable<TSource> enumerable, Func<TSource, TResult> mapper, Func<TSource, bool> predicate) => enumerable.Where(predicate).Select(mapper);
+		public static IEnumerable<TResult> SelectNonNull<TSource, TResult>(this IEnumerable<TSource> enumerable, Func<TSource, TResult> mapper) => enumerable.SelectWhere(mapper, x => x!= null);
+		
+		public static string ToIriList(this IEnumerable<string> iris) => string.Join(" ", iris.Select(x => $"<{x}>"));
 
 		public static IEnumerable<(int index, T item)> Enumerate<T>(this IEnumerable<T> enumerable)
 		{

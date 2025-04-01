@@ -1,4 +1,5 @@
 ﻿using SfaChatGraph.Server.RDF.Models;
+using VDS.RDF.Query;
 
 namespace SfaChatGraph.Server.Models
 {
@@ -8,6 +9,6 @@ namespace SfaChatGraph.Server.Models
 		public bool IncompatibleSchema { get; set; }
 		public string Answer { get; set; }
 		public string Error { get; set; }
-		public SparqlStarResult Graph { get; set; }
+		public SparqlResultSet Graph { get; set; }
 	}
 }

@@ -75,8 +75,14 @@ namespace AwosFramework.Generators.FunctionCalling
 		public static FunctionCallParameter GetParameter(GeneratorAttributeSyntaxContext context, int index, ParameterSyntax syntax)
 		{
 			var name = syntax.Identifier.Text.ToCamelCase();
+			var descriptionAttribute = syntax.AttributeLists.SelectMany(x => x.Attributes)
+				.FirstOrDefault(x => x.ArgumentList != null && 
+					x.ArgumentList.Arguments.Count == 1 && 
+					context.SemanticModel.GetSymbolInfo(x).Symbol.ToDisplayString().Equals("System.ComponentModel.DescriptionAttribute.DescriptionAttribute(string)")
+				);
+			var description = descriptionAttribute?.ArgumentList.Arguments.Select(x => x.Expression).OfType<LiteralExpressionSyntax>().FirstOrDefault()?.Token.ValueText;
 			var type = context.SemanticModel.GetSymbolInfo(syntax.Type).Symbol.ToDisplayString();
-			return new FunctionCallParameter(index, name, type);
+			return new FunctionCallParameter(index, name, type, description);
 		}
 
 		public static void GenerateFunctionCallRegistry(SourceProductionContext context, ImmutableArray<FunctionCall?> maybeFunctionCalls)
@@ -134,6 +140,17 @@ namespace AwosFramework.Generators.FunctionCalling
 			context.AddSource($"{Constants.RegistryClassName}.g.cs", SourceText.From(registryClass, Encoding.UTF8));
 		}
 
+
+		private static string FormatParameter(FunctionCallParameter parameter)
+		{
+			var paramString = $"\t\tpublic {parameter.Type} {parameter.Name} {{ get; set; }}";
+			if (string.IsNullOrEmpty(parameter.Description) == false)
+				paramString = $"\t\t[System.ComponentModel.Description(\"{parameter.Description}\")]\r\n{paramString}";
+
+			return paramString;
+		}
+
+
 		public static void GenerateFunctionCallCode(SourceProductionContext context, FunctionCall? maybeFunctionCall)
 		{
 			if (maybeFunctionCall.HasValue == false)
@@ -141,7 +158,7 @@ namespace AwosFramework.Generators.FunctionCalling
 
 			var functionCall = maybeFunctionCall.Value;
 
-			var parameters = string.Join("\r\n", functionCall.Parameters.Select(p => $"\t\tpublic {p.Type} {p.Name} {{ get; set; }}"));
+			var parameters = string.Join("\r\n", functionCall.Parameters.Select(FormatParameter));
 
 			var modelClassName = functionCall.ModelClassName;
 			var methodInvoke = $"{functionCall.MethodName}({string.Join(", ", functionCall.Parameters.OrderBy(x => x.Index).Select(x => $"this.{x.Name}"))})";
@@ -201,7 +218,9 @@ namespace AwosFramework.Generators.FunctionCalling
 			using Json.Schema.Generation;
 			using System.Text.Json;
 			using System.Text.Json.Serialization;
-			
+			using System.ComponentModel;
+			using Json.Schema.Generation.DataAnnotations;
+						
 			namespace {{Constants.ModelNameSpace}}
 			{
 				public class {{modelClassName}} : {{Constants.CallableInterfaceName}}
@@ -211,6 +230,7 @@ namespace AwosFramework.Generators.FunctionCalling
 
 					static {{modelClassName}}() 
 					{
+						DataAnnotationsSupport.AddDataAnnotations();
 						{{Constants.SchemaFieldName}} = new JsonSchemaBuilder().Properties().FromType(typeof({{modelClassName}})).Build();
 					}
 

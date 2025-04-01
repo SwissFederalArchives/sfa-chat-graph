@@ -169,10 +169,12 @@ export class AppComponent implements OnInit {
     this.graph = new Graph();
     this.graph.onNodeDetailsRequested.subscribe(async (data) => {
       if (data.value) {
-        const graph = data.value.graph;
-        let response = await this._apiClient.describeAsync(data.value.node.id); 
-        graph.loadFromSparqlStar(response, 20, data.value.node.subGraph?.id, response.head.vars);
-        data.next(graph);
+        if (data.value.node.isNoLeaf) {
+          const graph = data.value.graph;
+          let response = await this._apiClient.describeAsync(data.value.node.iri);
+          graph.loadFromSparqlStar(response, 20, data.value.node.subGraph?.id, response.head.vars);
+          data.next(graph);
+        }
       }
     });
   }

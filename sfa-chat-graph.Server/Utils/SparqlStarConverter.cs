@@ -1,4 +1,5 @@
 ﻿using Lucene.Net.Index;
+using SfaChatGraph.Server.RDF.Models;
 using SfaChatGraph.Server.Utils;
 using System.Collections.Frozen;
 using System.Dynamic;
@@ -6,7 +7,7 @@ using System.Reflection.Metadata;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace SfaChatGraph.Server.RDF.Models
+namespace sfa_chat_graph.Server.Utils
 {
 	public class SparqlStarConverter : JsonConverter<SparqlStarResult>
 	{
@@ -30,7 +31,7 @@ namespace SfaChatGraph.Server.RDF.Models
 			return new SparqlStarObject(termMapping, array);
 		}
 
-		public override SparqlStarResult? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+		public override SparqlStarResult Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
 		{
 			if (reader.ReadNamedObject() != "head")
 				throw new InvalidOperationException("Expected head object");
