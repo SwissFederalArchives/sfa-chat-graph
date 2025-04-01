@@ -1,0 +1,62 @@
+type: collection.insomnia.rest/5.0
+name: playground
+meta:
+  id: wrk_3003d0891f1a4ece91ce3f2babfdeaa5
+  created: 1743508652883
+  modified: 1743508652883
+collection:
+  - name: Requests
+    meta:
+      id: fld_89cf819e76e74831992cf0f654dba4b2
+      created: 1743508709376
+      modified: 1743508725605
+      sortKey: -1743508709376
+    children:
+      - url: https://lindas.admin.ch/query
+        name: ListGraphs
+        meta:
+          id: req_348e51b392a24f018e05407f12dd4780
+          created: 1743508656870
+          modified: 1743508728883
+          isPrivate: false
+          sortKey: -1743508714039
+        method: POST
+        body:
+          mimeType: text/plain
+          text: |-
+            select distinct ?g where {
+             graph ?g {}
+            }			
+        headers:
+          - name: Content-Type
+            value: text/plain
+            id: pair_c3c7c57dded1475e8db62ac7836df6f4
+          - name: User-Agent
+            value: insomnia/11.0.1
+            id: pair_ba2b76dfcf3a4937acd105b2b3d9459a
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+    headers:
+      - id: pair_068893033f994ee19605c8bbf4c0e051
+        name: Accept
+        value: application/sparql-results+json
+        disabled: false
+cookieJar:
+  name: Default Jar
+  meta:
+    id: jar_aa132a69e9ae75701dabd3cf35942d7b0a51c9f6
+    created: 1743508652891
+    modified: 1743508652891
+environments:
+  name: Base Environment
+  meta:
+    id: env_aa132a69e9ae75701dabd3cf35942d7b0a51c9f6
+    created: 1743508652890
+    modified: 1743508692738
+    isPrivate: false
