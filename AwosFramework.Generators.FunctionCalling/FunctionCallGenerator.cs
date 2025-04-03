@@ -1,4 +1,5 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using AwosFramework.Generators.FunctionCalling.Utils;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
@@ -88,7 +89,13 @@ namespace AwosFramework.Generators.FunctionCalling
 		public static void GenerateFunctionCallRegistry(SourceProductionContext context, ImmutableArray<FunctionCall?> maybeFunctionCalls)
 		{
 			
-			var handlerDictValues = string.Join(",\r\n", maybeFunctionCalls.Where(x => x!= null).Select(x => x.Value).Select(x => $"\t\t\t\t{{\"{x.FunctionId}\", new {Constants.FunctionCallMetadataName}(\"{x.FunctionId}\", \"{x.Description.ToLiteral()}\", {x.ModelClassName}.{Constants.SchemaFieldName}, {x.ModelClassName}.{Constants.ResolveAndHandleFunctionName})}}"));
+			var handlerDictValues = string.Join(",\r\n", maybeFunctionCalls
+				.NotNull()
+				.Select(x => $"\t\t\t\t{{\"{x.FunctionId}\", new {Constants.FunctionCallMetadataName}(\"{x.FunctionId}\", \"{x.Description.ToLiteral()}\", {x.ModelClassName}.{Constants.SchemaFieldName}, {x.ModelClassName}.{Constants.ResolveAndHandleFunctionName})}}"));
+
+			var constFunctionIds = string.Join("\r\n", maybeFunctionCalls
+				.NotNull()
+				.Select(x => $"\t\tpublic const string {x.FunctionId.ToUpper()} = \"{x.FunctionId}\";"));
 
 			var registryClass = $$"""
 			using System.Collections.Frozen;
@@ -100,6 +107,9 @@ namespace AwosFramework.Generators.FunctionCalling
 			{
 				public class {{Constants.RegistryClassName}}
 				{
+					
+			{{constFunctionIds}}
+
 					private static readonly FrozenDictionary<string, {{Constants.FunctionCallMetadataName}}> {{Constants.RegistryHandlerDictFieldName}};
 					private readonly IParentResolver {{Constants.RegistryResolverFieldName}};
 
