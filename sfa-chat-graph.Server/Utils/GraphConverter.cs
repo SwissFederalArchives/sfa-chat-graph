@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using Json.Schema;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using VDS.RDF;
 using VDS.RDF.Query;
@@ -7,67 +8,31 @@ namespace sfa_chat_graph.Server.Utils
 {
 	public class GraphConverter : JsonConverter<IGraph>
 	{
+
+
 		public override IGraph Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
 		{
-			throw new NotImplementedException();
-		}
+			var doc = JsonDocument.ParseValue(ref reader);
+			doc.RootElement.TryGetProperty("head", out var head);
+			var variables = JsonSerializer.Deserialize<string[]>(head, options);
+			if (variables.ContentsEqual(["s", "p", "o"]) == false)
+				throw new JsonException("Expected head to be ['s', 'p', 'o']");
 
-		private static void WriteBlankNode(Utf8JsonWriter writer, BlankNode node)
-		{
-			writer.WritePropertyName("type");
-			writer.WriteStringValue("bnode");
-			writer.WritePropertyName("value");
-			writer.WriteStringValue(node.InternalID);
-		}
-
-		private static void WriteUriNode(Utf8JsonWriter writer, UriNode node)
-		{
-			writer.WritePropertyName("type");
-			writer.WriteStringValue("uri");
-			writer.WritePropertyName("value");
-			writer.WriteStringValue(node.Uri.ToString());
-		}
-
-		private static void WriteLiteralNode(Utf8JsonWriter writer, LiteralNode node)
-		{
-			writer.WritePropertyName("type");
-			writer.WriteStringValue("literal");
-			writer.WritePropertyName("value");
-			writer.WriteStringValue(node.Value);
-
-			if (node.DataType != null)
+			doc.RootElement.TryGetProperty("results", out var results);
+			results.TryGetProperty("bindings", out var bindings);
+			var graph = new Graph();
+			foreach (var element in bindings.EnumerateArray())
 			{
-				writer.WritePropertyName("datatype");
-				writer.WriteStringValue(node.DataType.ToString());
+				var subject = ConverterUtils.ReadNode(element.GetProperty("s"));
+				var predicate = ConverterUtils.ReadNode(element.GetProperty("p"));
+				var obj = ConverterUtils.ReadNode(element.GetProperty("o"));
+				graph.Assert(new Triple(subject, predicate, obj));
 			}
 
-			if (string.IsNullOrEmpty(node.Language) == false)
-			{
-				writer.WritePropertyName("xml:lang");
-				writer.WriteStringValue(node.Language);
-			}
+			return graph;
 		}
 
-		private static void WriteNode(Utf8JsonWriter writer, INode node)
-		{
-			writer.WriteStartObject();
-			switch (node)
-			{
-				case LiteralNode literalNode:
-					WriteLiteralNode(writer, literalNode);
-					break;
 
-				case UriNode uriNode:
-					WriteUriNode(writer, uriNode);
-					break;
-
-				case BlankNode blankNode:
-					WriteBlankNode(writer, blankNode);
-					break;
-			}
-
-			writer.WriteEndObject();
-		}
 
 		public override void Write(Utf8JsonWriter writer, IGraph value, JsonSerializerOptions options)
 		{
@@ -82,11 +47,11 @@ namespace sfa_chat_graph.Server.Utils
 			{
 				writer.WriteStartObject();
 				writer.WritePropertyName("s");
-				WriteNode(writer, triple.Subject);
+				ConverterUtils.WriteNode(writer, triple.Subject);
 				writer.WritePropertyName("p");
-				WriteNode(writer, triple.Predicate);
+				ConverterUtils.WriteNode(writer, triple.Predicate);
 				writer.WritePropertyName("o");
-				WriteNode(writer, triple.Object);
+				ConverterUtils.WriteNode(writer, triple.Object);
 				writer.WriteEndObject();
 			}
 
