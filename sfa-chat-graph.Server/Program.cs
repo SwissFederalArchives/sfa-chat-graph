@@ -31,6 +31,7 @@ builder.Services.AddControllers()
 		opts.JsonSerializerOptions.Converters.Add(new SparqlStarConverter());
 		opts.JsonSerializerOptions.Converters.Add(new SparqlResultSetConverter());
 		opts.JsonSerializerOptions.Converters.Add(new ApiMessageConverter());
+		opts.JsonSerializerOptions.Converters.Add(new GraphConverter());
 	});
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi

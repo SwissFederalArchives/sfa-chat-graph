@@ -40,22 +40,8 @@ namespace SfaChatGraph.Server.Controllers
 		[ProducesResponseType<SparqlStarResult>(StatusCodes.Status200OK)]
 		public async Task<IActionResult> DescribeAsync([FromQuery] string subject)
 		{
-			var graph = await _graphDb.DescribeAsync(subject);
-
-			var result = new SparqlResultSet();
-			foreach (var triple in graph.Triples)
-			{
-				var row = new SparqlResult();
-				row.SetValue("s", triple.Subject);
-				row.SetValue("p", triple.Predicate);
-				row.SetValue("o", triple.Object);
-				result.Results.Add(row);
-			}
-
-			if (result.Count == 0)
-				return NotFound();
-
-			return Ok(result);
+			var graph = await _graphDb.DescribeAsync(subject);	
+			return Ok(graph);
 		}
 
 

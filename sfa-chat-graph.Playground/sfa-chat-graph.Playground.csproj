@@ -9,6 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\AwosFramework.ApiClients.Jupyter\AwosFramework.ApiClients.Jupyter.csproj" />
     <ProjectReference Include="..\sfa-chat-graph.Server\sfa-chat-graph.Server.csproj" />
   </ItemGroup>
 
