@@ -1,5 +1,5 @@
-﻿using AwosFramework.ApiClients.Jupyter.WebSocket.Messages;
-using AwosFramework.ApiClients.Jupyter.WebSocket.Models;
+﻿using AwosFramework.ApiClients.Jupyter.WebSocket.Models;
+using AwosFramework.ApiClients.Jupyter.WebSocket.Models.Messages;
 using CommunityToolkit.HighPerformance;
 using CommunityToolkit.HighPerformance.Buffers;
 using System;
@@ -60,7 +60,7 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Parser
 
 		private static readonly FrozenDictionary<string, Type> ContentTypes = typeof(WebsocketFrameParser).Assembly
 			.GetTypes()
-			.SelectMany(x => x.GetCustomAttributes<WebsocketMessageAttribute>().Select(y => (attr: y, type: x)))
+			.SelectMany(x => x.GetCustomAttributes<MessageTypeAttribute>().Select(y => (attr: y, type: x)))
 			.ToFrozenDictionary(x => x.attr.MessageType, x => x.type);
 
 

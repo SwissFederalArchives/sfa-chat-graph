@@ -4,16 +4,18 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace AwosFramework.ApiClients.Jupyter.WebSocket.Messages
+namespace AwosFramework.ApiClients.Jupyter.WebSocket.Models.Messages
 {
 	[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, AllowMultiple = true)]
-	public class WebsocketMessageAttribute : Attribute
+	public class MessageTypeAttribute : Attribute
 	{
 		public string MessageType { get; init; }
+		public ChannelKind Channel { get; init; }
 
-		public WebsocketMessageAttribute(string messageType)
+		public MessageTypeAttribute(string messageType, ChannelKind channel)
 		{
 			MessageType=messageType;
+			Channel=channel;
 		}
 	}
 }
