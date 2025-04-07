@@ -1,4 +1,7 @@
-﻿using Microsoft.AspNetCore.DataProtection.KeyManagement.Internal;
+﻿using AngleSharp.Io;
+using AwosFramework.ApiClients.Jupyter.Rest;
+using AwosFramework.ApiClients.Jupyter.Rest.Models;
+using Microsoft.AspNetCore.DataProtection.KeyManagement.Internal;
 using Microsoft.EntityFrameworkCore.Migrations.Operations;
 using sfa_chat_graph.Server.RDF;
 using sfa_chat_graph.Server.RDF.Endpoints;
@@ -14,17 +17,8 @@ using VDS.RDF.Query;
 using VDS.RDF.Storage;
 
 
-var endpoint = new StardogEndpoint("https://lindas.admin.ch/query");
-var graph = new GraphRag(endpoint);
-var options = new JsonSerializerOptions
-{
-	WriteIndented = true
-};
 
-options.Converters.Add(new SparqlResultSetConverter());
-
-string[] iris = ["https://health.ld.admin.ch/foph/covid19/ageGroup/total_population", "https://health.ld.admin.ch/foph/covid19/dimension/ageGroup"];
-string[] preds = ["https://health.ld.admin.ch/foph/covid19/dimension/ageGroup"];
-
-var res = await graph.QueryAsync(Queries.RelatedTriplesQuery(iris, preds));
-Console.WriteLine(JsonSerializer.Serialize(res, options));
+var jupyter = JupyterRestClient.GetRestClient("http://localhost:8888", "31b6ae941596a6cb1b11c6edb6344719e0c966e4e8ae73ff");
+var dir = await jupyter.GetDirectoryAsync("");
+foreach (var entry in dir.Content)
+	Console.WriteLine($"{entry.Name}: {entry.Type}");

@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.WebSockets;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -13,6 +15,15 @@ namespace AwosFramework.ApiClients.Jupyter.Utils
 			int i = offset;
 			foreach (var x in enumerable.Skip(offset))
 				yield return (i++, x);
+		}
+
+		public static async Task WaitForEndOfMessageAsync(this ClientWebSocket websocket, Memory<byte> buffer, CancellationToken token)
+		{
+			ValueWebSocketReceiveResult result = default;
+			do
+			{
+				result = await websocket.ReceiveAsync(buffer, token);
+			} while (result.EndOfMessage == false);
 		}
 
 		public static string ToSnakeCase(this string @string, string join = "_")

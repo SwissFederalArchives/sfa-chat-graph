@@ -15,7 +15,6 @@ DataAnnotationsSupport.AddDataAnnotations();
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-
 var client = new OpenAIClient(System.Environment.GetEnvironmentVariable("OPENAI_KEY"));
 builder.Services.AddSingleton<OpenAIClient>(client);
 builder.Services.AddScoped(x => x.GetRequiredService<OpenAIClient>().GetChatClient("gpt-4o"));
