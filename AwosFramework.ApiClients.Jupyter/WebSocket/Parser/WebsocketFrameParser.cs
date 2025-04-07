@@ -54,13 +54,16 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Parser
 			TryReadHeader,
 			TryReadParentHeader,
 			TryReadMetaData,
+			TryReadContent,
 			TryReadBuffer,
 			null
 		};
 
-		private static readonly FrozenDictionary<string, Type> ContentTypes = typeof(WebsocketFrameParser).Assembly
+		private static readonly FrozenDictionary<string, Type> ContentTypes = 
+			typeof(WebsocketFrameParser).Assembly
 			.GetTypes()
 			.SelectMany(x => x.GetCustomAttributes<MessageTypeAttribute>().Select(y => (attr: y, type: x)))
+			.DistinctBy(x => x.attr.MessageType)
 			.ToFrozenDictionary(x => x.attr.MessageType, x => x.type);
 
 
@@ -158,8 +161,8 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Parser
 
 			var count = Encoding.UTF8.GetMaxCharCount(span.Length);
 			Span<char> chars = stackalloc char[count];
-			var charCount = Encoding.UTF8.GetChars(data, chars);
-			if (Enum.TryParse<ChannelKind>(chars.Slice(0, charCount), out var channelKind) == false)
+			var charCount = Encoding.UTF8.GetChars(span, chars);
+			if (Enum.TryParse<ChannelKind>(chars.Slice(0, charCount), true, out var channelKind) == false)
 			{
 				state.SetError(WebsocketParserError.UnknownChannel);
 				return false;
@@ -176,7 +179,7 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Parser
 
 			try
 			{
-				state.PartialMessage.Header = JsonSerializer.Deserialize<MessageHeader>(data);
+				state.PartialMessage.Header = JsonSerializer.Deserialize<MessageHeader>(span, state.JsonOptions);
 			}
 			catch (JsonException ex)
 			{
@@ -194,7 +197,7 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Parser
 
 			try
 			{
-				state.PartialMessage.ParentHeader = JsonSerializer.Deserialize<MessageHeader>(data);
+				state.PartialMessage.ParentHeader = JsonSerializer.Deserialize<MessageHeader>(span, state.JsonOptions);
 			}
 			catch (JsonException ex)
 			{
@@ -212,7 +215,7 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Parser
 
 			try
 			{
-				state.PartialMessage.MetaData = JsonSerializer.Deserialize<JsonDocument>(data);
+				state.PartialMessage.MetaData = JsonSerializer.Deserialize<JsonDocument>(span, state.JsonOptions);
 			}
 			catch (JsonException ex)
 			{
@@ -234,7 +237,7 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Parser
 			try
 			{
 				var messageType = ContentTypes[state.PartialMessage.Header!.MessageType];
-				state.PartialMessage.Content = JsonSerializer.Deserialize(data, messageType);
+				state.PartialMessage.Content = JsonSerializer.Deserialize(span, messageType, state.JsonOptions);
 			}
 			catch (JsonException ex)
 			{
@@ -258,7 +261,7 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Parser
 
 			while (countRead < data.Length && state.CurrentBufferIndex < state.Buffers.Length)
 			{
-				if (state.TryGetBufferLength(state.CurrentBufferIndex +  ParserState.BUFFERS_START_INDEX, out var length) == false)
+				if (state.TryGetBufferLength(state.CurrentBufferIndex + ParserState.BUFFERS_START_INDEX, out var length) == false)
 				{
 					state.SetError(WebsocketParserError.BufferTooLarge);
 					return false;

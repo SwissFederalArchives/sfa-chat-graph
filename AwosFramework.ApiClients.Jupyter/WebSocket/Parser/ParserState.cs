@@ -3,6 +3,8 @@ using Microsoft.Extensions.Logging;
 using System.Buffers;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace AwosFramework.ApiClients.Jupyter.WebSocket.Parser
 {
@@ -11,13 +13,16 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Parser
 		public const int BUFFERS_START_INDEX = 5;
 		private readonly ArrayPool<byte> _arrayPool;
 
-		public ParserState(ArrayPool<byte> arrayPool, ILogger? logger = null)
+		public ParserState(ArrayPool<byte> arrayPool, JsonSerializerOptions? options = null, ILogger? logger = null)
 		{
 			_arrayPool = arrayPool;
 			Logger = logger;
 			PartialMessage = new WebsocketMessage();
+			JsonOptions = new JsonSerializerOptions(options ?? JsonSerializerOptions.Default);
+			JsonOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.SnakeCaseLower));
 		}
 
+		public JsonSerializerOptions JsonOptions { get; init; }
 		public ILogger? Logger { get; init; }
 		public WebsocketFrameParserState State;
 		public int OffsetCount;
@@ -40,7 +45,7 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Parser
 				if (OffsetsRaw == null)
 					return default;
 
-				return MemoryMarshal.Cast<byte, ulong>(OffsetsRaw);
+				return MemoryMarshal.Cast<byte, ulong>(OffsetsRaw).Slice(0, OffsetCount);
 			}
 		}
 
@@ -49,15 +54,18 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Parser
 			if (Buffers != null)
 				return true;
 
-			var bufferCount = OffsetCount - BUFFERS_START_INDEX;
+			var bufferCount = OffsetCount - 1 - BUFFERS_START_INDEX;
 			if (bufferCount == 0)
+			{
+				Buffers = PooledBufferHolder.Empty;
 				return true;
+			}
 
 			var offsets = Offsets;
 			var start = offsets[BUFFERS_START_INDEX];
 			var end = offsets[^1];
 			var len = end - start;
-			if(len > int.MaxValue)
+			if (len > int.MaxValue)
 			{
 				SetError(WebsocketParserError.BufferTooLarge);
 				return false;
@@ -99,7 +107,7 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Parser
 
 		public void Reset()
 		{
-			if(State == WebsocketFrameParserState.Error)
+			if (State == WebsocketFrameParserState.Error)
 				PartialMessage.Dispose();
 
 			PartialMessage = new WebsocketMessage();

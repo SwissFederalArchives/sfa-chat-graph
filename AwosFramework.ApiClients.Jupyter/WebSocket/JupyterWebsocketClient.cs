@@ -19,16 +19,24 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket
 		private ParserState _parserState;
 		private Task? _readTask;
 		private CancellationTokenSource? _cancelReadTask;
+		public event Action<WebsocketMessage>? OnReceive;
+		public Task ReadTask => _readTask;
 
-		public JupyterWebsocketClient(Uri endpoint, Guid kernelId, Guid sessionId)
+		public JupyterWebsocketClient(Uri endpoint, Guid kernelId, Guid sessionId, string? token = null)
 		{
 			if (endpoint.Segments.Last().Equals("api", StringComparison.OrdinalIgnoreCase) == false)
-				endpoint = new Uri(endpoint, "api");
+				endpoint = new Uri(endpoint, "api/");
 
-			_endpoint = new Uri(endpoint, $"kernels/{kernelId}/");
+			var tempUri = $"kernels/{kernelId}/channels?session_id={sessionId}";
+
 			_socket = new ClientWebSocket();
+			_endpoint = new Uri(endpoint, tempUri);
 			_buffer = MemoryPool<byte>.Shared.Rent(4096);
 			_parserState = new ParserState(ArrayPool<byte>.Shared);
+			if (token != null)
+				_socket.Options.SetRequestHeader("Authorization", $"token {token}");
+
+			_socket.Options.AddSubProtocol("v1.kernel.websocket.jupyter.org");
 		}
 
 		public async Task ConnectAsync()
@@ -61,21 +69,22 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket
 
 		private void HandleResult(WebsocketMessage message)
 		{
-
+			OnReceive?.Invoke(message);
 		}
 
 		private async Task ReceiveAsync(CancellationToken token)
 		{
 			int receiveOffset = 0;
+			var memory = _buffer.Memory;
 			while (token.IsCancellationRequested == false)
 			{
-				var received = await _socket.ReceiveAsync(_buffer.Memory.Slice(receiveOffset), token);
+				var received = await _socket.ReceiveAsync(memory.Slice(receiveOffset), token);
 				var receivedCount = received.Count;
 				int countRead = 0;
 
 				do
 				{
-					countRead += WebsocketFrameParser.Parse(_buffer.Memory.Span.Slice(countRead), ref _parserState);
+					countRead += WebsocketFrameParser.Parse(memory.Slice(countRead, receivedCount - countRead).Span, ref _parserState);
 					if (_parserState.IsErrorState(out var errorCode))
 					{
 						// handle error
@@ -88,14 +97,7 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket
 
 					if (_parserState.State == WebsocketFrameParserState.End)
 					{
-						if (received.EndOfMessage)
-						{
-							HandleResult(_parserState.PartialMessage);
-						}
-						else
-						{
-							throw new InvalidOperationException("Expected Websocket Message to end with parsed message");
-						}
+						HandleResult(_parserState.PartialMessage);
 					}
 
 				} while (countRead < receivedCount);

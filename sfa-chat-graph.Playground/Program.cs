@@ -1,6 +1,7 @@
 ﻿using AngleSharp.Io;
 using AwosFramework.ApiClients.Jupyter.Rest;
 using AwosFramework.ApiClients.Jupyter.Rest.Models;
+using AwosFramework.ApiClients.Jupyter.WebSocket;
 using Microsoft.AspNetCore.DataProtection.KeyManagement.Internal;
 using Microsoft.EntityFrameworkCore.Migrations.Operations;
 using sfa_chat_graph.Server.RDF;
@@ -17,8 +18,18 @@ using VDS.RDF.Query;
 using VDS.RDF.Storage;
 
 
-
-var jupyter = JupyterRestClient.GetRestClient("http://localhost:8888", "31b6ae941596a6cb1b11c6edb6344719e0c966e4e8ae73ff");
-var dir = await jupyter.GetDirectoryAsync("");
-foreach (var entry in dir.Content)
-	Console.WriteLine($"{entry.Name}: {entry.Type}");
+var token = "befecb7e902f2b5fa0d180ed2d017d6a0a7a7ef48fff6279";
+var jupyter = JupyterRestClient.GetRestClient("http://localhost:8888", token);
+var sessions = await jupyter.GetSessionsAsync();
+if(sessions.Length > 0)
+{
+	var session = sessions[0];
+	var ws = new JupyterWebsocketClient(new Uri("ws://localhost:8888"), session.Kernel.Id, session.Id, token);
+	await ws.ConnectAsync();
+	ws.OnReceive += (msg) =>
+	{
+		Console.WriteLine($"Received Message: {msg.Header.MessageType} on Channel {msg.Channel}");
+		Console.WriteLine(JsonSerializer.Serialize(msg.Content));
+	};
+	await ws.ReadTask;
+}
