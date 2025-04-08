@@ -13,10 +13,10 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Parser
 		public const int BUFFERS_START_INDEX = 5;
 		private readonly ArrayPool<byte> _arrayPool;
 
-		public ParserState(ArrayPool<byte> arrayPool, JsonSerializerOptions? options = null, ILogger? logger = null)
+		public ParserState(ArrayPool<byte> arrayPool, JsonSerializerOptions? options = null, ILoggerFactory? loggerFactory = null)
 		{
 			_arrayPool = arrayPool;
-			Logger = logger;
+			Logger = loggerFactory?.CreateLogger<ParserState>();
 			PartialMessage = new WebsocketMessage();
 			JsonOptions = new JsonSerializerOptions(options ?? JsonSerializerOptions.Default);
 			JsonOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.SnakeCaseLower));
@@ -36,6 +36,8 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Parser
 		public Exception? Exception;
 		public IWritableBufferHolder? Buffers;
 
+		private int BufferCount => OffsetCount - 1 - BUFFERS_START_INDEX;
+
 		public bool HasWorkingMemory => WorkingMemory != null;
 
 		public Span<ulong> Offsets
@@ -54,7 +56,7 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Parser
 			if (Buffers != null)
 				return true;
 
-			var bufferCount = OffsetCount - 1 - BUFFERS_START_INDEX;
+			var bufferCount = BufferCount;
 			if (bufferCount == 0)
 			{
 				Buffers = PooledBufferHolder.Empty;
@@ -153,6 +155,12 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Parser
 		public void NextState()
 		{
 			State++;
+			if (State == WebsocketFrameParserState.Buffer && BufferCount == 0)
+			{
+				SetBuffers();
+				State++;
+			}
+
 			CurrentArrayIndex = 0;
 			WorkingMemorySize = 0;
 		}

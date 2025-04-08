@@ -11,7 +11,6 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Models
 		Shell,
 		IOPub,
 		Stdin,
-		Control,
-		Heartbeat,
+		Control
 	}
 }

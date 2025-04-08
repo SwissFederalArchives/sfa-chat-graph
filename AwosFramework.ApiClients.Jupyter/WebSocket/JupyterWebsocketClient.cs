@@ -1,108 +1,308 @@
 ﻿using AwosFramework.ApiClients.Jupyter.Utils;
 using AwosFramework.ApiClients.Jupyter.WebSocket.Models;
 using AwosFramework.ApiClients.Jupyter.WebSocket.Parser;
+using AwosFramework.ApiClients.Jupyter.WebSocket.Protocol;
+using Microsoft.Extensions.Logging;
+using Refit;
 using System;
 using System.Buffers;
 using System.Collections.Generic;
+using System.ComponentModel.Design;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Net.WebSockets;
 using System.Text;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 
 namespace AwosFramework.ApiClients.Jupyter.WebSocket
 {
 	public class JupyterWebsocketClient : IDisposable
 	{
+		public JupyterWebsocketOptions Options { get; init; }
 		private ClientWebSocket _socket;
-		private Uri _endpoint;
-		private IMemoryOwner<byte> _buffer;
-		private ParserState _parserState;
-		private Task? _readTask;
-		private CancellationTokenSource? _cancelReadTask;
+
+		private CancellationTokenSource? _stopSocket;
+		private readonly ILogger? _logger;
+
+		private readonly Channel<WebsocketMessage> _receiveChannel;
+		private readonly Channel<WebsocketMessage> _sendChannel;
+
+		public ChannelReader<WebsocketMessage> MessageReader => _receiveChannel.Reader;
+
 		public event Action<WebsocketMessage>? OnReceive;
-		public Task ReadTask => _readTask;
+		public event Action<WebsocketMessage>? OnSend;
+		public event Action<JupyterWebsocketState>? StateChanged;
 
-		public JupyterWebsocketClient(Uri endpoint, Guid kernelId, Guid sessionId, string? token = null)
+		public JupyterWebsocketState State { get; private set; } = JupyterWebsocketState.Disconnected;
+
+		[MemberNotNullWhen(true, nameof(IOTask))]
+		public bool IsConnected => State == JupyterWebsocketState.Connected;
+		public bool IsDisconnected => State == JupyterWebsocketState.Disconnected;
+		public bool IsDisposed => State == JupyterWebsocketState.Disposed || State == JupyterWebsocketState.Errored;
+
+		public Task? IOTask { get; private set; }
+		public Exception? Exception { get; private set; }
+
+		private void ThrowIfDisposed()
 		{
-			if (endpoint.Segments.Last().Equals("api", StringComparison.OrdinalIgnoreCase) == false)
-				endpoint = new Uri(endpoint, "api/");
+			if (IsDisposed)
+				throw new ObjectDisposedException(nameof(JupyterWebsocketClient));
+		}
 
-			var tempUri = $"kernels/{kernelId}/channels?session_id={sessionId}";
+		private void SetState(JupyterWebsocketState state)
+		{
+			ThrowIfDisposed();
+			if (state != State)
+			{
+				State = state;
+				StateChanged?.Invoke(state);
+				_logger?.LogInformation("Websocket state changed to {State}", state);
+			}
+		}
 
-			_socket = new ClientWebSocket();
-			_endpoint = new Uri(endpoint, tempUri);
-			_buffer = MemoryPool<byte>.Shared.Rent(4096);
-			_parserState = new ParserState(ArrayPool<byte>.Shared);
-			if (token != null)
-				_socket.Options.SetRequestHeader("Authorization", $"token {token}");
+		private static ClientWebSocket CreateWebSocket(JupyterWebsocketOptions options)
+		{
+			var socket = new ClientWebSocket();
+			if (options.HasToken(out var token))
+				socket.Options.SetRequestHeader("Authorization", $"token {token}");
 
-			_socket.Options.AddSubProtocol("v1.kernel.websocket.jupyter.org");
+			foreach (var protocol in IWebsocketProtocol.Implementations.Keys)
+				if (string.IsNullOrEmpty(protocol) == false)
+					socket.Options.AddSubProtocol(protocol);
+
+			return socket;
+		}
+
+		public JupyterWebsocketClient(JupyterWebsocketOptions options)
+		{
+			_logger = options.LoggerFactory?.CreateLogger<JupyterWebsocketClient>();
+			Options = options;
+			_socket = CreateWebSocket(options);
+
+
+			var sendOptions = new UnboundedChannelOptions { SingleReader = true };
+			_sendChannel = Channel.CreateUnbounded<WebsocketMessage>(sendOptions);
+			if (options.MaxMessages.HasValue)
+			{
+				var channelOptions = new BoundedChannelOptions(options.MaxMessages.Value) { SingleWriter = true, FullMode = BoundedChannelFullMode.DropOldest };
+				_receiveChannel = Channel.CreateBounded<WebsocketMessage>(channelOptions);
+			}
+			else
+			{
+				_receiveChannel = Channel.CreateUnbounded<WebsocketMessage>();
+			}
+		}
+
+		public JupyterWebsocketClient(Uri endpoint, Guid kernelId, Guid? sessionId = null, string? token = null) : this(new JupyterWebsocketOptions(endpoint, kernelId, sessionId, token))
+		{
+
+
 		}
 
 		public async Task ConnectAsync()
 		{
-			await _socket.ConnectAsync(_endpoint, CancellationToken.None);
-			if (_readTask != null)
-				await DisconnectAsync();
-
-			_cancelReadTask = new CancellationTokenSource();
-			_readTask = ReceiveAsync(_cancelReadTask.Token);
+			this.ThrowIfDisposed();
+			if (IsDisconnected)
+			{
+				SetState(JupyterWebsocketState.Connecting);
+				_stopSocket = new CancellationTokenSource();
+				await _socket.ConnectAsync(Options.GetConnectionUri(), _stopSocket.Token);
+				_stopSocket.Token.ThrowIfCancellationRequested();
+				var protocol = IWebsocketProtocol.CreateInstance(_socket.SubProtocol, Options);
+				IOTask = IOLoopAsync(protocol, _stopSocket.Token);
+				SetState(JupyterWebsocketState.Connected);
+			}
 		}
 
 		public async Task DisconnectAsync()
 		{
-			if (_readTask == null)
+			this.ThrowIfDisposed();
+			if (IsConnected)
 			{
-				_cancelReadTask?.Cancel();
+				SetState(JupyterWebsocketState.Disconnecting);
+				_stopSocket?.Cancel();
+				await IOTask.ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing);
 				await _socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Client disconnect", CancellationToken.None);
-				await _readTask.ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing);
-				_readTask = null;
-				_parserState.Reset();
+				SetState(JupyterWebsocketState.Disconnected);
 			}
+		}
+
+		private void DisposeImpl()
+		{
+			_stopSocket?.Cancel();
+			_socket.Dispose();
 		}
 
 		public void Dispose()
 		{
-			_buffer.Dispose();
-			_parserState.Reset();
+			DisposeImpl();
+			SetState(JupyterWebsocketState.Disposed);
 		}
 
 		private void HandleResult(WebsocketMessage message)
 		{
 			OnReceive?.Invoke(message);
+			_sendChannel.Writer.TryWrite(message);
+			_logger?.LogDebug("Received message {MessageType} on channel {Channel}", message.Header.MessageType, message.Channel);
 		}
 
-		private async Task ReceiveAsync(CancellationToken token)
+		private async Task SocketSendAsync(ReadOnlyMemory<byte> message, bool lastMessage)
 		{
-			int receiveOffset = 0;
-			var memory = _buffer.Memory;
+			await _socket.SendAsync(message, WebSocketMessageType.Binary, lastMessage, _stopSocket!.Token);
+		}
+
+		public async Task SendAsync(WebsocketMessage message)
+		{
+			await _sendChannel.Writer.WriteAsync(message, _stopSocket.Token);
+		}
+
+		private async Task<bool> TryConnectAsync(CancellationToken token)
+		{
+			try
+			{
+				await _socket.ConnectAsync(Options.GetConnectionUri(), token);
+				return true;
+			}
+			catch (WebSocketException)
+			{
+				return false;
+			}
+		}
+
+		private async Task<(bool success, Task? read, Task? send, IWebsocketProtocol protocol, CancellationToken token)> HandleReconnectAsync(CancellationToken token, IWebsocketProtocol protocol)
+		{
+			_stopSocket?.Cancel();
+			if (Options.TryReconnect)
+			{
+				_logger?.LogInformation("Reconnecting to websocket...");
+				SetState(JupyterWebsocketState.Reconnecting);
+				_stopSocket = new CancellationTokenSource();
+				token = _stopSocket.Token;
+
+				var count = Options.MaxReconnectTries.Value;
+				while (count-- > 0)
+				{
+					var result = await TryConnectAsync(token);
+					if (result)
+					{
+						protocol?.Dispose();
+						protocol = IWebsocketProtocol.CreateInstance(_socket.SubProtocol, Options);
+						var receive = ReceiveLoopAsync(protocol, token);
+						var send = SendLoopAsync(protocol, token);
+						SetState(JupyterWebsocketState.Connected);
+						_logger?.LogInformation("Reconnected to websocket");
+						return (true, receive, send, protocol, token);
+					}
+
+					await Task.Delay(Options.ReconnectDelay);
+					_logger?.LogDebug(count, "Reconnect attempt {Attempt}/{MaxAttempts} failed", Options.MaxReconnectTries-count, Options.MaxReconnectTries);
+				}
+
+			}
+			return (false, null, null, protocol, token);
+		}
+
+		private async Task IOLoopAsync(IWebsocketProtocol protocol, CancellationToken token)
+		{
+			try
+			{
+				var receive = ReceiveLoopAsync(protocol, token);
+				var send = SendLoopAsync(protocol, token);
+
+				while (token.IsCancellationRequested == false)
+				{
+					var returned = await Task.WhenAny(receive, send);
+					if (returned.IsFaulted && token.IsCancellationRequested == false) // restart logic
+					{
+						// only try to reconnect if its actually a websocket disconnect error
+						if (returned.Exception.InnerException is WebSocketException wse && wse.WebSocketErrorCode == WebSocketError.ConnectionClosedPrematurely)
+						{
+							var (success, newReceive, newSend, newProtocol, newToken) = await HandleReconnectAsync(token, protocol);
+							if (success)
+							{
+								receive = newReceive!;
+								send = newSend!;
+								protocol = newProtocol;
+								token = newToken;
+								continue;
+							}
+						}
+						else
+						{
+							// something else failed, transition to errored state
+							_stopSocket?.Cancel();
+							this.Exception = returned.Exception;
+							SetState(JupyterWebsocketState.Errored);
+							DisposeImpl();
+							_logger?.LogError(returned.Exception, "Unexpected Websocket Exception {Message}, shutting down socket...", returned.Exception.Message);
+							return;
+						}
+
+					}
+				}
+
+				SetState(JupyterWebsocketState.Disconnected);
+			}
+			finally
+			{
+				protocol.Dispose();
+				IOTask = null;
+			}
+		}
+
+		private async Task SendLoopAsync(IWebsocketProtocol protocol, CancellationToken token)
+		{
 			while (token.IsCancellationRequested == false)
 			{
-				var received = await _socket.ReceiveAsync(memory.Slice(receiveOffset), token);
-				var receivedCount = received.Count;
-				int countRead = 0;
+				var message = await _sendChannel.Reader.ReadAsync(token);
+				if (message == null)
+					break;
 
-				do
+				OnSend?.Invoke(message);
+				var countWritten = await protocol.SendAsync(message, SocketSendAsync);
+			}
+		}
+
+		private async Task ReceiveLoopAsync(IWebsocketProtocol protocol, CancellationToken token)
+		{
+			var _bufferRaw = Options.ArrayPool.Rent(1024*1024*16);
+			try
+			{
+				var memory = _bufferRaw.AsMemory();
+				int receiveOffset = 0;
+				while (token.IsCancellationRequested == false)
 				{
-					countRead += WebsocketFrameParser.Parse(memory.Slice(countRead, receivedCount - countRead).Span, ref _parserState);
-					if (_parserState.IsErrorState(out var errorCode))
+					var received = await _socket.ReceiveAsync(memory.Slice(receiveOffset), token);
+					_logger?.LogDebug("Received {Count} bytes, End of message: {EndOfMessage}", received.Count, received.EndOfMessage);
+					var receivedCount = received.Count;
+					int countRead = 0;
+
+					do
 					{
-						// handle error
-						if (received.EndOfMessage == false)
-							await _socket.WaitForEndOfMessageAsync(_buffer.Memory, token);
+						var result = await protocol.ReadAsync(memory[countRead..receivedCount], received.EndOfMessage);
+						countRead += result.CountRead;
 
-						countRead = receivedCount;
-						break;
-					}
+						if (result.IsError(out var error))
+						{
+							if (received.EndOfMessage == false)
+								await _socket.WaitForEndOfMessageAsync(memory, token);
 
-					if (_parserState.State == WebsocketFrameParserState.End)
-					{
-						HandleResult(_parserState.PartialMessage);
-					}
+							countRead = receivedCount;
+							_logger?.LogError(error.Exception, "Error parsing message: {ErrorCode}", error.ErrorCode);
+						}
 
-				} while (countRead < receivedCount);
+						if (result.IsCompleted(out var message))
+							HandleResult(message);
 
-				receiveOffset = receivedCount - countRead;
+					} while (countRead < receivedCount);
+
+					receiveOffset = receivedCount - countRead;
+				}
+			}
+			finally
+			{
+				Options.ArrayPool.Return(_bufferRaw);
 			}
 		}
 
