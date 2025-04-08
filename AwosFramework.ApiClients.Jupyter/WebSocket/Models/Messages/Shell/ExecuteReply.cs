@@ -15,10 +15,10 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Models.Messages.Shell
 		public int ExecutionCount { get; set; }
 
 		[JsonPropertyName("payload")]
-		public Dictionary<string, JsonDocument>? Payload { get; set; }
+		public Dictionary<string, JsonDocument>[]? Payload { get; set; }
 
 		[JsonPropertyName("user_expressions")]
-		public Dictionary<string, JsonDocument>? UserExpressions { get; set; }
+		public Dictionary<string, UserExpressionResult>? UserExpressions { get; set; }
 
 
 	}
