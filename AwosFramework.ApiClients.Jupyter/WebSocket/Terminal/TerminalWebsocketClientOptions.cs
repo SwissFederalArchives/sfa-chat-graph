@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace AwosFramework.ApiClients.Jupyter.WebSocket.Terminal
 {
-	public class TerminalWebsocketOptions : IWebsocketOptions
+	public record TerminalWebsocketClientOptions : IWebsocketOptions
 	{
 		public required Uri Endpoint { get; init; }
 		public string? Token { get; init; }
@@ -23,7 +23,7 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Terminal
 		public ArrayPool<byte> ArrayPool { get; init; } = ArrayPool<byte>.Shared;
 
 		[SetsRequiredMembers]
-		public TerminalWebsocketOptions(Uri endpoint, string terminalId, string? token = null)
+		public TerminalWebsocketClientOptions(Uri endpoint, string terminalId, string? token = null)
 		{
 			if (endpoint.Scheme.StartsWith("http"))
 			{
@@ -40,7 +40,7 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Terminal
 		public Uri GetConnectionUri()
 		{
 			var uri = new UriBuilder(Endpoint);
-			uri.Path = uri.Path.TrimEnd('/') + $"/api/terminals/websocket/{TerminalId}";
+			uri.Path = uri.Path.TrimEnd('/') + $"terminals/websocket/{TerminalId}";
 			return uri.Uri;
 		}
 	}

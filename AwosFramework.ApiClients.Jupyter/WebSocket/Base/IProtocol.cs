@@ -1,6 +1,8 @@
 ﻿using AwosFramework.ApiClients.Jupyter.WebSocket.Jupyter;
 using AwosFramework.ApiClients.Jupyter.WebSocket.Jupyter.Models.Messages;
 using AwosFramework.ApiClients.Jupyter.WebSocket.Jupyter.Protocol;
+using AwosFramework.ApiClients.Jupyter.WebSocket.Terminal;
+using AwosFramework.ApiClients.Jupyter.WebSocket.Terminal.Protocol;
 using System;
 using System.Collections.Frozen;
 using System.Collections.Generic;
@@ -22,7 +24,7 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Base
 			var types = typeof(IProtocol<TRes, TError>).Assembly.GetTypes();
 			foreach (var type in types)
 			{
-				if (type.IsClass && type.IsAbstract == false)
+				if (type.IsClass && type.IsAbstract == false && type.IsAssignableTo(typeof(IProtocol<TRes, TError>)))
 				{
 					var attributes = type.GetCustomAttributes<ProtocolImplementationAttribute>();
 					foreach (var attribute in attributes)
@@ -55,8 +57,13 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Base
 
 	}
 
-	public interface IWebsocketProtocol : IProtocol<WebsocketMessage, JupyterWebsocketError>
+	public interface ITerminalProtocol : IProtocol<TerminalMessage, TerminalError>
 	{
-		public static IWebsocketProtocol CreateInstance(string? protocolName, JupyterWebsocketOptions options) => (IWebsocketProtocol)IProtocol<WebsocketMessage, JupyterWebsocketError>.CreateInstance(protocolName, options);
+		public static ITerminalProtocol CreateInstance(string? protocolName, TerminalWebsocketClientOptions options) => (ITerminalProtocol)IProtocol<TerminalMessage, TerminalError>.CreateInstance(protocolName, options);
+	}
+
+	public interface IJupyterProtocol : IProtocol<JupyterMessage, JupyterError>
+	{
+		public static IJupyterProtocol CreateInstance(string? protocolName, JupyterWebsocketOptions options) => (IJupyterProtocol)IProtocol<JupyterMessage, JupyterError>.CreateInstance(protocolName, options);
 	}
 }

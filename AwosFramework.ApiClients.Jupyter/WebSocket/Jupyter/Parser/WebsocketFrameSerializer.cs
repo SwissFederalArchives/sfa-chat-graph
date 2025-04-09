@@ -10,7 +10,7 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Jupyter.Parser
 {
 	public static class WebsocketFrameSerializer
 	{
-		public static void Serialize(WebsocketMessage msg)
+		public static void Serialize(JupyterMessage msg)
 		{
 			
 		}

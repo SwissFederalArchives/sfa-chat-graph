@@ -8,7 +8,7 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Base
 {
 	public interface IError
 	{
-		public Exception Exception { get; }
+		public Exception? Exception { get; }
 		public object? ErrorCode { get; }
 	}
 }

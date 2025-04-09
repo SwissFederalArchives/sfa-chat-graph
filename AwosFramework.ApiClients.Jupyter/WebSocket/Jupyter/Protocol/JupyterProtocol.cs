@@ -1,5 +1,5 @@
 ﻿using AwosFramework.ApiClients.Jupyter.WebSocket.Base;
-using AwosFramework.ApiClients.Jupyter.WebSocket.Json;
+using AwosFramework.ApiClients.Jupyter.WebSocket.Jupyter.Json;
 using AwosFramework.ApiClients.Jupyter.WebSocket.Jupyter.Models.Messages;
 using AwosFramework.ApiClients.Jupyter.WebSocket.Jupyter.Parser;
 using Microsoft.IO;
@@ -15,7 +15,7 @@ using System.Threading.Tasks;
 namespace AwosFramework.ApiClients.Jupyter.WebSocket.Jupyter.Protocol
 {
 	[ProtocolImplementation("jupyter", IsDefault = true)]
-	public class JupyterProtocol : IWebsocketProtocol
+	public class JupyterProtocol : IJupyterProtocol
 	{
 		private readonly MemoryStream _readBuffer = new();
 		private readonly MemoryStream _writeBuffer = new();
@@ -35,7 +35,7 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Jupyter.Protocol
 			_readBuffer?.Dispose();
 		}
 
-		public async Task<ProtocolResult<WebsocketMessage, JupyterWebsocketError>> ReadAsync(Memory<byte> memory, bool endOfMessage)
+		public async Task<ProtocolResult<JupyterMessage, JupyterError>> ReadAsync(Memory<byte> memory, bool endOfMessage)
 		{
 			try
 			{
@@ -43,7 +43,7 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Jupyter.Protocol
 				if (endOfMessage)
 				{
 					_readBuffer.Position = 0;
-					var msg = await JsonSerializer.DeserializeAsync<WebsocketMessage>(_readBuffer, _jsonOptions);
+					var msg = await JsonSerializer.DeserializeAsync<JupyterMessage>(_readBuffer, _jsonOptions);
 					_readBuffer.SetLength(0);
 
 					if (msg != null)
@@ -59,11 +59,11 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Jupyter.Protocol
 			catch (Exception ex)
 			{
 				_readBuffer.SetLength(0);
-				return ProtocolResult.ErrorResult(new JupyterWebsocketError(WebsocketParserError.Unknown, ex), memory.Length);
+				return ProtocolResult.ErrorResult(new JupyterError(WebsocketParserError.Unknown, ex), memory.Length);
 			}
 		}
 
-		public async Task<long> SendAsync(WebsocketMessage toSend, SendDeletegate sender)
+		public async Task<long> SendAsync(JupyterMessage toSend, SendDeletegate sender)
 		{
 			_writeBuffer.SetLength(0);
 			await JsonSerializer.SerializeAsync(_writeBuffer, toSend, _jsonOptions);

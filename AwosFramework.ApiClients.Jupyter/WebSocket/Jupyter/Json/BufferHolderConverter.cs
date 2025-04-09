@@ -1,6 +1,5 @@
 ﻿using AwosFramework.ApiClients.Jupyter.Utils;
 using AwosFramework.ApiClients.Jupyter.WebSocket.Jupyter.Parser;
-using AwosFramework.ApiClients.Jupyter.WebSocket.Models;
 using System;
 using System.Buffers;
 using System.Buffers.Text;

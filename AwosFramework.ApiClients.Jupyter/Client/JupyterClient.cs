@@ -1,6 +1,10 @@
-﻿using AwosFramework.ApiClients.Jupyter.Rest;
+﻿using AwosFramework.ApiClients.Jupyter.Client.Jupyter;
+using AwosFramework.ApiClients.Jupyter.Client.Terminal;
+using AwosFramework.ApiClients.Jupyter.Rest;
 using AwosFramework.ApiClients.Jupyter.Rest.Models.Session;
+using AwosFramework.ApiClients.Jupyter.Rest.Models.Terminal;
 using AwosFramework.ApiClients.Jupyter.WebSocket.Jupyter;
+using AwosFramework.ApiClients.Jupyter.WebSocket.Terminal;
 using Microsoft.Extensions.Logging;
 
 namespace AwosFramework.ApiClients.Jupyter.Client
@@ -8,8 +12,11 @@ namespace AwosFramework.ApiClients.Jupyter.Client
 	public class JupyterClient : IDisposable
 	{
 		private readonly IJupyterRestClient _restClient;
-		private readonly Dictionary<Guid, ClientKernelSession> _sessions = new();
-		private readonly JupyterWebsocketOptions _defaultWebsocketOptions;
+		private readonly List<KernelSessionClient> _kernelSessions = new();
+		private readonly List<TerminalSessionClient> _terminalSessions = new();
+
+		private readonly JupyterWebsocketOptions _defaultJupyterWebsocketOptions;
+		private readonly TerminalWebsocketClientOptions _defaultTerminalWebsocketOptions;
 		private readonly ILogger? _logger;
 
 		public IJupyterRestClient RestClient => _restClient;
@@ -21,24 +28,50 @@ namespace AwosFramework.ApiClients.Jupyter.Client
 		public JupyterClient(Uri endpoint, string? token, ILoggerFactory? loggerFactory)
 		{
 			_restClient = JupyterRestClient.GetRestClient(endpoint, token);
-			_defaultWebsocketOptions = new JupyterWebsocketOptions(endpoint, Guid.Empty) { Token = token, LoggerFactory = loggerFactory }; 
+			_defaultJupyterWebsocketOptions = new JupyterWebsocketOptions(endpoint, Guid.Empty) { Token = token, LoggerFactory = loggerFactory };
+			_defaultTerminalWebsocketOptions = new TerminalWebsocketClientOptions(endpoint, string.Empty) { Token = token, LoggerFactory = loggerFactory };
 			_logger = loggerFactory?.CreateLogger<JupyterClient>();
 		}
 
-		public void RemoveDisposedKernels()
+		public void RemoveDisposedSessions()
 		{
-			var disposed = _sessions.Where(x => x.Value.IsDisposed).Select(x => x.Key).ToArray();
-			foreach (var id in disposed)
-			{
-				_sessions.Remove(id);
-				_logger?.LogInformation("Removed disposed kernel session {SessionId}", id);
-			}
+			var terminalCount = _terminalSessions.RemoveAll(x => x.IsDisposed);
+			var kernelCount = _kernelSessions.RemoveAll(x => x.IsDisposed);
+			_logger?.LogDebug("Removed disposed sessions [Kernel: {KernelCount}, Terminal: {TerminalCount}]", kernelCount, terminalCount);
 		}
 
-		public async Task<ClientKernelSession> StartKernelAsync(ClientKernelSessionOptions options)
+		public async Task<TerminalSessionClient> CreateTerminalSessionAsync(TerminalSessionClientOptions options)
+		{
+			TerminalModel terminal;
+			if (string.IsNullOrEmpty(options.TerminalId))
+			{
+				terminal = await _restClient.OpenTerminalAsync();
+			}
+			else
+			{
+				terminal = await _restClient.GetTerminalAsync(options.TerminalId);
+				ArgumentNullException.ThrowIfNull(terminal, nameof(terminal));
+			}
+
+			if(options.CreateWorkingDirectory)
+				await _restClient.CreateDirectoriesAsync(options.StoragePath);
+
+			var client = new TerminalSessionClient(terminal, options, _restClient);
+			await client.InitializeAsync();
+			return client;
+		}
+
+		public Task<TerminalSessionClient> CreateTerminalSessionAsync(Action<TerminalSessionClientOptions>? configure = null)
+		{
+			var options = new TerminalSessionClientOptions() { DefaultWebsocketOptions = _defaultTerminalWebsocketOptions };
+			configure?.Invoke(options);
+			return CreateTerminalSessionAsync(options);
+		}
+
+		public async Task<KernelSessionClient> CreateKernelSessionAsync(KernelSessionClientOptions options)
 		{
 			KernelIdentification kernelId = new KernelIdentification { Id = options.KernelId, SpecName = options.KernelSpecName };
-			if(string.IsNullOrEmpty(options.KernelSpecName) && options.KernelId.HasValue == false)
+			if (string.IsNullOrEmpty(options.KernelSpecName) && options.KernelId.HasValue == false)
 			{
 				var kernelSpecs = await _restClient.GetKernelSpecsAsync();
 				kernelId.SpecName = kernelSpecs.Default;
@@ -46,27 +79,30 @@ namespace AwosFramework.ApiClients.Jupyter.Client
 
 			if (options.CreateWorkingDirectory)
 				await _restClient.CreateDirectoriesAsync(options.StoragePath);
-			
+
 			var createSession = StartSessionRequest.CreateConsole(kernelId, options.StoragePath ?? string.Empty);
 			var session = await _restClient.StartSessionAsync(createSession);
-			var sessionClient = new ClientKernelSession(session, options, _restClient);
-			_sessions.Add(session.Id, sessionClient);
+			var sessionClient = new KernelSessionClient(session, options, _restClient);
+			_kernelSessions.Add(sessionClient);
 			await sessionClient.InitializeAsync();
 			_logger?.LogInformation("Started kernel session {SessionId} with kernel {KernelName}[{KernelId}]", session.Id, session.Kernel.SpecName, session.Kernel.Id);
 			return sessionClient;
 		}
 
-		public Task<ClientKernelSession> StartKernelSessionAsync(Action<ClientKernelSessionOptions>? configure = null)
+		public Task<KernelSessionClient> CreateKernelSessionAsync(Action<KernelSessionClientOptions>? configure = null)
 		{
-			var options = new ClientKernelSessionOptions() { DefaultWebsocketOptions = _defaultWebsocketOptions };
+			var options = new KernelSessionClientOptions() { DefaultWebsocketOptions = _defaultJupyterWebsocketOptions };
 			configure?.Invoke(options);
-			return StartKernelAsync(options);
+			return CreateKernelSessionAsync(options);
 		}
 
 		public void Dispose()
 		{
-			foreach (var session in _sessions.Values)
+			foreach (var session in _kernelSessions)
+				session.Dispose();
+
+			foreach (var session in _terminalSessions)
 				session.Dispose();
 		}
 	}
-}	
+}

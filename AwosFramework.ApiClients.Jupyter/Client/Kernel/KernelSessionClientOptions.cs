@@ -6,9 +6,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace AwosFramework.ApiClients.Jupyter.Client
+namespace AwosFramework.ApiClients.Jupyter.Client.Jupyter
 {
-	public class ClientKernelSessionOptions
+	public class KernelSessionClientOptions
 	{
 		public string? KernelSpecName { get; set; }
 		public Guid? KernelId { get; set; }

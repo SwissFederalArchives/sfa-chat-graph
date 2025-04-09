@@ -17,7 +17,7 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Jupyter.Parser
 		{
 			_arrayPool = arrayPool;
 			Logger = loggerFactory?.CreateLogger<ParserState>();
-			PartialMessage = new WebsocketMessage();
+			PartialMessage = new JupyterMessage();
 			JsonOptions = new JsonSerializerOptions(options ?? JsonSerializerOptions.Default);
 			JsonOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.SnakeCaseLower));
 		}
@@ -31,7 +31,7 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Jupyter.Parser
 		public int WorkingMemorySize;
 		public byte[]? OffsetsRaw;
 		public byte[]? WorkingMemory;
-		public WebsocketMessage PartialMessage;
+		public JupyterMessage PartialMessage;
 		public WebsocketParserError? ErrorCode;
 		public Exception? Exception;
 		public IWritableBufferHolder? Buffers;
@@ -112,7 +112,7 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Jupyter.Parser
 			if (State == WebsocketFrameParserState.Error)
 				PartialMessage.Dispose();
 
-			PartialMessage = new WebsocketMessage();
+			PartialMessage = new JupyterMessage();
 			State = WebsocketFrameParserState.Start;
 			WorkingMemorySize = 0;
 			CurrentArrayIndex = 0;

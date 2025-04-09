@@ -19,6 +19,45 @@ namespace AwosFramework.ApiClients.Jupyter.Utils
 				yield return (i++, x);
 		}
 
+		public static object? GetPrimitive(this JsonElement element)
+		{
+			switch (element.ValueKind)
+			{
+				case JsonValueKind.String:
+					return element.GetString();
+
+				case JsonValueKind.Number:
+					if (element.TryGetInt32(out var intValue))
+						return intValue;
+					else if (element.TryGetUInt32(out var uintValue))
+						return uintValue;
+					else if (element.TryGetInt64(out var longValue))
+						return longValue;
+					else if (element.TryGetUInt64(out var ulongValue))
+						return ulongValue;
+					else if (element.TryGetDouble(out var doubleValue))
+						return doubleValue;
+					else
+						return null;
+
+				case JsonValueKind.True:
+					return true;
+
+				case JsonValueKind.False:
+					return false;
+
+				case JsonValueKind.Object:
+				case JsonValueKind.Array:
+					return element;
+
+				case JsonValueKind.Null:
+				case JsonValueKind.Undefined:
+				default:
+					return null;
+
+			}
+		}
+
 		public static IEnumerable<(bool isLast, T item)> IsLast<T>(this IEnumerable<T> enumerable)
 		{
 			var enumerator = enumerable.GetEnumerator();

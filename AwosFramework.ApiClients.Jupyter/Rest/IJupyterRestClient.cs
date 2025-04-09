@@ -127,14 +127,17 @@ namespace AwosFramework.ApiClients.Jupyter.Rest
 		[Patch("/config/{section}")]
 		public Task UpdateConfigSectionAsync(string section, [Body] JsonDocument data);
 
-		[Get("/api/terminals")]
+		[Get("/terminals")]
 		public Task<TerminalModel[]> GetTerminalsAsync();
 
-		[Get("/api/terminals/{id}")]
+		[Post("/terminals")]
+		public Task<TerminalModel> OpenTerminalAsync();
+
+		[Get("/terminals/{id}")]
 		public Task<TerminalModel> GetTerminalAsync(string id);
 		public Task<TerminalModel> GetTerminalAsync(TerminalModel terminal) => GetTerminalAsync(terminal.Name);
 
-		[Delete("/api/terminals/{id}")]
+		[Delete("/terminals/{id}")]
 		public Task CloseTerminalAsync(string id);
 		public Task CloseTerminalAsync(TerminalModel terminal) => CloseTerminalAsync(terminal.Name);
 

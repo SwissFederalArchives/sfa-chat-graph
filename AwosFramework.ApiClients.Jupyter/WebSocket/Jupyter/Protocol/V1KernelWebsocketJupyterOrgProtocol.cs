@@ -1,5 +1,6 @@
 ﻿using AwosFramework.ApiClients.Jupyter.Utils;
 using AwosFramework.ApiClients.Jupyter.WebSocket.Base;
+using AwosFramework.ApiClients.Jupyter.WebSocket.Jupyter.Json;
 using AwosFramework.ApiClients.Jupyter.WebSocket.Jupyter.Models.Messages;
 using AwosFramework.ApiClients.Jupyter.WebSocket.Jupyter.Parser;
 using CommunityToolkit.HighPerformance.Buffers;
@@ -21,7 +22,7 @@ using System.Threading.Tasks;
 namespace AwosFramework.ApiClients.Jupyter.WebSocket.Jupyter.Protocol
 {
 	[ProtocolImplementation("v1.kernel.websocket.jupyter.org")]
-	public class V1KernelWebsocketJupyterOrgProtocol : IWebsocketProtocol
+	public class V1KernelWebsocketJupyterOrgProtocol : IJupyterProtocol
 	{
 		private static readonly RecyclableMemoryStreamManager _streamManager = new RecyclableMemoryStreamManager();
 		private const int MIN_OFFSET_COUNT = 6;
@@ -34,12 +35,13 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Jupyter.Protocol
 		public V1KernelWebsocketJupyterOrgProtocol(JupyterWebsocketOptions options)
 		{
 			_options = options;
-			_parserState = new ParserState(options.ArrayPool, JsonSerializerOptions.Default, options.LoggerFactory);
 			_jsonOptions = new JsonSerializerOptions();
 			_jsonOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.SnakeCaseLower));
+			_jsonOptions.Converters.Add(new ObjectConverter());
+			_parserState = new ParserState(options.ArrayPool, _jsonOptions, options.LoggerFactory);
 		}
 
-		public async Task<ProtocolResult<WebsocketMessage, JupyterWebsocketError>> ReadAsync(Memory<byte> memory, bool endOfMessage)
+		public async Task<ProtocolResult<JupyterMessage, JupyterError>> ReadAsync(Memory<byte> memory, bool endOfMessage)
 		{
 			int initialLength = memory.Length;
 			do
@@ -51,7 +53,7 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Jupyter.Protocol
 				memory = memory.Slice(read);
 				if (_parserState.IsErrorState(out var errorCode))
 				{
-					var error = new JupyterWebsocketError(errorCode.Value, _parserState.Exception);
+					var error = new JupyterError(errorCode.Value, _parserState.Exception);
 					return ProtocolResult.ErrorResult(error, initialLength - memory.Length);
 				}
 
@@ -62,7 +64,7 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Jupyter.Protocol
 			return ProtocolResult.PartialResult(initialLength - memory.Length);
 		}
 
-		public async Task<long> SendAsync(WebsocketMessage msg, SendDeletegate sender)
+		public async Task<long> SendAsync(JupyterMessage msg, SendDeletegate sender)
 		{
 			_offsetList.Clear();
 			var bufferCount = msg.Buffers?.Count ?? 0;

@@ -26,27 +26,27 @@ using System.Xml.Linq;
 
 namespace AwosFramework.ApiClients.Jupyter.WebSocket.Jupyter
 {
-	public class JupyterWebsocketClient : WebsocketClientBase<JupyterWebsocketOptions, IWebsocketProtocol, WebsocketMessage, JupyterWebsocketError>
+	public class JupyterWebsocketClient : WebsocketClientBase<JupyterWebsocketOptions, IJupyterProtocol, JupyterMessage, JupyterError>
 	{
 		
-		private readonly Channel<WebsocketMessage> _receiveChannel;
-		private readonly Channel<WebsocketMessage> _sendChannel;
-		private readonly Dictionary<string, ObservableSource<WebsocketMessage>> _observableMessages = new();
+		private readonly Channel<JupyterMessage> _receiveChannel;
+		private readonly Channel<JupyterMessage> _sendChannel;
+		private readonly Dictionary<string, ObservableSource<JupyterMessage>> _observableMessages = new();
 
-		public ChannelReader<WebsocketMessage> MessageReader => _receiveChannel.Reader;
+		public ChannelReader<JupyterMessage> MessageReader => _receiveChannel.Reader;
 	
 		public JupyterWebsocketClient(JupyterWebsocketOptions options) : base(options)
 		{	
 			var sendOptions = new UnboundedChannelOptions { SingleReader = true };
-			_sendChannel = Channel.CreateUnbounded<WebsocketMessage>(sendOptions);
+			_sendChannel = Channel.CreateUnbounded<JupyterMessage>(sendOptions);
 			if (options.MaxMessages.HasValue)
 			{
 				var channelOptions = new BoundedChannelOptions(options.MaxMessages.Value) { SingleWriter = true, FullMode = BoundedChannelFullMode.DropOldest };
-				_receiveChannel = Channel.CreateBounded<WebsocketMessage>(channelOptions);
+				_receiveChannel = Channel.CreateBounded<JupyterMessage>(channelOptions);
 			}
 			else
 			{
-				_receiveChannel = Channel.CreateUnbounded<WebsocketMessage>();
+				_receiveChannel = Channel.CreateUnbounded<JupyterMessage>();
 			}
 		}
 
@@ -60,6 +60,8 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Jupyter
 		protected override void DisposeImpl()
 		{
 			base.DisposeImpl();
+			_sendChannel.Writer.Complete();
+			_receiveChannel.Writer.Complete();
 			while (_receiveChannel.Reader.TryRead(out var msg))
 				msg.Dispose();
 
@@ -68,8 +70,8 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Jupyter
 		}
 
 
-		protected override Task<WebsocketMessage> NextMessagAsync(CancellationToken token) => _sendChannel.Reader.ReadAsync(token).AsTask();
-		protected async override Task HandleResultAsync(WebsocketMessage message)
+		protected override Task<JupyterMessage> NextMessagAsync(CancellationToken token) => _sendChannel.Reader.ReadAsync(token).AsTask();
+		protected async override Task HandleResultAsync(JupyterMessage message)
 		{
 			_logger?.LogDebug("Received message {MessageType} on channel {Channel}", message.Header.MessageType, message.Channel);
 			if (message.Content is KernelStatusMessage status && status.ExecutionState == ExecutionState.Idle && message.ParentHeader != null && _observableMessages.TryGetValue(message.ParentHeader.Id, out var observable))
@@ -89,7 +91,7 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Jupyter
 		}
 
 
-		private WebsocketMessage CreateMessageFromPayload(object payload, ITransferableBufferHolder? buffers = null, JsonDocument? metaData = null, WebsocketMessage? parent = null)
+		private JupyterMessage CreateMessageFromPayload(object payload, ITransferableBufferHolder? buffers = null, JsonDocument? metaData = null, JupyterMessage? parent = null)
 		{
 			ArgumentNullException.ThrowIfNull(payload, nameof(payload));
 			var attrs = payload.GetType().GetCustomAttributes<MessageTypeAttribute>().ToArray();
@@ -97,7 +99,7 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Jupyter
 			if (attr == null)
 				throw new ArgumentException($"Type {payload.GetType()} does not have a MessageTypeAttribute");
 
-			var message = new WebsocketMessage
+			var message = new JupyterMessage
 			{
 				TransferableBuffers = buffers,
 				Channel = attr.Channel,
@@ -119,32 +121,32 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Jupyter
 			return message;
 		}
 
-		public async Task<IObservable<WebsocketMessage>> SendAndObserveAsync(WebsocketMessage message)
+		public async Task<IObservable<JupyterMessage>> SendAndObserveAsync(JupyterMessage message)
 		{
-			var observable = new ObservableSource<WebsocketMessage>();
+			var observable = new ObservableSource<JupyterMessage>();
 			_observableMessages[message.Header!.Id] = observable;
 			await SendAsync(message);
 			return observable;
 		}
 
-		public async Task<IObservable<WebsocketMessage>> SendAndObserveAsync(object payload, ITransferableBufferHolder? buffers = null, JsonDocument? metaData = null, WebsocketMessage? parent = null)
+		public async Task<IObservable<JupyterMessage>> SendAndObserveAsync(object payload, ITransferableBufferHolder? buffers = null, JsonDocument? metaData = null, JupyterMessage? parent = null)
 		{
 			var message = CreateMessageFromPayload(payload, buffers, metaData, parent);
-			var observable = new ObservableSource<WebsocketMessage>();
+			var observable = new ObservableSource<JupyterMessage>();
 			_observableMessages[message.Header!.Id] = observable;
 			await SendAsync(message);
 			return observable;
 		}
 
 
-		public async Task<WebsocketMessage> SendAsync(object payload, ITransferableBufferHolder? buffers = null, JsonDocument? metaData = null, WebsocketMessage? parent = null)
+		public async Task<JupyterMessage> SendAsync(object payload, ITransferableBufferHolder? buffers = null, JsonDocument? metaData = null, JupyterMessage? parent = null)
 		{
 			var message = CreateMessageFromPayload(payload, buffers, metaData, parent);
 			await SendAsync(message);
 			return message;
 		}
 
-		public async Task SendAsync(WebsocketMessage message)
+		public async Task SendAsync(JupyterMessage message)
 		{
 			await _sendChannel.Writer.WriteAsync(message, CancellationToken);
 		}

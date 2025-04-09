@@ -12,6 +12,7 @@ import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'node-detail',
+  standalone: true,
   imports: [NgFor, NgIf, MatDividerModule, MatButtonModule, MatIcon, FormsModule],
   templateUrl: './graph-detail-component.component.html',
   styleUrl: './graph-detail-component.component.css'

@@ -14,7 +14,7 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Jupyter.Json
 		public override HistoryEntry? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
 		{
 			int session, lineNumber;
-			string input, output = null;
+			string? input, output = null;
 			reader.Read();
 			session = reader.GetInt32();
 			reader.Read();

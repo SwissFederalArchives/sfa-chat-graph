@@ -5,8 +5,6 @@ using AwosFramework.ApiClients.Jupyter.WebSocket;
 using AwosFramework.ApiClients.Jupyter.WebSocket.Jupyter;
 using AwosFramework.ApiClients.Jupyter.WebSocket.Jupyter.Models.Messages.IOPub;
 using AwosFramework.ApiClients.Jupyter.WebSocket.Jupyter.Models.Messages.Shell;
-using AwosFramework.ApiClients.Jupyter.WebSocket.Models.Messages;
-using AwosFramework.ApiClients.Jupyter.WebSocket.Models.Messages.Shell;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,12 +12,12 @@ using System.Reactive.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace AwosFramework.ApiClients.Jupyter.Client
+namespace AwosFramework.ApiClients.Jupyter.Client.Jupyter
 {
-	public class ClientKernelSession : IAsyncDisposable, IDisposable
+	public class KernelSessionClient : IAsyncDisposable, IDisposable
 	{
 		private readonly SessionModel _apiSession;
-		private readonly ClientKernelSessionOptions _options;
+		private readonly KernelSessionClientOptions _options;
 		private readonly JupyterWebsocketClient _websocketClient;
 		private readonly IJupyterRestClient _restClient;
 		
@@ -32,10 +30,10 @@ namespace AwosFramework.ApiClients.Jupyter.Client
 		private void ThrowIfDisposed()
 		{
 			if (IsDisposed)
-				throw new ObjectDisposedException(nameof(ClientKernelSession));
+				throw new ObjectDisposedException(nameof(KernelSessionClient));
 		}
 
-		public ClientKernelSession(SessionModel apiSession, ClientKernelSessionOptions options, IJupyterRestClient restClient)
+		public KernelSessionClient(SessionModel apiSession, KernelSessionClientOptions options, IJupyterRestClient restClient)
 		{
 			_apiSession = apiSession;
 			_options = options;
@@ -49,7 +47,7 @@ namespace AwosFramework.ApiClients.Jupyter.Client
 			var executeRequest = new ExecuteRequest { Code = code, StopOnError = true };
 			var observable = await _websocketClient.SendAndObserveAsync(executeRequest);
 			var items = await observable.ToAsyncEnumerable().Select(x => x.Content).ToArrayAsync();
-			var result = items.OfType<ExecuteReply>().First();
+			var result = items.OfType<ExecuteReply>().FirstOrDefault();
 			var data = items.OfType<DisplayDataMessage>();
 			return new CodeExecutionResult { Request = executeRequest, Reply = result, Results = data.ToArray() };
 		}

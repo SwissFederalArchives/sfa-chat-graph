@@ -7,6 +7,7 @@ import { GraphVisualisationComponent } from '../graph-visualisation/graph-visual
 @Component({
   selector: 'sub-graph-selection',
   imports: [NgFor],
+  standalone: true,
   templateUrl: './sub-graph-selection.component.html',
   styleUrl: './sub-graph-selection.component.css'
 })

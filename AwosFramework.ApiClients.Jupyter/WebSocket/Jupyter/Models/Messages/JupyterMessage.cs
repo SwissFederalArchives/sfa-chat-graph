@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace AwosFramework.ApiClients.Jupyter.WebSocket.Jupyter.Models.Messages
 {
-	public class WebsocketMessage : IDisposable
+	public class JupyterMessage : IDisposable
 	{
 		[JsonPropertyName("channel")]
 		public ChannelKind Channel { get; internal set; }
@@ -33,7 +33,7 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Jupyter.Models.Messages
 
 		public IBufferHolder Buffers => (IBufferHolder)TransferableBuffers;
 
-		~WebsocketMessage()
+		~JupyterMessage()
 		{
 			Dispose();
 		}
