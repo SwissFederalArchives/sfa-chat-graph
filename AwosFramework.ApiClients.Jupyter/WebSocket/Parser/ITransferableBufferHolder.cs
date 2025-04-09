@@ -6,8 +6,10 @@ using System.Threading.Tasks;
 
 namespace AwosFramework.ApiClients.Jupyter.WebSocket.Parser
 {
-	public interface IBufferHolder : ITransferableBufferHolder
+	public interface ITransferableBufferHolder : IEnumerable<ReadOnlyMemory<byte>>, IDisposable
 	{
-		public ReadOnlyMemory<byte> this[int index] { get; }
+		public int Count { get; }
+
+		public IEnumerable<int> BufferLengths { get; }
 	}
 }

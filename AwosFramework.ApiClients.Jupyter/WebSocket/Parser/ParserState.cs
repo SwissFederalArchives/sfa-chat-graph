@@ -1,4 +1,4 @@
-﻿using AwosFramework.ApiClients.Jupyter.WebSocket.Models;
+﻿using AwosFramework.ApiClients.Jupyter.WebSocket.Models.Messages;
 using Microsoft.Extensions.Logging;
 using System.Buffers;
 using System.Diagnostics.CodeAnalysis;
@@ -74,7 +74,7 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Parser
 			}
 
 			Buffers = new PooledBufferHolder(bufferCount, (int)len, _arrayPool);
-			PartialMessage.Buffers = Buffers;
+			PartialMessage.TransferableBuffers = Buffers;
 			return true;
 		}
 

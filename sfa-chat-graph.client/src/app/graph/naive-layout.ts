@@ -188,6 +188,7 @@ export class NaiveGraphLayout implements IGraphLayout {
 
 
   layout(steps: number, scale: number = 1): number {
+    const time = performance.now();
     const center: Vector = Vector.zero();
     const renderingCircles = this.nodeCircles.filter(circle => circle.node.shouldRender());
     let internalEnergy: number = 0;
@@ -204,6 +205,8 @@ export class NaiveGraphLayout implements IGraphLayout {
     }
 
     this.nodeCircles.forEach(circle => circle.updateNodes());
+    const diff = performance.now() - time;
+    console.log(`Layout took ${diff}ms`);
     return internalEnergy / (renderingCircles.length / 3.0);
   }
 

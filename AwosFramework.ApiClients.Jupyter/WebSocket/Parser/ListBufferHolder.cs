@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,7 +13,9 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Parser
 
 		public ReadOnlyMemory<byte> this[int index] => _buffers[index];
 
-		public int Length => _buffers.Count;
+		public int Count => _buffers.Count;
+
+		public IEnumerable<int> BufferLengths => _buffers.Select(x => x.Length);
 
 		public void Dispose()
 		{
@@ -22,5 +25,8 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Parser
 		{
 			_buffers.Add(buffer);
 		}
+
+		public IEnumerator<ReadOnlyMemory<byte>> GetEnumerator() => _buffers.Select(x => (ReadOnlyMemory<byte>)x).GetEnumerator();
+		IEnumerator IEnumerable.GetEnumerator() => _buffers.GetEnumerator();
 	}
 }

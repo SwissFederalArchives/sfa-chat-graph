@@ -1,5 +1,5 @@
 ﻿using AwosFramework.ApiClients.Jupyter.Utils;
-using AwosFramework.ApiClients.Jupyter.WebSocket.Models;
+using AwosFramework.ApiClients.Jupyter.WebSocket.Models.Messages;
 using AwosFramework.ApiClients.Jupyter.WebSocket.Parser;
 using AwosFramework.ApiClients.Jupyter.WebSocket.Protocol;
 using Microsoft.Extensions.Logging;

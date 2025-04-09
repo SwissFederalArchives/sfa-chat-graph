@@ -1,5 +1,5 @@
 ﻿using AwosFramework.ApiClients.Jupyter.Utils;
-using AwosFramework.ApiClients.Jupyter.WebSocket.Models;
+using AwosFramework.ApiClients.Jupyter.WebSocket.Models.Messages;
 using AwosFramework.ApiClients.Jupyter.WebSocket.Parser;
 using CommunityToolkit.HighPerformance.Buffers;
 using Microsoft.IO;
@@ -64,7 +64,7 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Protocol
 		public async Task<long> SendAsync(WebsocketMessage msg, SendDeletegate sender)
 		{
 			_offsetList.Clear();
-			var bufferCount = msg.Buffers?.Length ?? 0;
+			var bufferCount = msg.Buffers?.Count ?? 0;
 			int offsetCount = bufferCount + MIN_OFFSET_COUNT;
 			using (var stream = _streamManager.GetStream())
 			{
@@ -83,10 +83,10 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Protocol
 				await Extensions.SerializeNullableAsync(stream, msg.Content, _jsonOptions);
 				_offsetList.Add((ulong)stream.Position);
 				var currentPos = stream.Position;
-				for (int i = 0; i < bufferCount; i++)
+
+				foreach (var bufferLen in msg.TransferableBuffers?.BufferLengths.EmptyIfNull())
 				{
-					var buffer = msg.Buffers![i];
-					currentPos += buffer.Length;
+					currentPos += bufferLen;
 					_offsetList.Add((ulong)stream.Position);
 				}
 
@@ -107,10 +107,12 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Protocol
 					_options.ArrayPool.Return(buffer);
 				}
 
+				foreach(var (isLast, buffer) in msg.TransferableBuffers.EmptyIfNull().IsLast())
+					await sender(buffer, isLast);
+				
 				for (int i = 0; i < bufferCount; i++)
 				{
 					var buffer = msg.Buffers![i];
-					await sender(buffer, i == bufferCount - 1);
 				}
 
 				return stream.Length;

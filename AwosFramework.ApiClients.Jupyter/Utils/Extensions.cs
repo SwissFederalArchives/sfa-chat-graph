@@ -19,6 +19,24 @@ namespace AwosFramework.ApiClients.Jupyter.Utils
 				yield return (i++, x);
 		}
 
+		public static IEnumerable<(bool isLast, T item)> IsLast<T>(this IEnumerable<T> enumerable)
+		{
+			var enumerator = enumerable.GetEnumerator();
+			if (enumerator.MoveNext() == false)
+				yield break;
+			
+			T last = enumerator.Current;	
+			while (enumerator.MoveNext())
+			{
+				yield return (false, last);
+				last = enumerator.Current;
+			}
+			
+			yield return (true, last);
+		}
+
+		public static IEnumerable<T> EmptyIfNull<T>(this IEnumerable<T>? enumerable) => enumerable ?? Enumerable.Empty<T>();
+
 		public static async Task SerializeNullableAsync<T>(Stream stream, T? value, JsonSerializerOptions options) where T : class
 		{
 			if (value == null)

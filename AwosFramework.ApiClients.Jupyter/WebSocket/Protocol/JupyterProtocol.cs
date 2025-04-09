@@ -1,5 +1,5 @@
 ﻿using AwosFramework.ApiClients.Jupyter.WebSocket.Json;
-using AwosFramework.ApiClients.Jupyter.WebSocket.Models;
+using AwosFramework.ApiClients.Jupyter.WebSocket.Models.Messages;
 using Microsoft.IO;
 using System;
 using System.Collections.Generic;

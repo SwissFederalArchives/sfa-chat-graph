@@ -59,13 +59,6 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Parser
 			null
 		};
 
-		private static readonly FrozenDictionary<string, Type> ContentTypes = 
-			typeof(WebsocketFrameParser).Assembly
-			.GetTypes()
-			.SelectMany(x => x.GetCustomAttributes<MessageTypeAttribute>().Select(y => (attr: y, type: x)))
-			.DistinctBy(x => x.attr.MessageType)
-			.ToFrozenDictionary(x => x.attr.MessageType, x => x.type);
-
 
 		private static unsafe bool TryReadOffsetCount(ref ParserState state, Span<byte> data, ref int countRead)
 		{
@@ -228,24 +221,27 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Parser
 
 		private static unsafe bool TryReadContent(ref ParserState state, Span<byte> data, ref int countRead)
 		{
-			if (ContentTypes.ContainsKey(state.PartialMessage.Header!.MessageType) == false)
+			if (MessageTypeAttribute.TryGetType(state.PartialMessage.Header!.MessageType, out var messageType))
+			{
+				if (WaitForFullBuffer(4, ref state, data, ref countRead, out var span) == false)
+					return false;
+
+				try
+				{
+					state.PartialMessage.Content = JsonSerializer.Deserialize(span, messageType, state.JsonOptions);
+				}
+				catch (JsonException ex)
+				{
+					state.SetError(WebsocketParserError.MalformedContent, ex);
+					return false;
+				}
+
+				return true;
+			}
+			else
+			{
 				return TrySkipBuffer(4, ref state, data, ref countRead);
-
-			if (WaitForFullBuffer(4, ref state, data, ref countRead, out var span) == false)
-				return false;
-
-			try
-			{
-				var messageType = ContentTypes[state.PartialMessage.Header!.MessageType];
-				state.PartialMessage.Content = JsonSerializer.Deserialize(span, messageType, state.JsonOptions);
 			}
-			catch (JsonException ex)
-			{
-				state.SetError(WebsocketParserError.MalformedContent, ex);
-				return false;
-			}
-
-			return true;
 		}
 
 		private static unsafe bool TryReadBuffer(ref ParserState state, Span<byte> data, ref int countRead)
@@ -253,13 +249,13 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Parser
 			if (state.SetBuffers() == false)
 				return false;
 
-			if (state.Buffers.Length == 0)
+			if (state.Buffers.Count == 0)
 			{
 				countRead = 0;
 				return true;
 			}
 
-			while (countRead < data.Length && state.CurrentBufferIndex < state.Buffers.Length)
+			while (countRead < data.Length && state.CurrentBufferIndex < state.Buffers.Count)
 			{
 				if (state.TryGetBufferLength(state.CurrentBufferIndex + ParserState.BUFFERS_START_INDEX, out var length) == false)
 				{
@@ -275,11 +271,11 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Parser
 				if (state.CurrentArrayIndex >= length)
 				{
 					state.CurrentBufferIndex++;
-					state.CurrentArrayIndex = 0;					
+					state.CurrentArrayIndex = 0;
 				}
 			}
 
-			return state.CurrentBufferIndex >= state.Buffers.Length;
+			return state.CurrentBufferIndex >= state.Buffers.Count;
 		}
 
 	}

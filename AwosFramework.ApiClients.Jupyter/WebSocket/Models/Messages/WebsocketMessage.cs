@@ -8,7 +8,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace AwosFramework.ApiClients.Jupyter.WebSocket.Models
+namespace AwosFramework.ApiClients.Jupyter.WebSocket.Models.Messages
 {
 	public class WebsocketMessage : IDisposable
 	{
@@ -28,7 +28,9 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Models
 		public object? Content { get; internal set; }
 
 		[JsonPropertyName("buffers")]
-		public IBufferHolder? Buffers { get; internal set; }
+		public ITransferableBufferHolder? TransferableBuffers { get; internal set; }
+
+		public IBufferHolder Buffers => (IBufferHolder)TransferableBuffers;
 
 		public void Dispose()
 		{
