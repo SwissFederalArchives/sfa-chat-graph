@@ -22,6 +22,18 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Terminal
 		private readonly RecyclableMemoryStream _stdOut;
 		private readonly Channel<TerminalMessage> _sendChannel;
 		private ObservableSource<TerminalMessage> _receiveObservable;
+		
+		public Task<TerminalMessage> WaitForSend()
+		{
+			var tcs = new TaskCompletionSource<TerminalMessage>();
+			OnSend += tcs.SetResult;
+			return tcs.Task.ContinueWith(t =>
+			{
+				OnSend -= tcs.SetResult;
+				return t.Result;
+			});
+		}
+
 		public IObservable<TerminalMessage> ObservableMessages => _receiveObservable;
 
 		public TerminalWebsocketClient(TerminalWebsocketClientOptions options) : base(options)
@@ -36,6 +48,12 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Terminal
 
 		public Task SendAsync(TerminalMessage message) => _sendChannel.Writer.WriteAsync(message).AsTask();
 		public Task SendAsync(string message) => SendAsync(new TerminalMessage(TerminalMessageType.Stdin, message));
+		public async Task SendAndWaitAsync(string message)
+		{
+			var wait = WaitForSend();
+			await SendAsync(message);
+			await wait;
+		}
 
 		public Stream StdOut => _stdOut;
 

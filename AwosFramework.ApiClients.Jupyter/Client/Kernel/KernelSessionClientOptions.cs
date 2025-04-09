@@ -16,6 +16,7 @@ namespace AwosFramework.ApiClients.Jupyter.Client.Jupyter
 		[MemberNotNullWhen(true, nameof(StoragePath))]
 		public bool CreateWorkingDirectory { get; set; } = true;
 		public bool DeleteWorkingDirectoryOnDispose { get; set; } = true;
+		public bool KillKernelOnDispose { get; set; } = false;
 		public Guid StorageId { get; set; } = Guid.NewGuid();
 		public string StoragePathFormat { get; set; } = "sessions/{0}";
 

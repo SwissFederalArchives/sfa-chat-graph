@@ -5,6 +5,7 @@ using AwosFramework.ApiClients.Jupyter.WebSocket;
 using AwosFramework.ApiClients.Jupyter.WebSocket.Jupyter;
 using AwosFramework.ApiClients.Jupyter.WebSocket.Jupyter.Models.Messages.IOPub;
 using AwosFramework.ApiClients.Jupyter.WebSocket.Jupyter.Models.Messages.Shell;
+using Refit;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,7 +21,7 @@ namespace AwosFramework.ApiClients.Jupyter.Client.Jupyter
 		private readonly KernelSessionClientOptions _options;
 		private readonly JupyterWebsocketClient _websocketClient;
 		private readonly IJupyterRestClient _restClient;
-		
+
 		public JupyterWebsocketClient WebSocketClient => _websocketClient;
 		public Guid SessionId => _apiSession.Id;
 		public KernelModel Kernel => _apiSession.Kernel;
@@ -87,16 +88,31 @@ namespace AwosFramework.ApiClients.Jupyter.Client.Jupyter
 			await _websocketClient.ConnectAsync();
 		}
 
+		private async Task TryKillKernelAsync()
+		{
+			try
+			{
+				if (_options.KillKernelOnDispose)
+					await _restClient.ShutdownKernelAsync(_apiSession.Kernel.Id!.Value);
+			}
+			catch (ApiException)
+			{
+
+			}
+		}
+
 
 		public async ValueTask DisposeAsync()
 		{
 			if (IsDisposed == false)
 			{
+				await _websocketClient.DisconnectAsync();
+				_websocketClient.Dispose();
 				await _restClient.DeleteSessionAsync(_apiSession.Id);
 				if (_options.CreateWorkingDirectory && _options.DeleteWorkingDirectoryOnDispose)
 					await _restClient.DeleteRecursivelyAsync(_options.StoragePath);
-				
-				_websocketClient.Dispose();
+
+				await TryKillKernelAsync();
 				IsDisposed = true;
 			}
 		}

@@ -34,7 +34,7 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Base
 		public bool IsConnected => State == WebsocketState.Connected;
 		public bool IsDisconnected => State == WebsocketState.Disconnected;
 		public bool IsDisposed => State == WebsocketState.Disposed || State == WebsocketState.Errored;
-		
+
 		public WebsocketState State { get; private set; } = WebsocketState.Disconnected;
 		public Task? IOTask { get; private set; }
 		public Exception? Exception { get; private set; }
@@ -65,7 +65,7 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Base
 		}
 
 		protected abstract Task HandleResultAsync(TMsg message);
-		protected abstract Task<TMsg> NextMessagAsync(CancellationToken token); 
+		protected abstract Task<TMsg> NextMessagAsync(CancellationToken token);
 
 		private async Task SocketSendAsync(ReadOnlyMemory<byte> message, bool lastMessage)
 		{
@@ -98,6 +98,9 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Base
 					_logger?.LogDebug("Received {Count} bytes, End of message: {EndOfMessage}", received.Count, received.EndOfMessage);
 					var receivedCount = received.Count;
 					int countRead = 0;
+
+					if (received.MessageType == WebSocketMessageType.Close)
+						return;
 
 					do
 					{
@@ -275,9 +278,10 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Base
 			if (IsConnected)
 			{
 				SetState(WebsocketState.Disconnecting);
+				if (_socket.State == WebSocketState.Open)
+					await _socket.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, "Client disconnect", CancellationToken.None);
 				_stopSocket?.Cancel();
 				await IOTask.ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing);
-				await _socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Client disconnect", CancellationToken.None);
 				SetState(WebsocketState.Disconnected);
 			}
 		}

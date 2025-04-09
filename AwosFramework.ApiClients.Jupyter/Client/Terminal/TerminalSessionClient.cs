@@ -46,10 +46,14 @@ namespace AwosFramework.ApiClients.Jupyter.Client.Terminal
 
 		public async ValueTask DisposeAsync()
 		{
-			_terminalClient.Dispose();
-
 			if (_options.CloseTerminalOnDispose)
+			{
+				await _terminalClient.SendAndWaitAsync("exit");
 				await _restClient.CloseTerminalAsync(_apiTerminal.Name);
+			}
+
+			await _terminalClient.DisconnectAsync();
+			_terminalClient.Dispose();
 
 			if (_options.DeleteWorkingDirectoryOnDispose && _options.CreateWorkingDirectory)
 			{
