@@ -1,5 +1,9 @@
-﻿using AwosFramework.ApiClients.Jupyter.Utils;
+﻿using AwosFramework.ApiClients.Jupyter.Rest;
+using AwosFramework.ApiClients.Jupyter.Rest.Models.Session;
+using AwosFramework.ApiClients.Jupyter.Utils;
+using AwosFramework.ApiClients.Jupyter.WebSocket.Base;
 using AwosFramework.ApiClients.Jupyter.WebSocket.Models.Messages;
+using AwosFramework.ApiClients.Jupyter.WebSocket.Models.Messages.IOPub;
 using AwosFramework.ApiClients.Jupyter.WebSocket.Parser;
 using AwosFramework.ApiClients.Jupyter.WebSocket.Protocol;
 using Microsoft.Extensions.Logging;
@@ -7,50 +11,36 @@ using Refit;
 using System;
 using System.Buffers;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel.Design;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Net.WebSockets;
+using System.Reactive.Linq;
+using System.Reflection;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Channels;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 
 namespace AwosFramework.ApiClients.Jupyter.WebSocket
 {
-	public class JupyterWebsocketClient : IDisposable
+	public class JupyterWebsocketClient : WebsocketClientBase<JupyterWebsocketOptions, IWebsocketProtocol, WebsocketMessage, WebsocketError>
 	{
-		public JupyterWebsocketOptions Options { get; init; }
-		private ClientWebSocket _socket;
-
-		private CancellationTokenSource? _stopSocket;
-		private readonly ILogger? _logger;
-
+		
 		private readonly Channel<WebsocketMessage> _receiveChannel;
 		private readonly Channel<WebsocketMessage> _sendChannel;
+		private readonly Dictionary<string, ObservableSource<WebsocketMessage>> _observableMessages = new();
 
 		public ChannelReader<WebsocketMessage> MessageReader => _receiveChannel.Reader;
-
-		public event Action<WebsocketMessage>? OnReceive;
-		public event Action<WebsocketMessage>? OnSend;
-		public event Action<JupyterWebsocketState>? StateChanged;
-
-		public JupyterWebsocketState State { get; private set; } = JupyterWebsocketState.Disconnected;
-
-		[MemberNotNullWhen(true, nameof(IOTask))]
-		public bool IsConnected => State == JupyterWebsocketState.Connected;
-		public bool IsDisconnected => State == JupyterWebsocketState.Disconnected;
-		public bool IsDisposed => State == JupyterWebsocketState.Disposed || State == JupyterWebsocketState.Errored;
-
-		public Task? IOTask { get; private set; }
-		public Exception? Exception { get; private set; }
-
 		private void ThrowIfDisposed()
 		{
 			if (IsDisposed)
 				throw new ObjectDisposedException(nameof(JupyterWebsocketClient));
 		}
 
-		private void SetState(JupyterWebsocketState state)
+		private void SetState(WebsocketState state)
 		{
 			ThrowIfDisposed();
 			if (state != State)
@@ -105,13 +95,13 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket
 			this.ThrowIfDisposed();
 			if (IsDisconnected)
 			{
-				SetState(JupyterWebsocketState.Connecting);
+				SetState(WebsocketState.Connecting);
 				_stopSocket = new CancellationTokenSource();
 				await _socket.ConnectAsync(Options.GetConnectionUri(), _stopSocket.Token);
 				_stopSocket.Token.ThrowIfCancellationRequested();
 				var protocol = IWebsocketProtocol.CreateInstance(_socket.SubProtocol, Options);
 				IOTask = IOLoopAsync(protocol, _stopSocket.Token);
-				SetState(JupyterWebsocketState.Connected);
+				SetState(WebsocketState.Connected);
 			}
 		}
 
@@ -120,11 +110,11 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket
 			this.ThrowIfDisposed();
 			if (IsConnected)
 			{
-				SetState(JupyterWebsocketState.Disconnecting);
+				SetState(WebsocketState.Disconnecting);
 				_stopSocket?.Cancel();
 				await IOTask.ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing);
 				await _socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Client disconnect", CancellationToken.None);
-				SetState(JupyterWebsocketState.Disconnected);
+				SetState(WebsocketState.Disconnected);
 			}
 		}
 
@@ -132,24 +122,97 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket
 		{
 			_stopSocket?.Cancel();
 			_socket.Dispose();
+			while (_receiveChannel.Reader.TryRead(out var msg))
+				msg.Dispose();
+
+			while (_sendChannel.Reader.TryRead(out var msg))
+				msg.Dispose();
 		}
 
 		public void Dispose()
 		{
 			DisposeImpl();
-			SetState(JupyterWebsocketState.Disposed);
+			SetState(WebsocketState.Disposed);
 		}
 
 		private void HandleResult(WebsocketMessage message)
 		{
 			OnReceive?.Invoke(message);
-			_sendChannel.Writer.TryWrite(message);
 			_logger?.LogDebug("Received message {MessageType} on channel {Channel}", message.Header.MessageType, message.Channel);
+			if (message.Content is KernelStatusMessage status && status.ExecutionState == ExecutionState.Idle && message.ParentHeader != null && _observableMessages.TryGetValue(message.ParentHeader.Id, out var observable))
+			{
+				_observableMessages.Remove(message.ParentHeader.Id);
+				observable.NotifyCompleted();
+			}
+
+			if(message.ParentHeader != null && message.Content is not KernelStatusMessage && _observableMessages.TryGetValue(message.ParentHeader.Id, out var ovservable))
+			{
+				ovservable.NotifyItem(message);
+			}
+			else
+			{
+				_receiveChannel.Writer.TryWrite(message);
+			}
 		}
 
 		private async Task SocketSendAsync(ReadOnlyMemory<byte> message, bool lastMessage)
 		{
 			await _socket.SendAsync(message, WebSocketMessageType.Binary, lastMessage, _stopSocket!.Token);
+		}
+
+		private WebsocketMessage CreateMessageFromPayload(object payload, ITransferableBufferHolder? buffers = null, JsonDocument? metaData = null, WebsocketMessage? parent = null)
+		{
+			ArgumentNullException.ThrowIfNull(payload, nameof(payload));
+			var attrs = payload.GetType().GetCustomAttributes<MessageTypeAttribute>().ToArray();
+			var attr = attrs.Length > 1 ? attrs.FirstOrDefault(x => x.MessageType.Contains("request")) : attrs.FirstOrDefault();
+			if (attr == null)
+				throw new ArgumentException($"Type {payload.GetType()} does not have a MessageTypeAttribute");
+
+			var message = new WebsocketMessage
+			{
+				TransferableBuffers = buffers,
+				Channel = attr.Channel,
+				Content = payload,
+				ParentHeader = parent?.Header,
+				MetaData = metaData,
+				Header = new Models.MessageHeader
+				{
+					Id = Guid.NewGuid().ToString(),
+					MessageType = attr.MessageType,
+					SessionId = Options.SessionId.ToString(),
+					UserName = Options.UserName,
+					Version = attr.Version,
+					SubshellId = null,
+					Timestamp = DateTime.UtcNow
+				}
+			};
+
+			return message;
+		}
+
+		public async Task<IObservable<WebsocketMessage>> SendAndObserveAsync(WebsocketMessage message)
+		{
+			var observable = new ObservableSource<WebsocketMessage>();
+			_observableMessages[message.Header!.Id] = observable;
+			await SendAsync(message);
+			return observable;
+		}
+
+		public async Task<IObservable<WebsocketMessage>> SendAndObserveAsync(object payload, ITransferableBufferHolder? buffers = null, JsonDocument? metaData = null, WebsocketMessage? parent = null)
+		{
+			var message = CreateMessageFromPayload(payload, buffers, metaData, parent);
+			var observable = new ObservableSource<WebsocketMessage>();
+			_observableMessages[message.Header!.Id] = observable;
+			await SendAsync(message);
+			return observable;
+		}
+
+
+		public async Task<WebsocketMessage> SendAsync(object payload, ITransferableBufferHolder? buffers = null, JsonDocument? metaData = null, WebsocketMessage? parent = null)
+		{
+			var message = CreateMessageFromPayload(payload, buffers, metaData, parent);
+			await SendAsync(message);
+			return message;
 		}
 
 		public async Task SendAsync(WebsocketMessage message)
@@ -176,7 +239,7 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket
 			if (Options.TryReconnect)
 			{
 				_logger?.LogInformation("Reconnecting to websocket...");
-				SetState(JupyterWebsocketState.Reconnecting);
+				SetState(WebsocketState.Reconnecting);
 				_stopSocket = new CancellationTokenSource();
 				token = _stopSocket.Token;
 
@@ -190,7 +253,7 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket
 						protocol = IWebsocketProtocol.CreateInstance(_socket.SubProtocol, Options);
 						var receive = ReceiveLoopAsync(protocol, token);
 						var send = SendLoopAsync(protocol, token);
-						SetState(JupyterWebsocketState.Connected);
+						SetState(WebsocketState.Connected);
 						_logger?.LogInformation("Reconnected to websocket");
 						return (true, receive, send, protocol, token);
 					}
@@ -233,7 +296,7 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket
 							// something else failed, transition to errored state
 							_stopSocket?.Cancel();
 							this.Exception = returned.Exception;
-							SetState(JupyterWebsocketState.Errored);
+							SetState(WebsocketState.Errored);
 							DisposeImpl();
 							_logger?.LogError(returned.Exception, "Unexpected Websocket Exception {Message}, shutting down socket...", returned.Exception.Message);
 							return;
@@ -242,7 +305,7 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket
 					}
 				}
 
-				SetState(JupyterWebsocketState.Disconnected);
+				SetState(WebsocketState.Disconnected);
 			}
 			finally
 			{

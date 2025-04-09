@@ -1,4 +1,5 @@
 ﻿using AwosFramework.ApiClients.Jupyter.WebSocket.Models.Messages;
+using AwosFramework.ApiClients.Jupyter.WebSocket.Protocol;
 using System;
 using System.Collections.Frozen;
 using System.Collections.Generic;
@@ -7,7 +8,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace AwosFramework.ApiClients.Jupyter.WebSocket.Protocol
+namespace AwosFramework.ApiClients.Jupyter.WebSocket.Base
 {
 	public delegate Task SendDeletegate(ReadOnlyMemory<byte> data, bool lastMessage);
 	public interface IProtocol<TRes, TError> : IDisposable

@@ -31,7 +31,34 @@ namespace AwosFramework.ApiClients.Jupyter.Rest
 
 		public Task<ContentModel> CreateContentCopyAsync(string path, string copy_from) => CreateContentAsync(path, CreateContentRequest.CreateCopy(copy_from));
 		public Task<ContentModel> CreateContentFileAsync(string path, string extension) => CreateContentAsync(path, CreateContentRequest.CreateFile(path, extension));
-		public Task<ContentModel> CreateContentDirectoryAsync(string path) => CreateContentAsync(path, CreateContentRequest.CreateDirectory(path));
+		public Task<ContentModel> CreateContentDirectoryAsync(string path) => PutContentAsync(path, PutContentRequest.CreateDirectory());
+
+		public async Task<ContentModel?> CreateDirectoriesAsync(string path)
+		{
+			ContentModel dir = null;
+			var parts = path.Split('/');
+			for(int i = 0; i < parts.Length; i++)
+				dir = await CreateContentDirectoryAsync(string.Join('/', parts.Take(i+1)));
+
+			return dir;
+		}
+
+		public async Task DeleteRecursivelyAsync(ContentModel model)
+		{
+			if (model.IsDirectory)
+			{
+				var children = await model.AsDirectory.GetContentAsync(true);
+				await Task.WhenAll(children.Select(c => DeleteRecursivelyAsync(c)));
+			}
+
+			await DeleteContentAsync(model.Path);
+		}
+
+		public async Task DeleteRecursivelyAsync(string path)
+		{
+			var contents = await GetContentsAsync(path);
+			await DeleteRecursivelyAsync(contents);
+		}
 
 		[Post("/contents/{path}")]
 		public Task<ContentModel> CreateContentAsync(string path, [Body] CreateContentRequest request);
@@ -63,6 +90,9 @@ namespace AwosFramework.ApiClients.Jupyter.Rest
 		[Get("/sessions/{id}")]
 		public Task<SessionModel> GetSessionAsync(Guid id);
 
+		[Delete("/sessions/{id}")]
+		public Task DeleteSessionAsync(Guid id);
+
 		[Post("/sessions")]
 		public Task<SessionModel> StartSessionAsync([Body] StartSessionRequest req);
 
@@ -74,19 +104,19 @@ namespace AwosFramework.ApiClients.Jupyter.Rest
 
 		[Delete("/kernels/{id}")]
 		public Task ShutdownKernelAsync(Guid id);
-		public Task ShutdownKernelAsync(KernelModel kernel) => ShutdownKernelAsync(kernel.Id);
+		public Task ShutdownKernelAsync(KernelModel kernel) => ShutdownKernelAsync(kernel.Id.Value);
 
 		[Post("/kernels")]
-		public Task<KernelModel> StartKernelAsync([Body]StartKernelRequest req);
-		public Task<KernelModel> StartKernelAsync(string specName, string?path = null) => StartKernelAsync(new StartKernelRequest { SpecName = specName, Path = path });
+		public Task<KernelModel> StartKernelAsync([Body] StartKernelRequest req);
+		public Task<KernelModel> StartKernelAsync(string specName, string? path = null) => StartKernelAsync(new StartKernelRequest { SpecName = specName, Path = path });
 
 		[Post("/kernels/{id}/interrupt")]
 		public Task InterruptKernelAsync(Guid id);
-		public Task InterruptKernelAsync(KernelModel kernel) => InterruptKernelAsync(kernel.Id);
+		public Task InterruptKernelAsync(KernelModel kernel) => InterruptKernelAsync(kernel.Id.Value);
 
 		[Post("/kernels/{id}/restart")]
 		public Task RestartKernelAsync(Guid id);
-		public Task RestartKernelAsync(KernelModel kernel) => RestartKernelAsync(kernel.Id);
+		public Task RestartKernelAsync(KernelModel kernel) => RestartKernelAsync(kernel.Id.Value);
 
 		[Get("/kernelspecs")]
 		public Task<KernelSpecsResponse> GetKernelSpecsAsync();
@@ -95,7 +125,7 @@ namespace AwosFramework.ApiClients.Jupyter.Rest
 		public Task<JsonDocument> GetConfigSectionAsync(string section);
 
 		[Patch("/config/{section}")]
-		public Task UpdateConfigSectionAsync(string section, [Body]JsonDocument data);
+		public Task UpdateConfigSectionAsync(string section, [Body] JsonDocument data);
 
 		[Get("/api/terminals")]
 		public Task<TerminalModel[]> GetTerminalsAsync();
@@ -109,14 +139,14 @@ namespace AwosFramework.ApiClients.Jupyter.Rest
 		public Task CloseTerminalAsync(TerminalModel terminal) => CloseTerminalAsync(terminal.Name);
 
 		[Get("/me")]
-		public Task<IdentityResponse> GetCurrentUserAsync([AliasAs("permissions")]string permissionFilter = null);
+		public Task<IdentityResponse> GetCurrentUserAsync([AliasAs("permissions")] string permissionFilter = null);
 		public Task<IdentityResponse> GetCurrentUserAsync(Dictionary<string, string[]> permissionsFilter) => GetCurrentUserAsync(JsonSerializer.Serialize(permissionsFilter));
 
 		[Get("/status")]
 		public Task<StatusModel> GetStatusAsync();
 
 		[Get("/contents/{path}?type=file&content=1")]
-		internal Task<FileContentResponse> GetFileContentAsync(string path, [AliasAs("format")]ContentFormat format);
+		internal Task<FileContentResponse> GetFileContentAsync(string path, [AliasAs("format")] ContentFormat format);
 
 		[Get("/contents/{path}?type=notebook&content=1")]
 		internal Task<NotebookContentResponse> GetNotebookContentAsync(string path);

@@ -25,6 +25,7 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Models.Messages
 
 		public string MessageType { get; init; }
 		public ChannelKind Channel { get; init; }
+		public string Version { get; init; } = "5.3";
 
 		public MessageTypeAttribute(string messageType, ChannelKind channel)
 		{

@@ -1,4 +1,5 @@
 ﻿using AngleSharp.Io;
+using AwosFramework.ApiClients.Jupyter.Client;
 using AwosFramework.ApiClients.Jupyter.Rest;
 using AwosFramework.ApiClients.Jupyter.Rest.Models;
 using AwosFramework.ApiClients.Jupyter.WebSocket;
@@ -27,55 +28,31 @@ var loggerFactory = LoggerFactory.Create(builder =>
 	builder.SetMinimumLevel(LogLevel.Debug);
 });
 
-var token = "81227d216ffcfdb82faf22b1b88d7ab20fc9e8f41de22639";
-var jupyter = JupyterRestClient.GetRestClient("http://localhost:8888", token);
-var sessions = await jupyter.GetSessionsAsync();
+var token = "371e778dcd2efdadab0e25fda1989e361d03d160f7aa970a";
+var jupyter = new JupyterClient("http://localhost:8888", token, loggerFactory);
 
-
-if(sessions.Length > 0)
+using(var session = await jupyter.StartKernelSessionAsync())
 {
-	var session = sessions[0];
-	var options = new JupyterWebsocketOptions("ws://localhost:8888", session.Kernel.Id, Guid.NewGuid(), token)
+	var jsonContent = $$"""
 	{
-		LoggerFactory = loggerFactory,
-		MaxReconnectTries = 3
-	};
+		"message": "Hello World from Kernel Session {{session.SessionId}}"
+	}
+	""";
+	await session.UploadFileAsync("msg.json", jsonContent);
 
-	var ws = new JupyterWebsocketClient(options);
-	await ws.ConnectAsync();
-	ws.OnReceive += (msg) =>
-	{
-		Console.WriteLine($"Received Message: {msg.Header.MessageType} on Channel {msg.Channel} with Id {msg.Header.Id} and Parent Id {(msg.ParentHeader?.Id ?? "None")}");
-		Console.WriteLine(JsonSerializer.Serialize(msg.Content));
-	};
+	var pythonCode = """		
+	import json
 
-	var executeMsg = new WebsocketMessage
-	{
-		Buffers = PooledBufferHolder.Empty,
-		Channel = ChannelKind.Shell,
-		Header = new MessageHeader
-		{
-			Id = Guid.NewGuid().ToString(),
-			MessageType = "execute_request",
-			SessionId = options.SessionId.ToString(),
-			UserName = "username",
-			Version = "5.3",
-			SubshellId = null,
-			Timestamp = DateTime.UtcNow
-		},
-		ParentHeader = null,
-		Content = new ExecuteRequest
-		{
-			Code = "4 + 5",
-			UserExpressions = new()
-			{
-				["test"] = "3*3"
-			}
-		},
-		MetaData = null
-	};
+	message = ""
+	with open("msg.json", "r") as f:
+		data = json.load(f)
+		message = data["message"]
 
-	await ws.SendAsync(executeMsg);
-	Console.WriteLine("Sent msg with id: {0}", executeMsg.Header.Id);
-	await ws.IOTask;
+	message
+	""";
+
+	var res = await session.ExecuteCodeAsync(pythonCode);
+	var stringData = res.Results.FirstOrDefault(x => x.Data.ContainsKey("text/plain"));
+	Console.WriteLine(stringData?.Data["text/plain"]);
 }
+

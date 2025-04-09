@@ -32,6 +32,11 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Models.Messages
 
 		public IBufferHolder Buffers => (IBufferHolder)TransferableBuffers;
 
+		~WebsocketMessage()
+		{
+			Dispose();
+		}
+
 		public void Dispose()
 		{
 			Buffers?.Dispose();

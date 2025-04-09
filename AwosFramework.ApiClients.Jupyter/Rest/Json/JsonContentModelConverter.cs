@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -13,11 +14,17 @@ namespace AwosFramework.ApiClients.Jupyter.Rest.Json
 	{
 		private Type FindModelType(Utf8JsonReader readerCopy)
 		{
+			int depth = 0;
+
 			while (readerCopy.Read())
 			{
 				if (readerCopy.TokenType == JsonTokenType.EndObject)
-					break;
-				if (readerCopy.TokenType == JsonTokenType.PropertyName)
+					depth--;
+
+				if(readerCopy.TokenType == JsonTokenType.StartObject)
+					depth++;
+
+				if (readerCopy.TokenType == JsonTokenType.PropertyName && depth == 0)
 				{
 					var propertyName = readerCopy.GetString();
 					if (propertyName == "type")

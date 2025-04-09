@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace AwosFramework.ApiClients.Jupyter.WebSocket
 {
-	public enum JupyterWebsocketState
+	public enum WebsocketState
 	{
 		Disconnected,
 		Connected,

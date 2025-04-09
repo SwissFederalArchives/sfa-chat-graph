@@ -1,4 +1,5 @@
 ﻿using AwosFramework.ApiClients.Jupyter.Utils;
+using AwosFramework.ApiClients.Jupyter.WebSocket.Base;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Buffers;
@@ -10,14 +11,15 @@ using System.Threading.Tasks;
 
 namespace AwosFramework.ApiClients.Jupyter.WebSocket
 {
-	public class JupyterWebsocketOptions
+	public record JupyterWebsocketOptions : IWebsocketOptions
 	{
 		public required Uri Endpoint { get; init; }
 		public Guid KernelId { get; init; }
 		public Guid SessionId { get; init; }
 		public string? Token { get; init; }
-		public ArrayPool<byte> ArrayPool { get; init; } = ArrayPool<byte>.Shared;
 		public int? MaxMessages { get; init; } = 1024;
+		public ArrayPool<byte> ArrayPool { get; init; } = ArrayPool<byte>.Shared;
+
 		public int? MaxReconnectTries { get; init; } = 3;
 		public TimeSpan ReconnectDelay { get; init; } = TimeSpan.FromSeconds(15);
 		public ILoggerFactory? LoggerFactory { get; init; } = null;
@@ -25,12 +27,8 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket
 		[MemberNotNullWhen(true, nameof(MaxReconnectTries))]
 		public bool TryReconnect => MaxReconnectTries.HasValue;
 
+		public string UserName { get; init; } = "username";
 
-		public bool HasToken([NotNullWhen(true)]out string? token)
-		{
-			token = Token;
-			return token != null;
-		}
 
 		[SetsRequiredMembers]
 		public JupyterWebsocketOptions(string endpoint, Guid kernelId, Guid? sessionId = null, string? token = null) : this(new Uri(endpoint), kernelId, sessionId, token)
@@ -42,6 +40,13 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket
 		[SetsRequiredMembers]
 		public JupyterWebsocketOptions(Uri endpoint, Guid kernelId, Guid? sessionId = null, string? token = null)
 		{
+			if (endpoint.Scheme.StartsWith("http"))
+			{
+				var builder = new UriBuilder(endpoint);
+				builder.Scheme = endpoint.Scheme.EndsWith("s") ? "wss" : "ws";
+				endpoint = builder.Uri;
+			}
+
 			Endpoint = endpoint.OfComponents(UriComponents.SchemeAndServer);
 			KernelId = kernelId;
 			SessionId = sessionId??Guid.NewGuid();

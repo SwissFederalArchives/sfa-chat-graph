@@ -26,7 +26,7 @@ namespace AwosFramework.ApiClients.Jupyter.Rest.Models.Contents
 		}
 
 		public static CreateContentRequest CreateCopy(string path) => new CreateContentRequest(path, null, ContentType.File);
-		public static CreateContentRequest CreateDirectory(string path) => new CreateContentRequest(path, null, ContentType.Directory);
+		public static CreateContentRequest CreateDirectory() => new CreateContentRequest(null, null, ContentType.Directory);
 		public static CreateContentRequest CreateFile(string path, string extension) => new CreateContentRequest(path, extension, ContentType.File);
 	}
 }

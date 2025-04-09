@@ -10,7 +10,7 @@ namespace AwosFramework.ApiClients.Jupyter.Rest.Models.Session
 	public class KernelIdentification
 	{
 		[JsonPropertyName("id")]
-		public Guid Id { get; set; }
+		public Guid? Id { get; set; }
 
 		[JsonPropertyName("name")]
 		public string? SpecName { get; set; }

@@ -9,6 +9,7 @@ namespace AwosFramework.ApiClients.Jupyter.Rest.Models.Session
 {
 	public class StartSessionRequest
 	{
+		public Guid? Id { get; set; }
 		public SessionType Type { get; set; }
 		public string? Path { get; set; }
 		public string? Name { get; set; }
@@ -24,6 +25,6 @@ namespace AwosFramework.ApiClients.Jupyter.Rest.Models.Session
 		}
 
 		public static StartSessionRequest CreateNotebook(KernelIdentification kernel, string path, string? name = null) => new StartSessionRequest(SessionType.Notebook, path, name, kernel);
-		public static StartSessionRequest CreateConsole(KernelIdentification kernel, string? name = null) => new StartSessionRequest(SessionType.Console, null, name, kernel);
+		public static StartSessionRequest CreateConsole(KernelIdentification kernel, string? path = null, string? name = null) => new StartSessionRequest(SessionType.Console, path, name, kernel);
 	}
 }
