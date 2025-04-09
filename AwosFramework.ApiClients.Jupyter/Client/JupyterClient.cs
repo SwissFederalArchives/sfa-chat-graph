@@ -1,6 +1,6 @@
 ﻿using AwosFramework.ApiClients.Jupyter.Rest;
 using AwosFramework.ApiClients.Jupyter.Rest.Models.Session;
-using AwosFramework.ApiClients.Jupyter.WebSocket;
+using AwosFramework.ApiClients.Jupyter.WebSocket.Jupyter;
 using Microsoft.Extensions.Logging;
 
 namespace AwosFramework.ApiClients.Jupyter.Client

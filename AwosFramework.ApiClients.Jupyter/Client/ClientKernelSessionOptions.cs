@@ -1,4 +1,4 @@
-﻿using AwosFramework.ApiClients.Jupyter.WebSocket;
+﻿using AwosFramework.ApiClients.Jupyter.WebSocket.Jupyter;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;

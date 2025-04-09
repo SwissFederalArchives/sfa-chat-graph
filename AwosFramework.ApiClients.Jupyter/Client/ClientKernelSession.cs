@@ -2,8 +2,10 @@
 using AwosFramework.ApiClients.Jupyter.Rest.Models.Contents;
 using AwosFramework.ApiClients.Jupyter.Rest.Models.Session;
 using AwosFramework.ApiClients.Jupyter.WebSocket;
+using AwosFramework.ApiClients.Jupyter.WebSocket.Jupyter;
+using AwosFramework.ApiClients.Jupyter.WebSocket.Jupyter.Models.Messages.IOPub;
+using AwosFramework.ApiClients.Jupyter.WebSocket.Jupyter.Models.Messages.Shell;
 using AwosFramework.ApiClients.Jupyter.WebSocket.Models.Messages;
-using AwosFramework.ApiClients.Jupyter.WebSocket.Models.Messages.IOPub;
 using AwosFramework.ApiClients.Jupyter.WebSocket.Models.Messages.Shell;
 using System;
 using System.Collections.Generic;

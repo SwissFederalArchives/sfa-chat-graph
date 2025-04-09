@@ -1,5 +1,5 @@
-﻿using AwosFramework.ApiClients.Jupyter.WebSocket.Models.Messages.IOPub;
-using AwosFramework.ApiClients.Jupyter.WebSocket.Models.Messages.Shell;
+﻿using AwosFramework.ApiClients.Jupyter.WebSocket.Jupyter.Models.Messages.IOPub;
+using AwosFramework.ApiClients.Jupyter.WebSocket.Jupyter.Models.Messages.Shell;
 using System;
 using System.Collections.Generic;
 using System.Linq;
