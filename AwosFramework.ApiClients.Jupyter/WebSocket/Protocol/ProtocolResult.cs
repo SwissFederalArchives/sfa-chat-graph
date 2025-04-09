@@ -41,9 +41,9 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Protocol
 		public static ProtocolResult<TRes, TError> ErrorResult<TRes, TError>(TError error, int countRead) => new ProtocolResult<TRes, TError>(countRead, default, error);
 		public static ProtocolResult<TRes, TError> OkResult<TRes, TError>(int countRead) => new ProtocolResult<TRes, TError>(countRead, default, default);
 	
-		public static ProtocolResult<WebsocketMessage, WebsocketError> CompletedResult(WebsocketMessage message, int countRead) => new ProtocolResult<WebsocketMessage, WebsocketError>(countRead, message, default);
-		public static ProtocolResult<WebsocketMessage, WebsocketError> ErrorResult(WebsocketError error, int countRead) => new ProtocolResult<WebsocketMessage, WebsocketError>(countRead, default, error);
-		public static ProtocolResult<WebsocketMessage, WebsocketError> PartialResult(int countRead) => new ProtocolResult<WebsocketMessage, WebsocketError>(countRead, default, default);
+		public static ProtocolResult<WebsocketMessage, JupyterWebsocketError> CompletedResult(WebsocketMessage message, int countRead) => new ProtocolResult<WebsocketMessage, JupyterWebsocketError>(countRead, message, default);
+		public static ProtocolResult<WebsocketMessage, JupyterWebsocketError> ErrorResult(JupyterWebsocketError error, int countRead) => new ProtocolResult<WebsocketMessage, JupyterWebsocketError>(countRead, default, error);
+		public static ProtocolResult<WebsocketMessage, JupyterWebsocketError> PartialResult(int countRead) => new ProtocolResult<WebsocketMessage, JupyterWebsocketError>(countRead, default, default);
 
 
 	}

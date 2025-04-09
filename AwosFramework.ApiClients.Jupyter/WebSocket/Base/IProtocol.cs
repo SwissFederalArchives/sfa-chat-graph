@@ -54,8 +54,8 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Base
 
 	}
 
-	public interface IWebsocketProtocol : IProtocol<WebsocketMessage, WebsocketError>
+	public interface IWebsocketProtocol : IProtocol<WebsocketMessage, JupyterWebsocketError>
 	{
-		public static IWebsocketProtocol CreateInstance(string? protocolName, JupyterWebsocketOptions options) => (IWebsocketProtocol)IProtocol<WebsocketMessage, WebsocketError>.CreateInstance(protocolName, options);
+		public static IWebsocketProtocol CreateInstance(string? protocolName, JupyterWebsocketOptions options) => (IWebsocketProtocol)IProtocol<WebsocketMessage, JupyterWebsocketError>.CreateInstance(protocolName, options);
 	}
 }

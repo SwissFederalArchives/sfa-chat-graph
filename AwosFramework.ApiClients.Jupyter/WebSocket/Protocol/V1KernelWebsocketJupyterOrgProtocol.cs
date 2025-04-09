@@ -39,7 +39,7 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Protocol
 			_jsonOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.SnakeCaseLower));
 		}
 
-		public async Task<ProtocolResult<WebsocketMessage, WebsocketError>> ReadAsync(Memory<byte> memory, bool endOfMessage)
+		public async Task<ProtocolResult<WebsocketMessage, JupyterWebsocketError>> ReadAsync(Memory<byte> memory, bool endOfMessage)
 		{
 			int initialLength = memory.Length;
 			do
@@ -51,7 +51,7 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Protocol
 				memory = memory.Slice(read);
 				if (_parserState.IsErrorState(out var errorCode))
 				{
-					var error = new WebsocketError(errorCode.Value, _parserState.Exception);
+					var error = new JupyterWebsocketError(errorCode.Value, _parserState.Exception);
 					return ProtocolResult.ErrorResult(error, initialLength - memory.Length);
 				}
 

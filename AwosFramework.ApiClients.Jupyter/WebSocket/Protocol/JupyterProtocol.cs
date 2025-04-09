@@ -34,7 +34,7 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Protocol
 			_readBuffer?.Dispose();
 		}
 
-		public async Task<ProtocolResult<WebsocketMessage, WebsocketError>> ReadAsync(Memory<byte> memory, bool endOfMessage)
+		public async Task<ProtocolResult<WebsocketMessage, JupyterWebsocketError>> ReadAsync(Memory<byte> memory, bool endOfMessage)
 		{
 			try
 			{
@@ -58,7 +58,7 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Protocol
 			catch (Exception ex)
 			{
 				_readBuffer.SetLength(0);
-				return ProtocolResult.ErrorResult(new WebsocketError(Parser.WebsocketParserError.Unknown, ex), memory.Length);
+				return ProtocolResult.ErrorResult(new JupyterWebsocketError(Parser.WebsocketParserError.Unknown, ex), memory.Length);
 			}
 		}
 

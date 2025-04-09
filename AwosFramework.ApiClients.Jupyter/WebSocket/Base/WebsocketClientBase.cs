@@ -26,7 +26,7 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Base
 		protected readonly ILogger? _logger;
 		private CancellationTokenSource? _stopSocket;
 		private ClientWebSocket _socket;
-
+		protected CancellationToken CancellationToken => _stopSocket?.Token ?? CancellationToken.None;
 
 
 		public TOptions Options { get; init; }
@@ -65,7 +65,7 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Base
 			IOTask = null;
 		}
 
-		protected abstract void HandleResult(TMsg message);
+		protected abstract Task HandleResultAsync(TMsg message);
 		protected abstract Task<TMsg> NextMessagAsync(CancellationToken token); 
 
 		private async Task SocketSendAsync(ReadOnlyMemory<byte> message, bool lastMessage)
@@ -117,7 +117,7 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Base
 						if (result.IsCompleted(out var message))
 						{
 							OnReceive?.Invoke(message);
-							HandleResult(message);
+							await HandleResultAsync(message);
 						}
 
 					} while (countRead < receivedCount);
