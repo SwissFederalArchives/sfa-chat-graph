@@ -43,11 +43,11 @@ namespace AwosFramework.ApiClients.Jupyter.Client.Jupyter
 			_websocketClient = new JupyterWebsocketClient(opts);
 		}
 
-		public async Task<CodeExecutionResult> ExecuteCodeAsync(string code)
+		public async Task<CodeExecutionResult> ExecuteCodeAsync(string code, CancellationToken token = default)
 		{
 			var executeRequest = new ExecuteRequest { Code = code, StopOnError = true };
 			var observable = await _websocketClient.SendAndObserveAsync(executeRequest);
-			var items = await observable.ToAsyncEnumerable().Select(x => x.Content).ToArrayAsync();
+			var items = await observable.ToAsyncEnumerable().Select(x => x.Content).ToArrayAsync(token);
 			var result = items.OfType<ExecuteReply>().FirstOrDefault();
 			var data = items.OfType<DisplayDataMessage>();
 			return new CodeExecutionResult { Request = executeRequest, Reply = result, Results = data.ToArray() };
@@ -58,6 +58,13 @@ namespace AwosFramework.ApiClients.Jupyter.Client.Jupyter
 		{
 			if (_options.CreateWorkingDirectory == false)
 				throw new InvalidOperationException("FileIO is disabled");
+		}
+
+		public async Task UploadFileAsync(PutContentRequest request)
+		{
+			FileIOCheck();
+			ThrowIfDisposed();
+			await _restClient.PutContentAsync($"{_options.StoragePath}/{request.Name}", request);
 		}
 
 		public async Task UploadFileAsync(string name, string data, Encoding? encoding = null)

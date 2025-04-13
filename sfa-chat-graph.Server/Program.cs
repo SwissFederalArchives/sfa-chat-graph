@@ -9,6 +9,8 @@ using sfa_chat_graph.Server.Utils;
 using Json.Schema.Generation.DataAnnotations;
 using sfa_chat_graph.Server.RDF;
 using sfa_chat_graph.Server.RDF.Endpoints;
+using sfa_chat_graph.Server.Services.CodeExecutionService;
+using sfa_chat_graph.Server.Services.CodeExecutionService.Jupyter;
 
 DotNetEnv.Env.Load();
 DataAnnotationsSupport.AddDataAnnotations();
@@ -21,6 +23,8 @@ builder.Services.AddScoped(x => x.GetRequiredService<OpenAIClient>().GetChatClie
 builder.Services.AddScoped(x => x.AsIParentResolver());
 builder.Services.AddScoped<FunctionCallRegistry>();
 
+builder.Services.Configure<JupyterCodeExecutionServiceOptions>(builder.Configuration.GetSection("JupyterOptions"));
+builder.Services.AddScoped<ICodeExecutionService, JupyterCodeExecutionService>();
 builder.Services.AddSingleton<ISparqlEndpoint>(new StardogEndpoint("https://lindas.admin.ch/query"));
 builder.Services.AddSingleton<IGraphRag, GraphRag>();
 

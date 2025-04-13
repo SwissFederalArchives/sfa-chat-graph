@@ -11,6 +11,7 @@ using VDS.RDF;
 using SfaChatGraph.Server.Utils;
 using Microsoft.EntityFrameworkCore.Query.Internal;
 using SfaChatGraph.Server.RDF;
+using sfa_chat_graph.Server.Services.CodeExecutionService;
 
 namespace sfa_chat_graph.Server.Services.ChatService.OpenAI
 {
@@ -37,7 +38,7 @@ namespace sfa_chat_graph.Server.Services.ChatService.OpenAI
 		private static readonly SystemChatMessage ChatSystemMessage = new SystemChatMessage(CHAT_SYS_PROMPT);
 
 
-		public OpenAIChatService(ChatClient client, FunctionCallRegistry functionCalls)
+		public OpenAIChatService(ChatClient client, FunctionCallRegistry functionCalls, ICodeExecutionService codeExecutionService)
 		{
 			_client = client;
 			_functionCalls = functionCalls;

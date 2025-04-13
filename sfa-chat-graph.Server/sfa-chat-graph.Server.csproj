@@ -45,6 +45,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\AwosFramework.ApiClients.Jupyter\AwosFramework.ApiClients.Jupyter.csproj" />
     <ProjectReference Include="..\AwosFramework.Generators.FunctionCalling\AwosFramework.Generators.FunctionCalling.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     
     <ProjectReference Include="..\sfa-chat-graph.client\sfa-chat-graph.client.esproj">
