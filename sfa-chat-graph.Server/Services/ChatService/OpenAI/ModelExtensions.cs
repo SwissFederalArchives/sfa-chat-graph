@@ -28,7 +28,7 @@ namespace sfa_chat_graph.Server.Services.ChatService.OpenAI
 
 		}
 
-		public static ApiMessage AsApiMessage(this ChatMessage msg, string query = null, SparqlResultSet visualisation = null, SparqlResultSet graphData = null)
+		public static ApiMessage AsApiMessage(this ChatMessage msg, ApiCodeToolData codeToolData = null)
 		{
 			return msg switch
 			{
@@ -37,7 +37,22 @@ namespace sfa_chat_graph.Server.Services.ChatService.OpenAI
 					new ApiToolCallMessage(assistantChatMessage.ToolCalls.Select(x => new ApiToolCall(x.FunctionName, x.Id, JsonDocument.Parse(x.FunctionArguments)))) :
 					new ApiAssistantMessage(assistantChatMessage.Content.First().Text)
 				),
-				ToolChatMessage toolMessage => new ApiToolResponseMessage(toolMessage.ToolCallId, toolMessage.Content.First().Text, query, visualisation, graphData),
+				ToolChatMessage toolMessage => new ApiToolResponseMessage(toolMessage.ToolCallId, toolMessage.Content.First().Text, codeToolData),
+				UserChatMessage userMessage => new ApiMessage(ChatRole.User, userMessage.Content.First().Text),
+				_ => throw new System.NotImplementedException()
+			};
+		}
+
+		public static ApiMessage AsApiMessage(this ChatMessage msg, ApiGraphToolData graphToolData = null)
+		{
+			return msg switch
+			{
+				AssistantChatMessage assistantChatMessage => (
+					assistantChatMessage.ToolCalls?.Count > 0 ?
+					new ApiToolCallMessage(assistantChatMessage.ToolCalls.Select(x => new ApiToolCall(x.FunctionName, x.Id, JsonDocument.Parse(x.FunctionArguments)))) :
+					new ApiAssistantMessage(assistantChatMessage.Content.First().Text)
+				),
+				ToolChatMessage toolMessage => new ApiToolResponseMessage(toolMessage.ToolCallId, toolMessage.Content.First().Text,  graphToolData),
 				UserChatMessage userMessage => new ApiMessage(ChatRole.User, userMessage.Content.First().Text),
 				_ => throw new System.NotImplementedException()
 			};

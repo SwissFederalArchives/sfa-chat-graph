@@ -73,7 +73,29 @@ namespace sfa_chat_graph.Server.Services.ChatService.OpenAI
 			var visualisation = await _graphDb.GetVisualisationResultAsync(result, query);
 			var csv = SparqlResultFormatter.ToCSV(result, 50);
 			var toolMessage = CreateToolMessage(toolCallId, csv);
-			var apiMessage = toolMessage.AsApiMessage(query, visualisation, result);
+			var graphToolData = new ApiGraphToolData { DataGraph = result, VisualisationGraph = visualisation, Query = query };
+			var apiMessage = toolMessage.AsApiMessage(graphToolData);
+			return new Message(toolMessage, apiMessage);
+		}
+
+		private Message HandleCodeResult(string toolCallId, CodeExecutionResult result, string code)
+		{
+			var toolMessage = CreateToolMessage(toolCallId, FormatCodeResponse(result));
+			var codeToolData = new ApiCodeToolData { Code = code, Error = result.Error, Data = result.Fragments?.SelectMany(x => x.BinaryData.Select(item =>
+			{
+				var mimeType = item.Key;
+				var isText = mimeType.StartsWith("text/", StringComparison.OrdinalIgnoreCase) || mimeType.Equals("application/json", StringComparison.OrdinalIgnoreCase);
+				return new ApiCodeResultData
+				{
+					Description = x.Description,
+					Id = Guid.NewGuid(),
+					Content = item.Value,
+					IsBase64Content = isText == false,
+					MimeType = mimeType
+				};
+			}))?.ToArray()};
+
+			var apiMessage = toolMessage.AsApiMessage(codeToolData);
 			return new Message(toolMessage, apiMessage);
 		}
 
@@ -148,8 +170,8 @@ namespace sfa_chat_graph.Server.Services.ChatService.OpenAI
 
 				case FunctionCallRegistry.EXECUTE_CODE:
 					var result = (CodeExecutionResult)responseObj;
-					var resultString = FormatCodeResponse(result);
-					return CreateToolMessage(toolCall.Id, resultString);
+					var codeString = toolParameters.RootElement.GetProperty("Code").GetString();
+					return HandleCodeResult(toolCall.Id, result, codeString);
 
 				default:
 					throw new NotImplementedException($"Tool call {toolCall.FunctionName} not implemented yet. Please implement it in the HandleToolCallImplAsync method.");
