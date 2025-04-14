@@ -17,7 +17,7 @@ namespace sfa_chat_graph.Server.Services.ChatService
 		}
 
 		[FunctionCall("execute_code")]
-		public async Task<CodeExecutionResult> ExecuteCodeAsync([Description("The code to execute")] string code, [Description("A list of id's of previous tool responses. The data of those responses will be available as csv file to the code. The file will be named <tool_reponse_id>.csv")] string[] toolData, [Context] ChatContext chatContext)
+		public async Task<CodeExecutionResult> ExecuteCodeAsync([Description("The code to execute")] string code, [Description("A list of id's of previous tool responses. The data of those responses will be available as csv file to the code. The file will be named <tool_reponse_id>.csv. The csv values are separated by ';'.")] string[] toolData, [Context] ChatContext chatContext)
 		{
 			var additionalFiles = chatContext.ToolResponses.Where(x => toolData.Contains(x.ToolCallId) && x.GraphToolData != null).ToArray();
 			if (additionalFiles.Length != toolData.Length)

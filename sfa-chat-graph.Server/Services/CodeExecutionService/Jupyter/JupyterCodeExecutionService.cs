@@ -97,7 +97,7 @@ namespace sfa_chat_graph.Server.Services.CodeExecutionService.Jupyter
 			if (reply.Status == StatusType.Error)
 			{
 				var error = $"{reply.ExceptionName}: {reply.ExceptionValue}\n\nStacktrace:\n{string.Join("\n", reply.StackTrace)}";
-				return new CodeExecutionResult { Success = false, Fragments = null, Error = error };
+				return new CodeExecutionResult { Success = false, Language = _kernelSpec.Spec.Language, Fragments = null, Error = error };
 			}
 			else
 			{
@@ -106,7 +106,8 @@ namespace sfa_chat_graph.Server.Services.CodeExecutionService.Jupyter
 				{
 					Success = true,
 					Fragments = fragments,
-					Error = null
+					Error = null,
+					Language = _kernelSpec.Spec.Language
 				};
 			}
 		}

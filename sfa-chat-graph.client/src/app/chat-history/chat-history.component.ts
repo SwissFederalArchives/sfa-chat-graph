@@ -56,16 +56,16 @@ export class ChatHistoryComponent {
 
       const previousResponseIndex = this.history.slice(0, -1).reverse().findIndex(m => m.role == ChatRole.Assitant);
       const subGraphs = this.history.slice(Math.max(0, previousResponseIndex), -1)
-        .filter(m => m.role == ChatRole.ToolResponse && m.graph && m.toolCallId)
+        .filter(m => m.role == ChatRole.ToolResponse && m.graphToolData && m.toolCallId)
         .map(msg => this.graph.getSubGraph(msg.toolCallId!))
         .filter(x => x)
         .map(subGraph => new SubGraphMarker(subGraph!.id, subGraph!.leafColor, subGraph!.id));
 
       const queries = this.history.slice(Math.max(0, previousResponseIndex), -1)
-        .filter(m => m.role == ChatRole.ToolCall && m.toolCalls)
-        .flatMap(msg => msg.toolCalls)
-        .filter(call => call?.toolId == 'query')
-        .map(call => `\`\`\`sparql\n${call!.arguments?.Query}\n\`\`\``);
+        .filter(m => m.role == ChatRole.ToolResponse && m.graphToolData)
+        .map(msg => msg.graphToolData?.query)
+        .filter(query => query)
+        .map(query => `\`\`\`sparql\n${query}\n\`\`\``);
 
       this.displayHistory.push(new DisplayMessage(message.id, message.content!, 'chat-message-left', subGraphs, queries));
     } else if (message.role == ChatRole.User) {
@@ -94,8 +94,8 @@ export class ChatHistoryComponent {
       const response = await this._apiClient.chatAsync(request);
       let sparqlLoaded: boolean = false;
 
-      for (let sparql of response.filter(m => m.role == ChatRole.ToolResponse).filter(tc => tc && tc.graph)) {
-        this.graph.loadFromSparqlStar(sparql!.graph!, 100, sparql!.toolCallId);
+      for (let sparql of response.filter(m => m.role == ChatRole.ToolResponse).filter(tc => tc && tc.graphToolData && tc.graphToolData.visualisationGraph)) {
+        this.graph.loadFromSparqlStar(sparql!.graphToolData!.visualisationGraph!, 100, sparql!.toolCallId);
         sparqlLoaded = true;
       }
 

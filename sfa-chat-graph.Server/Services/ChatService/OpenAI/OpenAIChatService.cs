@@ -81,11 +81,16 @@ namespace sfa_chat_graph.Server.Services.ChatService.OpenAI
 		private Message HandleCodeResult(string toolCallId, CodeExecutionResult result, string code)
 		{
 			var toolMessage = CreateToolMessage(toolCallId, FormatCodeResponse(result));
-			var codeToolData = new ApiCodeToolData { Code = code, Error = result.Error, Data = result.Fragments?.SelectMany(x => x.BinaryData.Select(item =>
+			var codeToolData = new ApiCodeToolData
+			{
+				Language = result.Language,
+				Code = code,
+				Error = result.Error,
+				Data = result.Fragments?.SelectMany(x => x.BinaryData.Select(item =>
 			{
 				var mimeType = item.Key;
 				var isText = mimeType.StartsWith("text/", StringComparison.OrdinalIgnoreCase) || mimeType.Equals("application/json", StringComparison.OrdinalIgnoreCase);
-				return new ApiCodeResultData
+				return new ApiToolData
 				{
 					Description = x.Description,
 					Id = Guid.NewGuid(),
@@ -93,7 +98,8 @@ namespace sfa_chat_graph.Server.Services.ChatService.OpenAI
 					IsBase64Content = isText == false,
 					MimeType = mimeType
 				};
-			}))?.ToArray()};
+			}))?.ToArray()
+			};
 
 			var apiMessage = toolMessage.AsApiMessage(codeToolData);
 			return new Message(toolMessage, apiMessage);
@@ -247,7 +253,7 @@ namespace sfa_chat_graph.Server.Services.ChatService.OpenAI
 			switch (completion.FinishReason)
 			{
 				case ChatFinishReason.Stop:
-					return new ToolHandleResponse( false, false);
+					return new ToolHandleResponse(false, false);
 
 				case ChatFinishReason.ToolCalls:
 					var errorsExceeded = await HandleToolCallsAsync(ctx, response, completion, maxErrors);

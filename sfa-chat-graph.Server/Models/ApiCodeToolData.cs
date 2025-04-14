@@ -2,8 +2,9 @@
 {
 	public class ApiCodeToolData
 	{
-		public ApiCodeResultData[] Data { get; set; }
+		public ApiToolData[] Data { get; set; }
 		public string Error { get; set; }
 		public string Code { get; set; }
+		public string Language { get; set; }
 	}
 }

@@ -1,6 +1,6 @@
 ﻿namespace sfa_chat_graph.Server.Models
 {
-	public class ApiCodeResultData
+	public class ApiToolData
 	{
 		public Guid Id { get; set; }
 		public bool IsBase64Content { get; set; }

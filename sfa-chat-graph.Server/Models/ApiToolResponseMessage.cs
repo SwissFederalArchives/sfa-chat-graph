@@ -17,13 +17,18 @@ namespace sfa_chat_graph.Server.Models
 
 		}
 
-		public ApiToolResponseMessage(string id, string content, ApiGraphToolData graphData = null) : base(ChatRole.ToolResponse, content)
+		public ApiToolResponseMessage(string id, string content) : base(ChatRole.ToolResponse, content)
+		{
+			this.ToolCallId = id;
+		}
+
+		public ApiToolResponseMessage(string id, string content, ApiGraphToolData graphData) : base(ChatRole.ToolResponse, content)
 		{
 			this.ToolCallId = id;
 			this.GraphToolData = graphData;
 		}
 
-		public ApiToolResponseMessage(string id, string content, ApiCodeToolData codeData = null) : base(ChatRole.ToolResponse, content)
+		public ApiToolResponseMessage(string id, string content, ApiCodeToolData codeData) : base(ChatRole.ToolResponse, content)
 		{
 			this.ToolCallId = id;
 			this.CodeToolData = codeData;

@@ -7,13 +7,34 @@ export class ApiMessage {
   public timestamp: Date = new Date(Date.now());
   public toolCalls?: ApiToolCall[];
   public toolCallId?: string;
-  public graph?: SparqlStarResult;
-  public query?: string;
+  public graphToolData?: ApiGraphToolData;
+  public codeToolData?: ApiCodeToolData;
 
   constructor(content?: string, role: ChatRole = ChatRole.User) {
     this.content = content;
     this.role = role;
   }
+}
+
+export class ApiGraphToolData {
+  public query?: string;
+  public dataGraph?: SparqlStarResult;
+  public visualisationGraph?: SparqlStarResult;
+}
+
+export class ApiToolData {
+  public id!: string;
+  public description?: string;
+  public mimeType?: string;
+  public isBase64Content!: boolean;
+  public content?: string;
+}
+
+export class ApiCodeToolData {
+  public code?: string;
+  public error?: string;
+  public language?: string;
+  public data?: ApiToolData[];
 }
 
 export class ApiToolCall {
