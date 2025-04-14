@@ -23,6 +23,15 @@ namespace SfaChatGraph.Server.Utils
 				ts.Add(item);
 		}
 
+		public static string Ellipsis(this string @string, int maxLen, string end = "...")
+		{
+			var len = maxLen - end.Length;
+			if(@string.Length > len)
+				return @string.Substring(0, len) + end;
+
+			return @string;
+		}
+
 		public static IEnumerable<(int index, T item)> Enumerate<T>(this IEnumerable<T> enumerable)
 		{
 			int i = 0;

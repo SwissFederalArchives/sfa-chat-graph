@@ -27,6 +27,7 @@ namespace AwosFramework.Generators.FunctionCalling
 				ctx.AddSource($"{Constants.FunctionCallMetadataName}.g.cs", SourceText.From(Constants.FunctionCallMetadata, Encoding.UTF8));
 				ctx.AddSource($"{Constants.ExtensionsClassName}.g.cs", SourceText.From(Constants.ExtensionsClass, Encoding.UTF8));
 				ctx.AddSource($"{Constants.ServiceProviderParentResolverName}.g.cs", SourceText.From(Constants.ServiceProviderParentResolver, Encoding.UTF8));
+				ctx.AddSource($"{Constants.ContextAttributeName}.g.cs", SourceText.From(Constants.ContextAttribute, Encoding.UTF8));
 			});
 
 			var functionCallsToGenerate = context.SyntaxProvider
@@ -77,18 +78,23 @@ namespace AwosFramework.Generators.FunctionCalling
 		{
 			var name = syntax.Identifier.Text.ToCamelCase();
 			var descriptionAttribute = syntax.AttributeLists.SelectMany(x => x.Attributes)
-				.FirstOrDefault(x => x.ArgumentList != null && 
-					x.ArgumentList.Arguments.Count == 1 && 
+				.FirstOrDefault(x => x.ArgumentList != null &&
+					x.ArgumentList.Arguments.Count == 1 &&
 					context.SemanticModel.GetSymbolInfo(x).Symbol.ToDisplayString().Equals("System.ComponentModel.DescriptionAttribute.DescriptionAttribute(string)")
 				);
+
+			var isContext = syntax.AttributeLists.SelectMany(x => x.Attributes)
+				.Any(x => context.SemanticModel.GetSymbolInfo(x).Symbol.ToDisplayString().Equals($"{Constants.ContextAttributeFullName}.{Constants.ContextAttributeName}()"));
+				
+
 			var description = descriptionAttribute?.ArgumentList.Arguments.Select(x => x.Expression).OfType<LiteralExpressionSyntax>().FirstOrDefault()?.Token.ValueText;
 			var type = context.SemanticModel.GetSymbolInfo(syntax.Type).Symbol.ToDisplayString();
-			return new FunctionCallParameter(index, name, type, description);
+			return new FunctionCallParameter(index, name, type, description, isContext);
 		}
 
 		public static void GenerateFunctionCallRegistry(SourceProductionContext context, ImmutableArray<FunctionCall?> maybeFunctionCalls)
 		{
-			
+
 			var handlerDictValues = string.Join(",\r\n", maybeFunctionCalls
 				.NotNull()
 				.Select(x => $"\t\t\t\t{{\"{x.FunctionId}\", new {Constants.FunctionCallMetadataName}(\"{x.FunctionId}\", \"{x.Description.ToLiteral()}\", {x.ModelClassName}.{Constants.SchemaFieldName}, {x.ModelClassName}.{Constants.ResolveAndHandleFunctionName})}}"));
@@ -126,11 +132,11 @@ namespace AwosFramework.Generators.FunctionCalling
 						{{Constants.RegistryResolverFieldName}} = resolver;
 					}
 			
-					public Task<object> CallFunctionAsync(string id, JsonDocument parameters)
+					public Task<object> CallFunctionAsync(string id, JsonDocument parameters, object? context = null)
 					{
 						if({{Constants.RegistryHandlerDictFieldName}}.TryGetValue(id, out var handler))
 						{
-							return handler.Handler(parameters, {{Constants.RegistryResolverFieldName}});
+							return handler.Handler(parameters, {{Constants.RegistryResolverFieldName}}, context);
 						}
 						else
 						{
@@ -155,7 +161,7 @@ namespace AwosFramework.Generators.FunctionCalling
 		{
 			var paramString = $"\t\tpublic {parameter.Type} {parameter.Name} {{ get; set; }}";
 			if (string.IsNullOrEmpty(parameter.Description) == false)
-				paramString = $"\t\t[System.ComponentModel.Description(\"{parameter.Description}\")]\r\n{paramString}";
+				paramString = $"\t\t[Json.Schema.Generation.Description(\"{parameter.Description}\")]\r\n\t\t[System.ComponentModel.Description(\"{parameter.Description}\")]\r\n{paramString}";
 
 			return paramString;
 		}
@@ -171,20 +177,55 @@ namespace AwosFramework.Generators.FunctionCalling
 			var parameters = string.Join("\r\n", functionCall.Parameters.Select(FormatParameter));
 
 			var modelClassName = functionCall.ModelClassName;
-			var methodInvoke = $"{functionCall.MethodName}({string.Join(", ", functionCall.Parameters.OrderBy(x => x.Index).Select(x => $"this.{x.Name}"))})";
+			var methodInvoke = $"{functionCall.MethodName}({string.Join(", ", functionCall.Parameters.OrderBy(x => x.Index).Select(x => x.IsContextParameter ? $"context" : $"this.{x.Name}"))})";
 
 			var parentName = functionCall.IsStatic ? functionCall.ContainingType : "Parent";
-			var invokeFunction =
-			$$"""
+			string invokeFunction;
+			if (functionCall.HasContext)
+			{
+				invokeFunction =
+				$$"""
+					public async Task<object> InvokeAsync({{functionCall.ContextType}} context)
+					{
+						return{{(functionCall.IsTask ? " await" : "")}} {{parentName}}.{{methodInvoke}};
+					}
+				""";
+			}
+			else
+			{
+				invokeFunction =
+				$$"""
 					public async Task<object> InvokeAsync()
 					{
 						return{{(functionCall.IsTask ? " await" : "")}} {{parentName}}.{{methodInvoke}};
 					}
-			""";
+				""";
+			}
 
-			var resolveAndHandleFunction = 
-			$$"""
-					public static Task<object> {{Constants.ResolveAndHandleFunctionName}}(JsonDocument document, IParentResolver parentResolver)
+			string resolveAndHandleFunction;
+			if (functionCall.HasContext)
+			{
+				resolveAndHandleFunction =
+				$$"""
+					public static Task<object> {{Constants.ResolveAndHandleFunctionName}}(JsonDocument document, IParentResolver parentResolver, object? context = null)
+					{
+						if (TryParse(document, out var model) && context is {{functionCall.ContextType}} ctx)
+						{
+							{{(functionCall.IsStatic ? "" : $"model.Parent = parentResolver.ResolveParent<{functionCall.ContainingType}>();")}}
+							return model.InvokeAsync(ctx);
+						}
+						else
+						{
+							throw new InvalidOperationException("Invalid function call");
+						}
+					}
+				""";
+			}
+			else
+			{
+				resolveAndHandleFunction =
+				$$"""
+					public static Task<object> {{Constants.ResolveAndHandleFunctionName}}(JsonDocument document, IParentResolver parentResolver, object? context = null)
 					{
 						if (TryParse(document, out var model))
 						{
@@ -195,8 +236,11 @@ namespace AwosFramework.Generators.FunctionCalling
 						{
 							throw new InvalidOperationException("Invalid function call");
 						}
-					}
-			""";
+					}	
+				""";
+			}
+
+
 
 			var parseFunction =
 			$$"""
@@ -233,14 +277,13 @@ namespace AwosFramework.Generators.FunctionCalling
 						
 			namespace {{Constants.ModelNameSpace}}
 			{
-				public class {{modelClassName}} : {{Constants.CallableInterfaceName}}
+				public class {{modelClassName}}
 				{
 					internal static readonly JsonSchema {{Constants.SchemaFieldName}};
 
 
 					static {{modelClassName}}() 
 					{
-						DataAnnotationsSupport.AddDataAnnotations();
 						{{Constants.SchemaFieldName}} = new JsonSchemaBuilder().Properties().FromType(typeof({{modelClassName}})).Build();
 					}
 

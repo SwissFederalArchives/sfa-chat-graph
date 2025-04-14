@@ -26,13 +26,20 @@ namespace sfa_chat_graph.Server.Services.CodeExecutionService.Jupyter
 			_kernelSpec = kernels.KernelSpecs[_options.Kernel ?? kernels.Default];
 			ArgumentNullException.ThrowIfNull(_kernelSpec, nameof(_kernelSpec));
 			_logger.LogInformation("Jupyter client initialized with kernel: {Kernel}", _kernelSpec.Name);
-			if(string.IsNullOrEmpty(_options.SetupScript) == false)
+			if (string.IsNullOrEmpty(_options.SetupScript) == false)
 			{
 				using var terminal = await client.CreateTerminalSessionAsync();
 				await terminal.SendAsync(_options.SetupScript);
-				await terminal.ObservableMessages.Timeout(TimeSpan.FromSeconds(15))
-					.Catch(Observable.Empty<TerminalMessage>())
-					.LastOrDefaultAsync();
+				try
+				{
+					await terminal.ObservableMessages.Timeout(TimeSpan.FromSeconds(15))
+						.Catch(Observable.Empty<TerminalMessage>())
+						.LastOrDefaultAsync();
+				}
+				catch (TimeoutException)
+				{
+
+				}
 			}
 
 			return client;
@@ -55,9 +62,9 @@ namespace sfa_chat_graph.Server.Services.CodeExecutionService.Jupyter
 			_jupyterClient?.Dispose();
 		}
 
-		private PutContentRequest AsContentRequest(CodeExecutionData data) => 
-			data.IsBinary ? 
-			PutContentRequest.CreateBinary(data.Data, data.Name) : 
+		private PutContentRequest AsContentRequest(CodeExecutionData data) =>
+			data.IsBinary ?
+			PutContentRequest.CreateBinary(data.Data, data.Name) :
 			PutContentRequest.CreateText(data.Data, data.Name);
 
 		private CodeExecutionFragment AsFragment(DisplayDataMessage message)
@@ -69,7 +76,7 @@ namespace sfa_chat_graph.Server.Services.CodeExecutionService.Jupyter
 				Id = Guid.NewGuid(),
 				Description = description,
 				BinaryData = message.Data
-			}; 
+			};
 		}
 
 		public async Task<CodeExecutionResult> ExecuteCodeAsync(string code, CodeExecutionData[] data, CancellationToken cancellationToken)
@@ -87,7 +94,7 @@ namespace sfa_chat_graph.Server.Services.CodeExecutionService.Jupyter
 
 			var result = await session.ExecuteCodeAsync(code, cancellationToken);
 			var reply = result.Reply;
-			if(reply.Status == StatusType.Error)
+			if (reply.Status == StatusType.Error)
 			{
 				var error = $"{reply.ExceptionName}: {reply.ExceptionValue}\n\nStacktrace:\n{string.Join("\n", reply.StackTrace)}";
 				return new CodeExecutionResult { Success = false, Fragments = null, Error = error };

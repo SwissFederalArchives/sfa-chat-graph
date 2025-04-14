@@ -15,6 +15,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel.Design;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Net;
 using System.Net.WebSockets;
 using System.Reactive.Linq;
 using System.Reflection;
@@ -35,7 +36,7 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Jupyter
 
 		public ChannelReader<JupyterMessage> MessageReader => _receiveChannel.Reader;
 	
-		public JupyterWebsocketClient(JupyterWebsocketOptions options) : base(options)
+		public JupyterWebsocketClient(JupyterWebsocketOptions options, CookieContainer cookies) : base(options, cookies)
 		{	
 			var sendOptions = new UnboundedChannelOptions { SingleReader = true };
 			_sendChannel = Channel.CreateUnbounded<JupyterMessage>(sendOptions);
@@ -48,12 +49,6 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Jupyter
 			{
 				_receiveChannel = Channel.CreateUnbounded<JupyterMessage>();
 			}
-		}
-
-		public JupyterWebsocketClient(Uri endpoint, Guid kernelId, Guid? sessionId = null, string? token = null) : this(new JupyterWebsocketOptions(endpoint, kernelId, sessionId, token))
-		{
-
-
 		}
 
 	

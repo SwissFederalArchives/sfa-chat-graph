@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Net;
 using System.Net.WebSockets;
 using System.Text;
 using System.Threading.Channels;
@@ -36,7 +37,7 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Terminal
 
 		public IObservable<TerminalMessage> ObservableMessages => _receiveObservable;
 
-		public TerminalWebsocketClient(TerminalWebsocketClientOptions options) : base(options)
+		public TerminalWebsocketClient(TerminalWebsocketClientOptions options, CookieContainer cookies) : base(options, cookies)
 		{
 			_stdOut = _streamManager.GetStream();
 			_receiveObservable = new ObservableSource<TerminalMessage>();

@@ -9,6 +9,7 @@ using Refit;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Reactive.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -34,13 +35,13 @@ namespace AwosFramework.ApiClients.Jupyter.Client.Jupyter
 				throw new ObjectDisposedException(nameof(KernelSessionClient));
 		}
 
-		public KernelSessionClient(SessionModel apiSession, KernelSessionClientOptions options, IJupyterRestClient restClient)
+		public KernelSessionClient(SessionModel apiSession, KernelSessionClientOptions options, IJupyterRestClient restClient, CookieContainer cookies)
 		{
 			_apiSession = apiSession;
 			_options = options;
 			_restClient = restClient;
 			var opts = options.DefaultWebsocketOptions with { SessionId = apiSession.Id, KernelId = apiSession.Kernel.Id!.Value };
-			_websocketClient = new JupyterWebsocketClient(opts);
+			_websocketClient = new JupyterWebsocketClient(opts, cookies);
 		}
 
 		public async Task<CodeExecutionResult> ExecuteCodeAsync(string code, CancellationToken token = default)

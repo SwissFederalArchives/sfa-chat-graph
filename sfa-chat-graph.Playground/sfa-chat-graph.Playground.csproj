@@ -9,6 +9,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="JsonSchema.Net" Version="7.3.1" />
+    <PackageReference Include="JsonSchema.Net.Generation" Version="5.0.0" />
+    <PackageReference Include="JsonSchema.Net.Generation.DataAnnotations" Version="1.2.0" />
     <ProjectReference Include="..\AwosFramework.ApiClients.Jupyter\AwosFramework.ApiClients.Jupyter.csproj" />
     <ProjectReference Include="..\sfa-chat-graph.Server\sfa-chat-graph.Server.csproj" />
   </ItemGroup>

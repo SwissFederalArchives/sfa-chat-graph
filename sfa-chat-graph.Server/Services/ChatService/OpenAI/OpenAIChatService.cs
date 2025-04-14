@@ -12,10 +12,13 @@ using SfaChatGraph.Server.Utils;
 using Microsoft.EntityFrameworkCore.Query.Internal;
 using SfaChatGraph.Server.RDF;
 using sfa_chat_graph.Server.Services.CodeExecutionService;
+using System.Text;
+using AwosFramework.ApiClients.Jupyter.Utils;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace sfa_chat_graph.Server.Services.ChatService.OpenAI
 {
-	public class OpenAIChatService : IChatService
+	public partial class OpenAIChatService : IChatService
 	{
 		private readonly FunctionCallRegistry _functionCalls;
 		private readonly IGraphRag _graphDb;
@@ -33,30 +36,23 @@ namespace sfa_chat_graph.Server.Services.ChatService.OpenAI
 		- list_graphs: Use this tool to get a list of all graphs in the database
 		- get_schema: Use this tool to get the schema of a graph use this as well if the user asks for a schema
 		- query: Use this tool to query the database with sparql. When querying the graph database, try to include the IRI's in the query response as well even if not directly needed. This is important to know which part of the graph was used for the answer.
+		- execute_code: Use this tool to write python code to visualize data or fully analyze large datasets
 		""";
 
 		private static readonly SystemChatMessage ChatSystemMessage = new SystemChatMessage(CHAT_SYS_PROMPT);
 
-
-		public OpenAIChatService(ChatClient client, FunctionCallRegistry functionCalls, ICodeExecutionService codeExecutionService)
+		public OpenAIChatService(ChatClient client, FunctionCallRegistry functionCalls, ICodeExecutionService codeExecutionService, IGraphRag graphDb)
 		{
 			_client = client;
 			_functionCalls = functionCalls;
 			_chatTools = functionCalls.GetFunctionCallMetas().Select(x => x.AsChatTool()).ToArray();
+			_graphDb=graphDb;
 		}
 
 
-		record Message(ChatMessage OpenAi, ApiMessage Api)
-		{
-			public Message(ChatMessage msg) : this(msg, msg.AsApiMessage())
-			{
 
-			}
 
-			public static implicit operator Message(ChatMessage msg) => new(msg);
-		}
-
-		record ToolHandleResponse(IEnumerable<Message> Messages, bool RequiresAction, bool ErrorsExceeded);
+		record ToolHandleResponse(bool RequiresAction, bool ErrorsExceeded);
 
 
 
@@ -75,26 +71,70 @@ namespace sfa_chat_graph.Server.Services.ChatService.OpenAI
 		private async Task<Message> HandleQueryResultAsync(string toolCallId, SparqlResultSet result, string query)
 		{
 			var visualisation = await _graphDb.GetVisualisationResultAsync(result, query);
-			var csv = SparqlResultFormatter.ToCSV(result);
-			var toolMessage = ToolChatMessage.CreateToolMessage(toolCallId, csv);
-			var apiMessage = toolMessage.AsApiMessage(query, visualisation);
+			var csv = SparqlResultFormatter.ToCSV(result, 50);
+			var toolMessage = CreateToolMessage(toolCallId, csv);
+			var apiMessage = toolMessage.AsApiMessage(query, visualisation, result);
 			return new Message(toolMessage, apiMessage);
 		}
 
-		private async Task<Message> HandleToolCallImplAsync(ChatToolCall toolCall)
+		private static string FormatCodeResponse(CodeExecutionResult result)
+		{
+			if (result.Success == false)
+			{
+				return $"The code yielded Errors:\n{result.Error}";
+			}
+			else
+			{
+				var builder = new StringBuilder();
+				builder.AppendLine("The code yielded the following results:");
+				foreach (var (isLast, fragment) in result.Fragments.IsLast())
+				{
+					builder.Append($"Fragment: {fragment.Id}");
+					if (string.IsNullOrEmpty(fragment.Description) == false)
+					{
+						builder.Append("Description: ");
+						builder.AppendLine(fragment.Description);
+					}
+
+					foreach (var (key, value) in fragment.BinaryData)
+					{
+						if (key.StartsWith("text/"))
+						{
+							builder.Append("Data[");
+							builder.Append(key);
+							builder.AppendLine("]:");
+							builder.AppendLine(value.Ellipsis(512, "result cut off after 512 chars"));
+						}
+					}
+
+					if (isLast == false)
+						builder.AppendLine();
+
+				}
+
+				return builder.ToString();
+			}
+		}
+
+		private static ToolChatMessage CreateToolMessage(string id, string content)
+		{
+			return ChatMessage.CreateToolMessage(id, $"ToolCallId: {id}\r\nResult: {content}");
+		}
+
+		private async Task<Message> HandleToolCallImplAsync(ChatToolCall toolCall, ChatContext ctx)
 		{
 			var toolParameters = JsonDocument.Parse(toolCall.FunctionArguments);
-			var responseObj = await _functionCalls.CallFunctionAsync(toolCall.FunctionName, toolParameters);
+			var responseObj = await _functionCalls.CallFunctionAsync(toolCall.FunctionName, toolParameters, ctx);
 			switch (toolCall.FunctionName)
 			{
 				case FunctionCallRegistry.LIST_GRAPHS:
 					var graphs = (IEnumerable<string>)responseObj;
-					var toolMessage = ToolChatMessage.CreateToolMessage(toolCall.Id, string.Join("\n", graphs));
+					var toolMessage = CreateToolMessage(toolCall.Id, string.Join("\n", graphs));
 					return toolMessage;
 
 				case FunctionCallRegistry.GET_SCHEMA:
 					var schema = (string)responseObj;
-					return ToolChatMessage.CreateToolMessage(toolCall.Id, schema);
+					return CreateToolMessage(toolCall.Id, schema);
 
 				case FunctionCallRegistry.QUERY:
 					var sparqlResult = (SparqlResultSet)responseObj;
@@ -104,20 +144,25 @@ namespace sfa_chat_graph.Server.Services.ChatService.OpenAI
 				case FunctionCallRegistry.DESCRIBE:
 					var graph = (IGraph)responseObj;
 					var csv = SparqlResultFormatter.ToCSV(graph);
-					return ToolChatMessage.CreateToolMessage(toolCall.Id, csv);
+					return CreateToolMessage(toolCall.Id, csv);
+
+				case FunctionCallRegistry.EXECUTE_CODE:
+					var result = (CodeExecutionResult)responseObj;
+					var resultString = FormatCodeResponse(result);
+					return CreateToolMessage(toolCall.Id, resultString);
 
 				default:
 					throw new NotImplementedException($"Tool call {toolCall.FunctionName} not implemented yet. Please implement it in the HandleToolCallImplAsync method.");
 			}
 		}
 
-		private async Task<Message> TryHandleErrorAsync(IEnumerable<ChatMessage> history, ChatMessage completion, ChatToolCall toolCall, Exception ex, int tries)
+		private async Task<Message> TryHandleErrorAsync(OpenAiChatContext context, ChatMessage completion, ChatToolCall toolCall, Exception ex, int tries)
 		{
 			var originalId = toolCall.Id;
 			var opts = GetErrorHandlingOptions(toolCall);
 			while (tries-- > 0)
 			{
-				var messages = history.ToList();
+				var messages = context.OpenAIHistory.ToList();
 				messages.Add(completion);
 				var toolMessage = ToolChatMessage.CreateToolMessage(toolCall.Id, $"You're tool call yielded an error: {ex.Message}\nthis is most likel due to malformed sparql or forgotten prefixes ");
 				messages.Add(toolMessage);
@@ -130,7 +175,7 @@ namespace sfa_chat_graph.Server.Services.ChatService.OpenAI
 
 				try
 				{
-					var res = await HandleToolCallImplAsync(toolCall);
+					var res = await HandleToolCallImplAsync(toolCall, context);
 					if (res.Api is ApiToolResponseMessage toolResponse)
 						toolResponse.ToolCallId = originalId;
 
@@ -147,46 +192,44 @@ namespace sfa_chat_graph.Server.Services.ChatService.OpenAI
 			return null;
 		}
 
-		private async Task<Message> HandleToolCallAsync(IEnumerable<ChatMessage> history, ChatMessage completion, ChatToolCall toolCall, int maxErrors)
+		private async Task<Message> HandleToolCallAsync(OpenAiChatContext ctx, ChatMessage completion, ChatToolCall toolCall, int maxErrors)
 		{
 			try
 			{
-				return await HandleToolCallImplAsync(toolCall);
+				return await HandleToolCallImplAsync(toolCall, ctx);
 			}
 			catch (Exception ex)
 			{
-				return await TryHandleErrorAsync(history, completion, toolCall, ex, maxErrors);
+				return await TryHandleErrorAsync(ctx, completion, toolCall, ex, maxErrors);
 			}
 		}
 
-		private async Task<bool> HandleToolCallsAsync(IEnumerable<ChatMessage> history, ChatMessage completionMessage, ChatCompletion completion, List<Message> chatMessages, int maxErrors)
+		private async Task<bool> HandleToolCallsAsync(OpenAiChatContext ctx, ChatMessage completionMessage, ChatCompletion completion, int maxErrors)
 		{
 			foreach (var toolCall in completion.ToolCalls)
 			{
-				var msg = await HandleToolCallAsync(history, completionMessage, toolCall, maxErrors);
+				var msg = await HandleToolCallAsync(ctx, completionMessage, toolCall, maxErrors);
 				if (msg == null)
-					return false;
+					return true;
 
-				chatMessages.Add(msg);
+				ctx.AddMessage(msg);
 			}
 
-			return true;
+			return false;
 		}
 
 
-		private async Task<ToolHandleResponse> HandleResponseAsync(IEnumerable<ChatMessage> history, ChatCompletion completion, int maxErrors)
+		private async Task<ToolHandleResponse> HandleResponseAsync(OpenAiChatContext ctx, ChatCompletion completion, AssistantChatMessage response, int maxErrors)
 		{
-			var response = ChatMessage.CreateAssistantMessage(completion);
-			List<Message> list = [response];
 
 			switch (completion.FinishReason)
 			{
 				case ChatFinishReason.Stop:
-					return new ToolHandleResponse(list, false, false);
+					return new ToolHandleResponse( false, false);
 
 				case ChatFinishReason.ToolCalls:
-					var errorsExceeded = await HandleToolCallsAsync(history, response, completion, list, maxErrors);
-					return new ToolHandleResponse(list, true, errorsExceeded);
+					var errorsExceeded = await HandleToolCallsAsync(ctx, response, completion, maxErrors);
+					return new ToolHandleResponse(true, errorsExceeded);
 
 				default:
 					return null;
@@ -195,28 +238,24 @@ namespace sfa_chat_graph.Server.Services.ChatService.OpenAI
 
 		public async Task<CompletionResult> CompleteAsync(ApiMessage[] history, float temperature, int maxErrors)
 		{
+			var ctx = new OpenAiChatContext(ChatSystemMessage, history);
 			var options = new ChatCompletionOptions { Temperature = temperature };
 			options.Tools.AddRange(_chatTools);
 
-			List<ChatMessage> messages = [ChatSystemMessage];
-			messages.AddRange(history.Select(x => x.AsOpenAIMessage()));
 
-			var resultMessages = new List<Message>();
-			ToolHandleResponse response = null;
+			ToolHandleResponse toolResponse = null;
 			do
 			{
-				var chatResponse = await _client.CompleteChatAsync(messages, options);
-				var message = ChatMessage.CreateAssistantMessage(chatResponse);
-				messages.Add(message);
-				response = await HandleResponseAsync(messages, chatResponse, maxErrors);
-				if (response.ErrorsExceeded)
+				var completion = await _client.CompleteChatAsync(ctx.OpenAIHistory, options);
+				var response = ChatMessage.CreateAssistantMessage(completion);
+				ctx.AddMessage(response);
+				toolResponse = await HandleResponseAsync(ctx, completion, response, maxErrors);
+				if (toolResponse.ErrorsExceeded)
 					return new CompletionResult(null, false);
 
-				messages.AddRange(response.Messages.Select(x => x.OpenAi));
-				resultMessages.AddRange(response.Messages);
-			} while (response?.RequiresAction == true);
+			} while (toolResponse?.RequiresAction == true);
 
-			return new CompletionResult(resultMessages.Select(x => x.Api).ToArray(), true);
+			return new CompletionResult(ctx.Created.ToArray(), true);
 		}
 	}
 }

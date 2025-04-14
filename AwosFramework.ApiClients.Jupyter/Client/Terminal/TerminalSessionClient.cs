@@ -5,6 +5,7 @@ using AwosFramework.ApiClients.Jupyter.WebSocket.Terminal.Protocol;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -26,12 +27,12 @@ namespace AwosFramework.ApiClients.Jupyter.Client.Terminal
 		public Stream StdOut => _terminalClient.StdOut;
 		public async Task SendAsync(string message) => await _terminalClient.SendAsync(message);
 
-		public TerminalSessionClient(TerminalModel apiTerminal, TerminalSessionClientOptions options, IJupyterRestClient restClient)
+		public TerminalSessionClient(TerminalModel apiTerminal, TerminalSessionClientOptions options, IJupyterRestClient restClient, CookieContainer cookies)
 		{
 			_apiTerminal = apiTerminal;
 			_options = options;
 			var terminalOpts = options.DefaultWebsocketOptions with { TerminalId = apiTerminal.Name };
-			_terminalClient = new TerminalWebsocketClient(terminalOpts);
+			_terminalClient = new TerminalWebsocketClient(terminalOpts, cookies);
 			_restClient=restClient;
 		}
 

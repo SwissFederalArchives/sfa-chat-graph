@@ -114,7 +114,7 @@ namespace sfa_chat_graph.Server.RDF
 			return _endpoint.QueryAsync(query);
 		}
 
-		public Task<IGraph> DescribeAsync([Description("The iri of the subject to describe")] string iri)
+		public Task<IGraph> DescribeAsync( string iri)
 		{
 			return _endpoint.QueryGraphAsync(Queries.DescribeQuery(iri));
 		}

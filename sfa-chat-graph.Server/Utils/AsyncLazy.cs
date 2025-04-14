@@ -26,7 +26,6 @@
 		public AsyncLazy(Func<Task<T>> valueFactory) : base()
 		{
 			_valueFactory = valueFactory;
-			_initTask = new Task<T>(() => default(T));
 		}
 	}
 }

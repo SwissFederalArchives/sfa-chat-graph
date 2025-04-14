@@ -34,20 +34,28 @@ namespace sfa_chat_graph.Server.Utils
 			return str;
 		}
 
-		public static string ToCSV(IGraph graph)
+		public static string ToCSV(IGraph graph, int? maxLines = null)
 		{
 			if (graph.Triples.Count == 0)
 				return "Query yielded empty collection";
 
 			var builder = new StringBuilder();
 			builder.AppendLine("subject;predicate;object");
-			foreach(var triple in graph.Triples)
+			foreach (var triple in graph.Triples)
+			{
+				if (maxLines.HasValue && --maxLines < 0)
+				{
+					builder.AppendLine("Output too large and cut off...");
+					break;
+				}
+
 				builder.AppendLine($"{CsvFormatNode(triple.Subject)};{CsvFormatNode(triple.Predicate)};{CsvFormatNode(triple.Object)}");
+			}
 
 			return builder.ToString();
 		}
 
-		public static string ToCSV(SparqlResultSet resultSet)
+		public static string ToCSV(SparqlResultSet resultSet, int? maxLines = null)
 		{
 			if (resultSet.ResultsType == SparqlResultsType.Boolean)
 				return $"boolean: {resultSet.Result}";
@@ -60,6 +68,12 @@ namespace sfa_chat_graph.Server.Utils
 			builder.AppendLine(string.Join(";", variables));
 			foreach (var result in resultSet)
 			{
+				if (maxLines.HasValue && --maxLines < 0)
+				{
+					builder.AppendLine("Output too large and cut off...");
+					break;
+				}
+
 				var line = string.Join(";", variables.Select(x => CsvFormatNode(result[x])));
 				builder.AppendLine(line);
 			}

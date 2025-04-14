@@ -19,6 +19,21 @@ namespace AwosFramework.Generators.FunctionCalling
 		public const string ResolveAndHandleFunctionName = "ResolveAndHandleAsync";
 
 
+		public const string ContextAttributeName = "ContextAttribute";
+		public const string ContextAttributeFullName = $"{NameSpace}.{ContextAttributeName}";
+		public const string ContextAttribute = $$"""
+		using System;
+
+		namespace {{NameSpace}}
+		{
+			[AttributeUsage(AttributeTargets.Parameter, AllowMultiple = false)]
+			public class {{ContextAttributeName}} : Attribute
+			{
+				
+			}
+		}
+		""";
+
 		public const string ServiceProviderParentResolverName = "ServiceProviderParentResolver";
 		public const string ServiceProviderParentResolverFullName = $"{NameSpace}.{ServiceProviderParentResolverName}";
 		public const string ServiceProviderParentResolver = $$"""
@@ -86,7 +101,7 @@ namespace AwosFramework.Generators.FunctionCalling
 
 		namespace {{NameSpace}}
 		{
-			internal record {{FunctionCallMetadataName}}(string Id, string Description, JsonSchema Schema, Func<JsonDocument, {{ParentResolverInterfaceName}}, Task<object>> Handler) : {{FunctionCallMetadataInterfaceName}}
+			internal record {{FunctionCallMetadataName}}(string Id, string Description, JsonSchema Schema, Func<JsonDocument, {{ParentResolverInterfaceName}}, object, Task<object>> Handler) : {{FunctionCallMetadataInterfaceName}}
 			{
 			}
 		}

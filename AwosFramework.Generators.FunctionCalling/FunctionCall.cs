@@ -18,6 +18,9 @@ namespace AwosFramework.Generators.FunctionCalling
 		public bool IsTask { get; }
 		public EquatableArray<FunctionCallParameter> Parameters { get; }
 
+		public string ContextType => Parameters.FirstOrDefault(x => x.IsContextParameter).Type;
+		public bool HasContext => Parameters.Any(x => x.IsContextParameter);
+
 		public FunctionCall(string functionId, string description, string containingType, string methodName, bool isStatic, bool isTask, FunctionCallParameter[] parameters)
 		{
 			this.FunctionId = functionId;

@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Net;
 using System.Net.Sockets;
 using System.Net.WebSockets;
 using System.Text;
@@ -56,11 +57,11 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Base
 			}
 		}
 
-		public WebsocketClientBase(TOptions options)
+		public WebsocketClientBase(TOptions options, CookieContainer cookies)
 		{
 			Options = options ?? throw new ArgumentNullException(nameof(options));
 			_logger = options.LoggerFactory?.CreateLogger(GetType());
-			_socket = CreateWebSocket(options);
+			_socket = CreateWebSocket(options, cookies);
 			IOTask = null;
 		}
 
@@ -134,9 +135,10 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Base
 		}
 
 
-		private static ClientWebSocket CreateWebSocket(IWebsocketOptions options)
+		private static ClientWebSocket CreateWebSocket(IWebsocketOptions options, CookieContainer cookies)
 		{
 			var socket = new ClientWebSocket();
+			socket.Options.Cookies = cookies;
 			if (options.HasToken(out var token))
 				socket.Options.SetRequestHeader("Authorization", $"token {token}");
 
@@ -281,7 +283,9 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Base
 				if (_socket.State == WebSocketState.Open)
 					await _socket.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, "Client disconnect", CancellationToken.None);
 				_stopSocket?.Cancel();
-				await IOTask.ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing);
+				if (IOTask != null)
+					await IOTask.ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing);
+
 				SetState(WebsocketState.Disconnected);
 			}
 		}

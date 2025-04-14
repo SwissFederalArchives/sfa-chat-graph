@@ -18,11 +18,12 @@ namespace sfa_chat_graph.Server.Models
 
 		}
 
-		public ApiToolResponseMessage(string id, string content, string query = null, SparqlResultSet graph = null) : base(ChatRole.ToolResponse, content)
+		public ApiToolResponseMessage(string id, string content, string query = null, SparqlResultSet graph = null, SparqlResultSet graphData = null) : base(ChatRole.ToolResponse, content)
 		{
 			this.ToolCallId = id;
 			this.Graph = graph;
 			this.Query = query;
+			this.GraphData = graphData;
 		}
 
 	}

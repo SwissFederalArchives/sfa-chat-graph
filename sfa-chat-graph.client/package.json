@@ -29,7 +29,6 @@
     "marked": "^15.0.6",
     "ngx-markdown": "^19.0.0",
     "prismjs": "^1.29.0",
-    "run-script-os": "*",
     "rxjs": "~7.8.0",
     "sfa-chat-graph.client": "file:",
     "tslib": "^2.3.0",
@@ -47,6 +46,7 @@
     "karma-coverage": "~2.2.0",
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
+    "run-script-os": "^1.1.6",
     "typescript": "~5.6.2"
   }
 }

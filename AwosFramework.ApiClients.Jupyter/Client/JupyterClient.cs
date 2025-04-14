@@ -6,6 +6,7 @@ using AwosFramework.ApiClients.Jupyter.Rest.Models.Terminal;
 using AwosFramework.ApiClients.Jupyter.WebSocket.Jupyter;
 using AwosFramework.ApiClients.Jupyter.WebSocket.Terminal;
 using Microsoft.Extensions.Logging;
+using System.Net;
 
 namespace AwosFramework.ApiClients.Jupyter.Client
 {
@@ -18,6 +19,7 @@ namespace AwosFramework.ApiClients.Jupyter.Client
 		private readonly JupyterWebsocketOptions _defaultJupyterWebsocketOptions;
 		private readonly TerminalWebsocketClientOptions _defaultTerminalWebsocketOptions;
 		private readonly ILogger? _logger;
+		private readonly CookieContainer _cookieContainer = new();
 
 		public IJupyterRestClient RestClient => _restClient;
 
@@ -27,7 +29,7 @@ namespace AwosFramework.ApiClients.Jupyter.Client
 
 		public JupyterClient(Uri endpoint, string? token, ILoggerFactory? loggerFactory)
 		{
-			_restClient = JupyterRestClient.GetRestClient(endpoint, token);
+			_restClient = JupyterRestClient.GetRestClient(_cookieContainer, endpoint, token);
 			_defaultJupyterWebsocketOptions = new JupyterWebsocketOptions(endpoint, Guid.Empty) { Token = token, LoggerFactory = loggerFactory };
 			_defaultTerminalWebsocketOptions = new TerminalWebsocketClientOptions(endpoint, string.Empty) { Token = token, LoggerFactory = loggerFactory };
 			_logger = loggerFactory?.CreateLogger<JupyterClient>();
@@ -56,7 +58,7 @@ namespace AwosFramework.ApiClients.Jupyter.Client
 			if(options.CreateWorkingDirectory)
 				await _restClient.CreateDirectoriesAsync(options.StoragePath);
 
-			var client = new TerminalSessionClient(terminal, options, _restClient);
+			var client = new TerminalSessionClient(terminal, options, _restClient, _cookieContainer);
 			await client.InitializeAsync();
 			return client;
 		}
@@ -82,7 +84,7 @@ namespace AwosFramework.ApiClients.Jupyter.Client
 
 			var createSession = StartSessionRequest.CreateConsole(kernelId, options.StoragePath ?? string.Empty);
 			var session = await _restClient.StartSessionAsync(createSession);
-			var sessionClient = new KernelSessionClient(session, options, _restClient);
+			var sessionClient = new KernelSessionClient(session, options, _restClient, _cookieContainer);
 			_kernelSessions.Add(sessionClient);
 			await sessionClient.InitializeAsync();
 			_logger?.LogInformation("Started kernel session {SessionId} with kernel {KernelName}[{KernelId}]", session.Id, session.Kernel.SpecName, session.Kernel.Id);
