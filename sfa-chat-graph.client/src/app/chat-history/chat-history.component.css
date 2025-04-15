@@ -50,6 +50,26 @@
     width: 100%;
 }
 
+.error-message {
+    background-color: #f35555;
+}
+
+.error-header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 1em;
+    padding-top: 1em;
+}
+
+.error-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding-bottom: 1em;
+    align-items: end;
+}
+
 .control-container {
     width: 80%;
     justify-self: center;

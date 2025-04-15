@@ -24,6 +24,30 @@ body {
     --app-corner-table-radius: .25em;
 }
 
+.inverted-button {
+    border: none;
+    background-color: var(--app-control-background-dark);
+    color: var(--app-control-text-dark);
+    width: fit-content;
+    height: fit-content;
+    padding: 0.5em 1em;
+    font-size: medium;
+    align-items: center;
+    justify-content: center;
+    display: flex;
+    border-radius: 5px;
+    transition: background-color 0.3s ease-in-out;
+}
+
+.inverted-button:hover {
+    background-color: var(--app-control-hover-dark);
+    transition: background-color 0.3s ease-in-out;
+}
+
+.inverted-button:disabled{
+    background-color: var(--app-control-disabled-dark);
+}
+
 .inverted-icon-button {
     border: none;
     background-color: var(--app-control-background-dark);

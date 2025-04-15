@@ -8,12 +8,13 @@
                     {{msg.message}}
                 </markdown>
                 <div *ngIf="msg.data.length > 0" class="data-tag-container">
-                @for(data of msg.data; track data){                  
-                    <button [style.color]="data.color" (click)="displayMessageData(data)"><span class="tooltip-long" [attr.data-text]="data.description">{{data.label}}</span></button>        
-                }       
+                    @for(data of msg.data; track data){
+                    <button [style.color]="data.color" (click)="displayMessageData(data)"><span class="tooltip-long"
+                            [attr.data-text]="data.description">{{data.label}}</span></button>
+                    }
                 </div>
 
-                
+
             </div>
             <div class="marker-container">
                 <span *ngFor="let marker of msg.markers" class="tooltip-long"
@@ -26,6 +27,19 @@
         </div>
 
 
+        }
+        @if(error){
+        <div id="msg-error" class="error-message chat-message chat-message-right">
+            <div class="error-content">
+                <div class="error-header">
+                    <b>An error occured during your request</b>
+                    <mat-icon fontSet="material-symbols-outlined">error</mat-icon>
+                </div>
+                <markdown>{{error}}</markdown>
+                <button class="inverted-button" (click)="resend()">Retry</button>
+            </div>
+
+        </div>
         }
     </div>
     <form>
