@@ -35,6 +35,46 @@ var loggerFactory = LoggerFactory.Create(builder =>
 	builder.SetMinimumLevel(LogLevel.Debug);
 });
 
-var endpoint = new StardogEndpoint("https://lindas.admin.ch/query");
-var client = new GraphRag(endpoint);
-var graphs = await client.ListGraphsAsync();
+var token = "371e778dcd2efdadab0e25fda1989e361d03d160f7aa970a";
+var jupyter = new JupyterClient("http://localhost:8888", null, loggerFactory);
+
+using (var session = await jupyter.CreateKernelSessionAsync())
+{
+	var csvData = """
+    Category,Count
+    Bananas,23
+    Apples,45
+    Oranges,12
+    Cherries,43
+    """;
+	await session.UploadFileAsync("data.csv", csvData);
+
+	var pythonCode = """
+	import pandas as pd
+	import matplotlib.pyplot as plt
+	import seaborn as sns
+	from IPython.display import display
+
+	# Load the data
+	data = pd.read_csv('data.csv')
+	# Create a bar plot
+	plt.figure(figsize=(10, 6))
+	sns.barplot(x='Category', y='Count', data=data, palette='viridis')
+	plt.title('Fruit Count')
+	plt.xlabel('Fruit Category')
+	plt.ylabel('Count')
+	plt.show()
+	display(data)
+	""";
+
+	var res = await session.ExecuteCodeAsync(pythonCode);
+	var stringData = res.Results.FirstOrDefault(x => x.Data.ContainsKey("text/plain"));
+	var imgData = res.Results.FirstOrDefault(x => x.Data.ContainsKey("image/png"));
+	if (imgData != null)
+	{
+		var img = imgData.Data["image/png"];
+		await File.WriteAllBytesAsync("output.png", Convert.FromBase64String((string)img));
+		Console.WriteLine("Image saved as output.png");
+	}
+	Console.WriteLine(stringData?.Data["text/plain"]);
+}

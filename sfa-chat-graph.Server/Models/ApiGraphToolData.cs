@@ -1,4 +1,5 @@
-﻿using VDS.RDF.Query;
+﻿using VDS.RDF;
+using VDS.RDF.Query;
 
 namespace sfa_chat_graph.Server.Models
 {

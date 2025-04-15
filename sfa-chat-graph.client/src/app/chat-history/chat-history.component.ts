@@ -139,7 +139,7 @@ export class ChatHistoryComponent {
   @ViewChild('chatHistory') chatHistory!: ElementRef<HTMLElement>;
   roles = ChatRole;
 
-  constructor(private _apiClient: ApiClientService, private injector: Injector) {
+  private fakeMessages(): void{
     const toolMsg = new ApiMessage(undefined, ChatRole.ToolResponse);
     const code = `
     import pandas as pd
@@ -179,6 +179,12 @@ export class ChatHistoryComponent {
         mimeType: 'text/csv',
         isBase64Content: false,
         id: 'test-id-csv'
+      }, {
+        description: 'html data',
+        content: '<h1>Test</h1>',
+        mimeType: 'text/html',
+        isBase64Content: false,
+        id: 'test-id-html'
       }]
     } as ApiCodeToolData;
     this.addMessageToHistory(new ApiMessage("Pls plot me stuff", ChatRole.User));
@@ -187,13 +193,15 @@ export class ChatHistoryComponent {
     this.error = "Backend not reachable";
   }
 
+  constructor(private _apiClient: ApiClientService, private injector: Injector) {
+ 
+  }
+
   addMessageToHistory(message: ApiMessage) {
     const URL_SUBST_PATTERN: RegExp = new RegExp(/tool-data:\/\/([^\s()]+)/g);
-    this.history.push(message);
     if (message.role == ChatRole.Assitant) {
-
-      const previousResponseIndex = this.history.slice(0, -1).reverse().findIndex(m => m.role == ChatRole.Assitant);
-      const previousMessages = this.history.slice(Math.max(0, previousResponseIndex), -1);
+      const previousResponseIndex = this.history.findLastIndex(m => m.role == ChatRole.User);
+      const previousMessages = this.history.slice(Math.max(0, previousResponseIndex));
       const subGraphs = previousMessages
         .filter(m => m.role == ChatRole.ToolResponse && m.graphToolData && m.toolCallId)
         .map(msg => this.graph.getSubGraph(msg.toolCallId!))
@@ -224,6 +232,8 @@ export class ChatHistoryComponent {
     } else if (message.role == ChatRole.User) {
       this.displayHistory.push(new DisplayMessage(message.id, message.content!, 'chat-message-right'));
     }
+
+    this.history.push(message);
   }
 
 
@@ -252,13 +262,13 @@ export class ChatHistoryComponent {
   }
 
   async send() {
-    if(this.waitingForResponse) return;
+    if (this.waitingForResponse) return;
     this.addMessageToHistory(new ApiMessage(this.message));
     await this.sendImpl();
   }
 
-  async sendImpl(){
-    if(this.waitingForResponse) return;
+  async sendImpl() {
+    if (this.waitingForResponse) return;
     this.waitingForResponse = true;
     try {
       const request = new ChatRequest(this.history);

@@ -1,4 +1,6 @@
-﻿using System.Text;
+﻿using SfaChatGraph.Server.Utils;
+using System.Text;
+using VDS.Common.Collections.Enumerations;
 using VDS.RDF;
 using VDS.RDF.Query;
 
@@ -32,6 +34,19 @@ namespace sfa_chat_graph.Server.Utils
 			}
 
 			return str;
+		}
+
+		public static SparqlResultSet ToResultSet(IGraph graph, string[] header = null)
+		{
+			header ??= ["s", "p", "o"];
+			var set = new SparqlResultSet();
+			foreach (var triple in graph.Triples)
+			{
+				var result = new SparqlResult(header.ZipPair(triple.Nodes));
+				set.Results.Add(result);
+			}
+
+			return set;
 		}
 
 		public static string ToCSV(IGraph graph, int? maxLines = null)

@@ -60,7 +60,7 @@ namespace sfa_chat_graph.Server.Services.ChatService.OpenAI
 		{
 			var options = new ChatCompletionOptions
 			{
-				Temperature = 0,
+				Temperature = 0.15F,
 				ToolChoice = ChatToolChoice.CreateFunctionChoice(toolCall.FunctionName)
 			};
 
@@ -85,6 +85,7 @@ namespace sfa_chat_graph.Server.Services.ChatService.OpenAI
 			{
 				Language = result.Language,
 				Code = code,
+				Success = result.Success,
 				Error = result.Error,
 				Data = result.Fragments?.SelectMany(x => x.BinaryData.Select(item =>
 			{
@@ -135,7 +136,7 @@ namespace sfa_chat_graph.Server.Services.ChatService.OpenAI
 						}
 						else
 						{
-							builder.AppendLine($"BinaryData[{key}]: tool-response://{fragment.BinaryIDs[key]}");
+							builder.AppendLine($"BinaryData[{key}]: tool-data://{fragment.BinaryIDs[key]}");
 						}
 					}
 
@@ -176,7 +177,12 @@ namespace sfa_chat_graph.Server.Services.ChatService.OpenAI
 				case FunctionCallRegistry.DESCRIBE:
 					var graph = (IGraph)responseObj;
 					var csv = SparqlResultFormatter.ToCSV(graph);
-					return CreateToolMessage(toolCall.Id, csv);
+					var msg = CreateToolMessage(toolCall.Id, csv);
+					var iri = toolParameters.RootElement.GetProperty("Iri").GetString();
+					var sparqlRes = SparqlResultFormatter.ToResultSet(graph);
+					var graphData = new ApiGraphToolData { DataGraph = sparqlRes, VisualisationGraph = sparqlRes, Query = Queries.DescribeQuery(iri) };
+					var apiMsg = msg.AsApiMessage();
+					return new Message(msg, apiMsg);
 
 				case FunctionCallRegistry.EXECUTE_CODE:
 					var result = (CodeExecutionResult)responseObj;
@@ -195,11 +201,14 @@ namespace sfa_chat_graph.Server.Services.ChatService.OpenAI
 			while (tries-- > 0)
 			{
 				var messages = context.OpenAIHistory.ToList();
-				messages.Add(completion);
-				var toolMessage = ToolChatMessage.CreateToolMessage(toolCall.Id, $"You're tool call yielded an error: {ex.Message}\nthis is most likel due to malformed sparql or forgotten prefixes ");
+				string errorDetail = null;
+				if (ex.Data.Contains("error"))
+					errorDetail = $"\nError Detail: {JsonSerializer.Serialize(ex.Data["error"])}";
+
+				var toolMessage = ToolChatMessage.CreateToolMessage(toolCall.Id, $"You're tool call yielded an error: {ex.Message}\nTry to fix the error and call the tool again. Don't just resend the last tool call, try to fix it\nThis is most likel due to malformed sparql or forgotten prefixes\nAdhere strictly to the sparql syntax, if a group in the select doesn't work try to bind the group inside the select instead{errorDetail}");
 				messages.Add(toolMessage);
 				var response = await _client.CompleteChatAsync(messages, opts);
-				if (response == null || response.Value.FinishReason != ChatFinishReason.ToolCalls || response.Value.ToolCalls.Count != 1)
+				if (response == null || response.Value.ToolCalls.Count != 1)
 					continue;
 
 				completion = ChatMessage.CreateAssistantMessage(response);
@@ -207,12 +216,8 @@ namespace sfa_chat_graph.Server.Services.ChatService.OpenAI
 
 				try
 				{
-					var res = await HandleToolCallImplAsync(toolCall, context);
-					if (res.Api is ApiToolResponseMessage toolResponse)
-						toolResponse.ToolCallId = originalId;
-
-					var newOpenAiMsg = ToolChatMessage.CreateToolMessage(originalId, res.OpenAi.Content);
-					return new Message(newOpenAiMsg, res.Api);
+					toolCall.Id = originalId;
+					return await HandleToolCallImplAsync(toolCall, context);	
 				}
 				catch (Exception newEx)
 				{

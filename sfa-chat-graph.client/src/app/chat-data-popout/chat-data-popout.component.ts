@@ -57,6 +57,14 @@ export class ChatDataPopoutComponent {
     return "";
   }
 
+  public getIFrameContent(){
+    if(this.data?.content){
+      return `data:text/html;charset=utf-8,${encodeURIComponent(this.data?.content)}`;
+    }
+
+    return "";
+  }
+
   public getMdContent() {
     if (this.data?.formattingLanguage) {
       return `\`\`\`${this.data?.formattingLanguage}\n${this.data?.content}\n\`\`\``;

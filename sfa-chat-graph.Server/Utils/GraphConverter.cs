@@ -6,11 +6,17 @@ using VDS.RDF.Query;
 
 namespace sfa_chat_graph.Server.Utils
 {
-	public class GraphConverter : JsonConverter<IGraph>
+	public class GraphConverter<T> : JsonConverter<T> where T : IGraph
 	{
 
+		private readonly Func<T> _supplier;
 
-		public override IGraph Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+		public GraphConverter(Func<T> supplier = null)
+		{
+			_supplier = supplier ?? Activator.CreateInstance<T>;
+		}
+
+		public override T Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
 		{
 			var doc = JsonDocument.ParseValue(ref reader);
 			doc.RootElement.TryGetProperty("head", out var head);
@@ -20,7 +26,7 @@ namespace sfa_chat_graph.Server.Utils
 
 			doc.RootElement.TryGetProperty("results", out var results);
 			results.TryGetProperty("bindings", out var bindings);
-			var graph = new Graph();
+			var graph = _supplier();
 			foreach (var element in bindings.EnumerateArray())
 			{
 				var subject = ConverterUtils.ReadNode(element.GetProperty("s"));
@@ -34,7 +40,7 @@ namespace sfa_chat_graph.Server.Utils
 
 
 
-		public override void Write(Utf8JsonWriter writer, IGraph value, JsonSerializerOptions options)
+		public override void Write(Utf8JsonWriter writer, T value, JsonSerializerOptions options)
 		{
 			writer.WriteStartObject();
 			writer.WritePropertyName("head");

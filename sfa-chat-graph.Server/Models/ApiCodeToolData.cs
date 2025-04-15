@@ -6,5 +6,6 @@
 		public string Error { get; set; }
 		public string Code { get; set; }
 		public string Language { get; set; }
+		public bool Success { get; set; }
 	}
 }

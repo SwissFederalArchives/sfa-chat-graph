@@ -16,6 +16,7 @@ namespace sfa_chat_graph.Server.RDF
 		private readonly ISparqlEndpoint _endpoint;
 		private readonly Dictionary<string, string> _schemaCache = new();
 		private readonly SparqlQueryParser _parser = new();
+		private string[] _graphsCache = null;
 
 		public GraphRag(ISparqlEndpoint endpoint)
 		{
@@ -69,7 +70,7 @@ namespace sfa_chat_graph.Server.RDF
 				(IsResultVariable(pattern.Subject, resultVars) || IsResultVariable(pattern.Object, resultVars)) &&
 				IsFixedPattern(pattern.Predicate) &&
 				pattern.Object.IsFixed == false;
-		} 
+		}
 
 		private static string? GetPredicateIri(TriplePattern pattern)
 		{
@@ -103,10 +104,15 @@ namespace sfa_chat_graph.Server.RDF
 			return relatedTriples;
 		}
 
-		public async Task<string[]> ListGraphsAsync()
+		public async Task<string[]> ListGraphsAsync(bool ignoreCached = false)
 		{
-			var res = await _endpoint.QueryAsync(Queries.ListGraphsQuery());
-			return res.Select(x => x["g"]).OfType<UriNode>().Select(x => x.Uri.ToString()).ToArray();
+			if (_graphsCache == null || ignoreCached)
+			{
+				var res = await _endpoint.QueryAsync(Queries.ListGraphsQuery());
+				_graphsCache = res.Select(x => x["g"]).OfType<UriNode>().Select(x => x.Uri.ToString()).ToArray();
+			}
+
+			return _graphsCache;
 		}
 
 		public Task<SparqlResultSet> QueryAsync(string query)
@@ -114,7 +120,7 @@ namespace sfa_chat_graph.Server.RDF
 			return _endpoint.QueryAsync(query);
 		}
 
-		public Task<IGraph> DescribeAsync( string iri)
+		public Task<IGraph> DescribeAsync(string iri)
 		{
 			return _endpoint.QueryGraphAsync(Queries.DescribeQuery(iri));
 		}

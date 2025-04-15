@@ -5,7 +5,7 @@ namespace sfa_chat_graph.Server.RDF.Endpoints
 {
 	public class StardogEndpoint : ISparqlEndpoint
 	{
-		private readonly SparqlQueryClient _client;
+		private readonly SparqlQueryClientWithError<StardogError> _client;
 		private readonly HttpClient _httpClient;
 
 		public StardogEndpoint(string endpoint) : this(new Uri(endpoint))
@@ -15,7 +15,7 @@ namespace sfa_chat_graph.Server.RDF.Endpoints
 		public StardogEndpoint(Uri endpoint)
 		{
 			_httpClient = new HttpClient();
-			_client = new SparqlQueryClient(_httpClient, endpoint);
+			_client = new SparqlQueryClientWithError<StardogError>(_httpClient, endpoint);
 		}
 
 		public Task<IGraph> QueryGraphAsync(string query)

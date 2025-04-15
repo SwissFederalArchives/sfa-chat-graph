@@ -1,6 +1,7 @@
 ﻿using OpenAI.Assistants;
 using SfaChatGraph.Server.Models;
 using System.Text.Json.Serialization;
+using VDS.RDF.Query;
 
 namespace sfa_chat_graph.Server.Models
 {

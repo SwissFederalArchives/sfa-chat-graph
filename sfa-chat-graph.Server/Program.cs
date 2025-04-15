@@ -13,6 +13,7 @@ using sfa_chat_graph.Server.Services.CodeExecutionService;
 using sfa_chat_graph.Server.Services.CodeExecutionService.Jupyter;
 using sfa_chat_graph.Server.Services.ChatService;
 using sfa_chat_graph.Server.Services.ChatService.OpenAI;
+using VDS.RDF;
 
 DotNetEnv.Env.Load();
 DataAnnotationsSupport.AddDataAnnotations();
@@ -37,7 +38,8 @@ builder.Services.AddControllers()
 		opts.JsonSerializerOptions.Converters.Add(new SparqlStarConverter());
 		opts.JsonSerializerOptions.Converters.Add(new SparqlResultSetConverter());
 		opts.JsonSerializerOptions.Converters.Add(new ApiMessageConverter());
-		opts.JsonSerializerOptions.Converters.Add(new GraphConverter());
+		opts.JsonSerializerOptions.Converters.Add(new GraphConverter<Graph>());
+		opts.JsonSerializerOptions.Converters.Add(new GraphConverter<IGraph>(() => new Graph()));
 	});
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi

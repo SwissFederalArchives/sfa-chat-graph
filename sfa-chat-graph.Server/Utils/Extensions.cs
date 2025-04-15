@@ -1,5 +1,6 @@
 ﻿using AwosFramework.Generators.FunctionCalling;
 using Json.More;
+using Json.Schema;
 using OpenAI.Chat;
 using sfa_chat_graph.Server.Models;
 using SfaChatGraph.Server.Models;
@@ -14,7 +15,16 @@ namespace SfaChatGraph.Server.Utils
 	{
 		public static IEnumerable<TResult> SelectWhere<TSource, TResult>(this IEnumerable<TSource> enumerable, Func<TSource, TResult> mapper, Func<TSource, bool> predicate) => enumerable.Where(predicate).Select(mapper);
 		public static IEnumerable<TResult> SelectNonNull<TSource, TResult>(this IEnumerable<TSource> enumerable, Func<TSource, TResult> mapper) => enumerable.SelectWhere(mapper, x => x!= null);
-		
+
+		public static IEnumerable<KeyValuePair<TKey, TValue>> ZipPair<TKey, TValue>(this IEnumerable<TKey> enumerable, IEnumerable<TValue> other)
+		{
+			using var enumerator1 = enumerable.GetEnumerator();
+			using var enumerator2 = other.GetEnumerator();
+			while (enumerator1.MoveNext() && enumerator2.MoveNext())
+				yield return new KeyValuePair<TKey, TValue>(enumerator1.Current, enumerator2.Current);
+			
+		}
+
 		public static string ToIriList(this IEnumerable<string> iris) => string.Join(" ", iris.Select(x => $"<{x}>"));
 
 		public static void AddRange<T>(this ICollection<T> ts, IEnumerable<T> items)

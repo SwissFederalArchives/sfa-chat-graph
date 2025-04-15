@@ -257,6 +257,7 @@ body {
 
 .tooltip-long:hover:before {
     display: block;
+    z-index: 2;
 }
 
 .tooltip:before {

@@ -11,7 +11,7 @@ namespace SfaChatGraph.Server.RDF
 	{
 		[FunctionCall("list_graphs")]
 		[Description("Lists all graphs in the current database")]
-		public Task<string[]> ListGraphsAsync();
+		public Task<string[]> ListGraphsAsync([Description("Whether to allow cached graphs, always allow caching if the user not explicitly asks for a refresh")] bool ignoreCached = false);
 
 		[FunctionCall("get_schema")]
 		[Description("Gets the schema of a graph")]

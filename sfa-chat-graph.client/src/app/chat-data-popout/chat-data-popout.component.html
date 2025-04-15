@@ -10,8 +10,9 @@
     <div class="popup-content table-container-bright">
         @if(data && data.mimeType && data.mimeType.startsWith("image/")){
         <img src="data:{{data.mimeType}};base64,{{data.content}}" alt="Image: {{data.description}}" />
-        }@else{
-        <markdown [katex]="true" [emoji]="true" [clipboard]="true" [lineNumbers]="true" ngPreserveWhitespaces [innerHtml]="getMdContent()">
+        } @else {
+        <markdown [katex]="true" [emoji]="true" [clipboard]="true" [lineNumbers]="true" ngPreserveWhitespaces
+            [innerHtml]="getMdContent()">
         </markdown>
         }
     </div>
