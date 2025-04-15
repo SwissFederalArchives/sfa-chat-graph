@@ -29,7 +29,7 @@
 }
 
 .chat-message {
-    padding: 0em 1em 1em 1em;
+    padding: 0em 1em;
     max-width: 75%;
     margin: .5em 1em;
     display: flex;
@@ -63,4 +63,26 @@
     flex-direction: column;
     gap: 2em;
     flex-grow: 1;
+}
+
+.data-tag-container {
+    display: flex;
+    flex-direction: row;
+    gap: 0.5em;
+    align-items: center;
+    padding-bottom: 1em;
+}
+
+.data-tag-container button {
+    background-color: var(--app-text-color-dark);
+    color: var(--app-text-color);
+    border: none;
+    padding: 0.5em 1em;
+    border-radius: 0.5em;
+    cursor: pointer;
+}
+
+.data-tag-container button:hover {
+    background-color: var(--app-control-hover);
+    transition: background-color 0.3s ease-in-out;
 }

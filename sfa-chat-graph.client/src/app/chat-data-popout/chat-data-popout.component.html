@@ -1,0 +1,18 @@
+<div class="popup-window">
+    <div class="popup-buttons">
+        <button class="inverted-icon-button" (click)="close()">
+            <mat-icon fontSet="material-symbols-outlined">close</mat-icon>
+        </button>
+        <button class="inverted-icon-button" (click)="download()">
+            <mat-icon fontSet="material-symbols-outlined">download</mat-icon>
+        </button>
+    </div>
+    <div class="popup-content table-container-bright">
+        @if(data && data.mimeType && data.mimeType.startsWith("image/")){
+        <img src="data:{{data.mimeType}};base64,{{data.content}}" alt="Image: {{data.description}}" />
+        }@else{
+        <markdown [katex]="true" [emoji]="true" [clipboard]="true" [lineNumbers]="true" ngPreserveWhitespaces [innerHtml]="getMdContent()">
+        </markdown>
+        }
+    </div>
+</div>

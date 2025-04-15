@@ -108,40 +108,80 @@ body {
     filter: drop-shadow(0px 0px 5px rgba(0, 0, 0, 0.3));
 }
 
-.chat-message table tr:first-child th:first-child {
+.table-container-bright table tr:first-child th:first-child {
     border-radius: var(--app-corner-table-radius) 0px 0px 0px;
 }
-.chat-message table tr:first-child th:last-child {
+.table-container-bright table tr:first-child th:last-child {
     border-radius: 0px var(--app-corner-table-radius) 0px 0px;
 }
-.chat-message table tr:last-child td:first-child {
+.table-container-bright table tr:last-child td:first-child {
     border-radius: 0px 0px 0px var(--app-corner-table-radius);
 }
-.chat-message table tr:last-child td:last-child {
+.table-container-bright table tr:last-child td:last-child {
     border-radius: 0px 0px var(--app-corner-table-radius) 0px;
 }
 
-.chat-message table td, th {
+.table-container-bright table td, th {
     padding: .5em;
     border-top: none;
     border-bottom: #424242 1px solid;
     border-right: #424242 1px solid;
 }
 
-.chat-message a {
-    color: var(--app-text-color-dark);
+.table-container-bright table a {
+    color: var(--app-text-color);
 }
 
-.chat-message table th {
-    background-color: #303030;
+.table-container-bright table th {
+    background-color: #dbdbdb;
     font-weight: normal;
 }
 
-.chat-message table {
+.table-container-bright table {
     border-collapse:separate;
     border: #424242 1px solid;
     border-radius: var(--app-corner-table-radius);
     border-spacing: 0px;
+}
+
+.table-container table tr:first-child th:first-child {
+    border-radius: var(--app-corner-table-radius) 0px 0px 0px;
+}
+.table-container table tr:first-child th:last-child {
+    border-radius: 0px var(--app-corner-table-radius) 0px 0px;
+}
+.table-container table tr:last-child td:first-child {
+    border-radius: 0px 0px 0px var(--app-corner-table-radius);
+}
+.table-container table tr:last-child td:last-child {
+    border-radius: 0px 0px var(--app-corner-table-radius) 0px;
+}
+
+.table-container table td, th {
+    padding: .5em;
+    border-top: none;
+    border-bottom: #424242 1px solid;
+    border-right: #424242 1px solid;
+}
+
+.table-container table a {
+    color: var(--app-text-color-dark);
+}
+
+.table-container table th {
+    background-color: #303030;
+    font-weight: normal;
+}
+
+.table-container table {
+    border-collapse:separate;
+    border: #424242 1px solid;
+    border-radius: var(--app-corner-table-radius);
+    border-spacing: 0px;
+}
+
+.chat-message a {
+    color: var(--app-text-color-dark);
 }
 
 .tooltip {

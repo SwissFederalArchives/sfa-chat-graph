@@ -1,21 +1,19 @@
 <div class="chat-container">
     <div #chatHistory class="chat-history">
         @for(msg of displayHistory; track msg){
-        <div id="msg-{{msg.id}}" class="chat-message" [class]="msg.cls">
+        <div id="msg-{{msg.id}}" class="chat-message table-container" [class]="msg.cls">
             <div class="message-content">
                 <markdown [katex]="true" [emoji]="true" [clipboard]="true" [lineNumbers]="true"
                     (ready)="scrollToBottom()" ngPreserveWhitespaces>
                     {{msg.message}}
                 </markdown>
-                <div *ngIf="msg.queries.length > 0" class="sparql-container">
-                    <collapse-container [collapsed]="false" title="Sparql Queries">
-                        <markdown *ngFor="let query of msg.queries" [katex]="true" [clipboard]="true"
-                            [lineNumbers]="true" ngPreserveWhitespaces>
-
-                            {{query}} 
-                        </markdown>
-                    </collapse-container>
+                <div *ngIf="msg.data.length > 0" class="data-tag-container">
+                @for(data of msg.data; track data){                  
+                    <button [style.color]="data.color" (click)="displayMessageData(data)"><span class="tooltip-long" [attr.data-text]="data.description">{{data.label}}</span></button>        
+                }       
                 </div>
+
+                
             </div>
             <div class="marker-container">
                 <span *ngFor="let marker of msg.markers" class="tooltip-long"

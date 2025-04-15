@@ -205,8 +205,8 @@ export class Node extends NodeBase {
 
   override setupChildren(svg: ElementRef<SVGSVGElement>, group: SVGGElement): void {
     this.leafs.forEach((leaf, edge) => {
-      group.appendChild(leaf.setup(svg));
       group.appendChild(edge.setup(svg));
+      group.appendChild(leaf.setup(svg));
     });
   }
 

@@ -31,6 +31,7 @@ export class ApiToolData {
 }
 
 export class ApiCodeToolData {
+  public success!: boolean;
   public code?: string;
   public error?: string;
   public language?: string;

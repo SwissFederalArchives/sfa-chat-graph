@@ -9,6 +9,7 @@ import { ChatHistoryComponent } from './chat-history/chat-history.component';
 import { GraphVisualisationControlsComponent } from './graph-visualisation-controls/graph-visualisation-controls.component';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { provideMarkdown } from 'ngx-markdown';
+import { ChatDataPopoutComponent } from './chat-data-popout/chat-data-popout.component';
 
 @NgModule({
   declarations: [

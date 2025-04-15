@@ -6,7 +6,7 @@
       "request": "launch",
       "name": "localhost (Edge)",
       "url": "https://localhost:40112",
-      "webRoot": "${workspaceFolder}"
+      "webRoot": "${workspaceFolder}",
     },
     {
       "type": "chrome",

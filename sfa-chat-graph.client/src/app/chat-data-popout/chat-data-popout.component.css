@@ -1,0 +1,37 @@
+.popup-buttons {
+    display: flex;
+    flex-direction: row;
+    align-items: end;
+    justify-content: end;
+    gap: 1em;
+    padding: 0.5em;
+    flex-shrink: 0;
+    right: 1%;
+    top: 1%;
+    padding: 1em;
+}
+
+.popup-window {
+    position: absolute;
+    z-index: 2;
+    background-color: var(--app-container);
+    max-width: 80%;
+    top: 10%;
+    left: 10%;
+    display: flex;
+    flex-direction: column;
+    border-radius: 5px;
+    max-height: 80%;
+    overflow-x: auto; 
+}
+
+.popup-content {
+    margin-top: 0px;
+    overflow-y: auto;
+    max-height: inherit;
+    padding: 0em 1em 1em 1em;
+}
+
+.markdown pre:first {
+    margin-top: 0px;
+}

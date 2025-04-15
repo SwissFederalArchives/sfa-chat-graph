@@ -93,7 +93,7 @@ namespace sfa_chat_graph.Server.Services.ChatService.OpenAI
 				return new ApiToolData
 				{
 					Description = x.Description,
-					Id = Guid.NewGuid(),
+					Id = x.BinaryIDs[item.Key],
 					Content = item.Value,
 					IsBase64Content = isText == false,
 					MimeType = mimeType
@@ -126,12 +126,16 @@ namespace sfa_chat_graph.Server.Services.ChatService.OpenAI
 
 					foreach (var (key, value) in fragment.BinaryData)
 					{
-						if (key.StartsWith("text/"))
+						if (key.StartsWith("text/") || key.Equals("application/json", StringComparison.OrdinalIgnoreCase))
 						{
 							builder.Append("Data[");
 							builder.Append(key);
 							builder.AppendLine("]:");
 							builder.AppendLine(value.Ellipsis(512, "result cut off after 512 chars"));
+						}
+						else
+						{
+							builder.AppendLine($"BinaryData[{key}]: tool-response://{fragment.BinaryIDs[key]}");
 						}
 					}
 

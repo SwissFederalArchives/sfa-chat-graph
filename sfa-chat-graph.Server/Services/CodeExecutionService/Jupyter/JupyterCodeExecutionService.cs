@@ -75,7 +75,8 @@ namespace sfa_chat_graph.Server.Services.CodeExecutionService.Jupyter
 			{
 				Id = Guid.NewGuid(),
 				Description = description,
-				BinaryData = message.Data
+				BinaryData = message.Data,
+				BinaryIDs = message.Data.Keys.ToDictionary(x => x, x => Guid.NewGuid())
 			};
 		}
 
