@@ -42,8 +42,15 @@ namespace sfa_chat_graph.Server.Services.ChatHistoryService
 				await histories.UpdateOneAsync(x => x.Id == chatId, update);
 			}
 
-			
-			await CacheAsync(chatId, messages);
+			var cached = await _redis.KeyExistsAsync(chatId.ToString());
+			if (cached)
+			{
+				await CacheAsync(chatId, messages);
+			}
+			else
+			{
+				await SetCacheAsync(chatId, history.Messages.Concat(messages));
+			}
 		}
 
 		private async Task<ChatHistory?> FindDbHistoryAsync(Guid id)
@@ -71,7 +78,7 @@ namespace sfa_chat_graph.Server.Services.ChatHistoryService
 				MessagePackSerializer.Serialize<IApiMessage>(stream, message, _msgPackOptions);
 
 			stream.Position = 0;
-			await _redis.StringSetAsync(chatId.ToString(), RedisValue.CreateFrom(stream));
+			await _redis.StringSetAsync(chatId.ToString(), RedisValue.CreateFrom(stream), TimeSpan.FromMinutes(30));
 		}
 
 		public async Task<ChatHistory> GetChatHistoryAsync(Guid id)
