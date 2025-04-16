@@ -7,7 +7,7 @@ services:
       dockerfile: sfa-chat-graph.Server/Dockerfile
     environment:
       - JUPYTEROPTIONS__ENDPOINT=http://jupyter:8888
-      - CONNECTIONSTRINGS_MONGO=mongodb://mongodb:5432/sfa-chat-graph
+      - CONNECTIONSTRINGS_MONGO=mongodb://mongodb:27017/sfa-chat-graph
       - CONNECTIONSTRINGS_REDIS=valkey:6379 
     ports:
       - 1220:8080

@@ -1,11 +1,11 @@
 import { ApiMessage } from "./chat-message.model";
 
 export class ChatRequest {
-    public maxErrors?: number = 3;
-    public temperature?: number = undefined;
-    public history: ApiMessage[] = [];
+  public maxErrors?: number = 3;
+  public temperature?: number = undefined;
+  public message: ApiMessage;
 
-    constructor(history: ApiMessage[]|undefined = undefined) {
-        this.history = history ?? [];
-    }
+  constructor(message: ApiMessage) {
+    this.message = message;
+  }
 }

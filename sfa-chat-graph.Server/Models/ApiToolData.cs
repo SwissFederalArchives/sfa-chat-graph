@@ -1,4 +1,6 @@
 ﻿using MessagePack;
+using MongoDB.Bson.Serialization.Attributes;
+using MongoDB.Bson;
 
 namespace sfa_chat_graph.Server.Models
 {
@@ -6,6 +8,7 @@ namespace sfa_chat_graph.Server.Models
 	public class ApiToolData
 	{
 		[Key(0)]
+		[BsonGuidRepresentation(GuidRepresentation.Standard)]
 		public Guid Id { get; set; }
 
 		[Key(1)]

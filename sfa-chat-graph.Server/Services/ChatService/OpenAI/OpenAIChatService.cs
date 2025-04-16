@@ -24,6 +24,7 @@ namespace sfa_chat_graph.Server.Services.ChatService.OpenAI
 		private readonly IGraphRag _graphDb;
 		private readonly ChatClient _client;
 		private readonly ChatTool[] _chatTools;
+		private readonly ILogger _logger;
 
 		private const string CHAT_SYS_PROMPT = $"""
 		You are an helpfull assistant which answers questions with the help of generating sparql queries for the current database. Use your tool calls to query the database with sparql.
@@ -41,12 +42,13 @@ namespace sfa_chat_graph.Server.Services.ChatService.OpenAI
 
 		private static readonly SystemChatMessage ChatSystemMessage = new SystemChatMessage(CHAT_SYS_PROMPT);
 
-		public OpenAIChatService(ChatClient client, FunctionCallRegistry functionCalls, ICodeExecutionService codeExecutionService, IGraphRag graphDb)
+		public OpenAIChatService(ChatClient client, FunctionCallRegistry functionCalls, ILoggerFactory loggerFactory, ICodeExecutionService codeExecutionService, IGraphRag graphDb)
 		{
 			_client = client;
 			_functionCalls = functionCalls;
 			_chatTools = functionCalls.GetFunctionCallMetas().Select(x => x.AsChatTool()).ToArray();
 			_graphDb=graphDb;
+			_logger = loggerFactory.CreateLogger<OpenAIChatService>();
 		}
 
 
@@ -70,7 +72,17 @@ namespace sfa_chat_graph.Server.Services.ChatService.OpenAI
 
 		private async Task<Message> HandleQueryResultAsync(string toolCallId, SparqlResultSet result, string query)
 		{
-			var visualisation = await _graphDb.GetVisualisationResultAsync(result, query);
+			SparqlResultSet visualisation = null;
+
+			try
+			{
+				visualisation = await _graphDb.GetVisualisationResultAsync(result, query);
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Failed to get visualisation result for query: {query}", query);
+			}
+
 			var csv = SparqlResultFormatter.ToCSV(result, 50);
 			var toolMessage = CreateToolMessage(toolCallId, csv);
 			var graphToolData = new ApiGraphToolData { DataGraph = result, VisualisationGraph = visualisation, Query = query };
@@ -217,7 +229,7 @@ namespace sfa_chat_graph.Server.Services.ChatService.OpenAI
 				try
 				{
 					toolCall.Id = originalId;
-					return await HandleToolCallImplAsync(toolCall, context);	
+					return await HandleToolCallImplAsync(toolCall, context);
 				}
 				catch (Exception newEx)
 				{
@@ -273,7 +285,7 @@ namespace sfa_chat_graph.Server.Services.ChatService.OpenAI
 			}
 		}
 
-		public async Task<CompletionResult> CompleteAsync(ApiMessage[] history, float temperature, int maxErrors)
+		public async Task<CompletionResult> CompleteAsync(IEnumerable<ApiMessage> history, float temperature, int maxErrors)
 		{
 			var ctx = new OpenAiChatContext(ChatSystemMessage, history);
 			var options = new ChatCompletionOptions { Temperature = temperature };

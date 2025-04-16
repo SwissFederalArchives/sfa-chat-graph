@@ -9,10 +9,16 @@ namespace sfa_chat_graph.Server.Utils.Bson
 {
 	public class SparqlResultSetBsonConverter : IBsonSerializer<SparqlResultSet>
 	{
-		public Type ValueType => typeof(SparqlStarResult);
+		public Type ValueType => typeof(SparqlResultSet);
 
 		private void SerializeNode(BsonSerializationContext context, BsonSerializationArgs args, INode node)
 		{
+			if (node == null)
+			{
+				context.Writer.WriteNull();
+				return;
+			}
+
 			context.Writer.WriteStartDocument();
 			context.Writer.WriteName("type");
 			context.Writer.WriteInt32((int)node.NodeType);
@@ -100,7 +106,6 @@ namespace sfa_chat_graph.Server.Utils.Bson
 					SerializeResult(context, args, variables, result);
 
 				context.Writer.WriteEndArray();
-				context.Writer.WriteEndDocument();
 			}
 			else if (value.ResultsType == SparqlResultsType.Boolean)
 			{
@@ -118,6 +123,12 @@ namespace sfa_chat_graph.Server.Utils.Bson
 
 		private INode DeserializeNode(BsonDeserializationContext context, BsonDeserializationArgs args)
 		{
+			if(context.Reader.CurrentBsonType == BsonType.Null)
+			{
+				context.Reader.ReadNull();
+				return null;
+			}
+
 			context.Reader.ReadStartDocument();
 			context.Reader.ReadName("type");
 			var type = (NodeType)context.Reader.ReadInt32();
@@ -189,7 +200,7 @@ namespace sfa_chat_graph.Server.Utils.Bson
 			var result = new SparqlResult();
 			for (int i = 0; i < variables.Length; i++)
 				result.SetValue(variables[i], DeserializeNode(context, args));
-			
+
 			context.Reader.ReadEndArray();
 			return result;
 		}

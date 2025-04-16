@@ -10,7 +10,6 @@ import { GraphVisualisationControlsComponent } from './graph-visualisation-contr
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { provideMarkdown } from 'ngx-markdown';
 import { ChatDataPopoutComponent } from './chat-data-popout/chat-data-popout.component';
-
 @NgModule({
   declarations: [
     AppComponent,

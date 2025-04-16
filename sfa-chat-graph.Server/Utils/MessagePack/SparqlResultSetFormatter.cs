@@ -28,6 +28,11 @@ namespace sfa_chat_graph.Server.Utils.MessagePack
 
 		private INode ReadNode(ref MessagePackReader reader, MessagePackSerializerOptions options)
 		{
+			if(reader.TryReadNil())
+			{
+				return null;
+			}
+
 			var type = (NodeType)reader.ReadByte();
 			switch (type)
 			{
@@ -123,6 +128,12 @@ namespace sfa_chat_graph.Server.Utils.MessagePack
 
 		private void WriteNode(ref MessagePackWriter writer, MessagePackSerializerOptions options, INode node)
 		{
+			if(node == null)
+			{
+				writer.WriteNil();
+				return;
+			}
+
 			writer.Write((byte)node.NodeType);
 			switch (node)
 			{

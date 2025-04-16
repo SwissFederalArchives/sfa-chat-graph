@@ -45,6 +45,9 @@ namespace sfa_chat_graph.Server.Utils
 
 		public static INode ReadNode(JsonElement element)
 		{
+			if(element.ValueKind == JsonValueKind.Null)
+				return null;
+
 			var type = element.GetProperty("type").GetString();
 			var value = element.GetProperty("value").GetString();
 			switch (type)
@@ -75,6 +78,9 @@ namespace sfa_chat_graph.Server.Utils
 			string value = null;
 			string dataType = null;
 			string lang = null;
+
+			if(reader.TokenType == JsonTokenType.Null)
+				return null;
 
 			reader.ReadAndCheck(JsonTokenType.StartObject);
 			while (reader.Read())
@@ -136,6 +142,12 @@ namespace sfa_chat_graph.Server.Utils
 
 		public static void WriteNode(Utf8JsonWriter writer, INode node)
 		{
+			if(node == null)
+			{
+				writer.WriteNullValue();
+				return;
+			}
+
 			writer.WriteStartObject();
 			switch (node)
 			{

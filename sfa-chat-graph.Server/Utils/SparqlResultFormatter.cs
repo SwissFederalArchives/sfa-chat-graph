@@ -25,7 +25,7 @@ namespace sfa_chat_graph.Server.Utils
 			{
 				UriNode uriNode => $"<{uriNode.Uri}>",
 				LiteralNode literalNode => literalNode.Value,
-				_ => node.ToString()
+				_ => string.Empty
 			};
 
 			if (str.Contains(";"))

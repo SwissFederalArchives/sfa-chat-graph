@@ -47,17 +47,25 @@ namespace SfaChatGraph.Server.Controllers
 			return Ok(graph);
 		}
 
-
-		[HttpPost("chat")]
+		[HttpGet("history/{id}")]
 		[ProducesResponseType<ApiMessage[]>(StatusCodes.Status200OK)]
-		public async Task<IActionResult> ChatAsync([FromBody] ApiChatRequest chat)
+		public async Task<IActionResult> GetHistoryAsync(Guid id)
 		{
-			var history = await _chatHistoryService.GetChatHistoryAsync(chat.Id);
-			var response = await _chatService.CompleteAsync(history.Messages, chat.Temperature, chat.MaxErrors);
+			var history = await _chatHistoryService.GetChatHistoryAsync(id);
+			return Ok(history.Messages);
+		}	
+	
+		[HttpPost("chat/{id}")]
+		[ProducesResponseType<ApiMessage[]>(StatusCodes.Status200OK)]
+		public async Task<IActionResult> ChatAsync([FromBody] ApiChatRequest chat, Guid id)
+		{
+			var history = await _chatHistoryService.GetChatHistoryAsync(id);
+			var messages = history.Messages.Append(chat.Message);
+			var response = await _chatService.CompleteAsync(messages, chat.Temperature, chat.MaxErrors);
 			if (response.Success == false)
 				return StatusCode(500, "Max errors exceeded");
 
-			await _chatHistoryService.AppendAsync(chat.Id, response.Messages);
+			await _chatHistoryService.AppendAsync(id, response.Messages.Prepend(chat.Message));
 			return Ok(response.Messages);
 		}
 	}

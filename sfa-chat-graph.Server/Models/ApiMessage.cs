@@ -1,4 +1,5 @@
 ﻿using MessagePack;
+using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using OpenAI.Assistants;
 using SfaChatGraph.Server.Models;
@@ -7,14 +8,14 @@ using VDS.RDF.Query;
 
 namespace sfa_chat_graph.Server.Models
 {
+
+
 	[MessagePackObject]
-	[Union(1, typeof(ApiAssistantMessage))]
-	[Union(2, typeof(ApiToolCallMessage))]
-	[Union(3, typeof(ApiToolResponseMessage))]
 	[BsonKnownTypes(typeof(ApiAssistantMessage), typeof(ApiToolCallMessage), typeof(ApiToolResponseMessage))]
-	public class ApiMessage
+	public class ApiMessage : IApiMessage
 	{
 		[Key(0)]
+		[BsonGuidRepresentation(GuidRepresentation.Standard)]
 		public Guid Id { get; set; } = Guid.NewGuid();
 
 		[Key(1)]

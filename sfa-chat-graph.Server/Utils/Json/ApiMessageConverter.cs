@@ -38,7 +38,9 @@ namespace sfa_chat_graph.Server.Utils.Json
 
 		public override void Write(Utf8JsonWriter writer, ApiMessage value, JsonSerializerOptions options)
 		{
-			JsonSerializer.Serialize(writer, value, value.GetType(), options);
+			var clonedOptions = new JsonSerializerOptions(options);
+			clonedOptions.Converters.Remove(this); // prevent recursive calls to this converter
+			JsonSerializer.Serialize(writer, value, value.GetType(), clonedOptions);
 		}
 	}
 }

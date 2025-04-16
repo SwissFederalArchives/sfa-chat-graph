@@ -16,8 +16,12 @@ export class ApiClientService {
     return await firstValueFrom(this._httpClient.get<SparqlStarResult>(`https://localhost:40112/api/v1/rdf/describe?subject=${encodeURIComponent(iri)}`));
   }
 
-  public async chatAsync(request: ChatRequest): Promise<ApiMessage[]>{
-    return await firstValueFrom(this._httpClient.post<ApiMessage[]>('https://localhost:40112/api/v1/rdf/chat', request));
+  public async getHistoryAsync(id: string): Promise<ApiMessage[]> {
+    return await firstValueFrom(this._httpClient.get<ApiMessage[]>(`https://localhost:40112/api/v1/rdf/history/${id}`));
+  }
+
+  public async chatAsync(id: string, request: ChatRequest): Promise<ApiMessage[]>{
+    return await firstValueFrom(this._httpClient.post<ApiMessage[]>(`https://localhost:40112/api/v1/rdf/chat/${id}`, request));
   }
 
 

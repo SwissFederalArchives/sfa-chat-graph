@@ -11,13 +11,3 @@ td {
 table {
     margin: 0 auto;
 }
-
-.container {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    height: 99vh;
-}
-
-.container > *{
-    height: 99vh;
-}
