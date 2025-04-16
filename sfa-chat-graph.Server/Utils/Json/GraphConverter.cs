@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 using VDS.RDF;
 using VDS.RDF.Query;
 
-namespace sfa_chat_graph.Server.Utils
+namespace sfa_chat_graph.Server.Utils.Json
 {
 	public class GraphConverter<T> : JsonConverter<T> where T : IGraph
 	{
@@ -20,7 +20,7 @@ namespace sfa_chat_graph.Server.Utils
 		{
 			var doc = JsonDocument.ParseValue(ref reader);
 			doc.RootElement.TryGetProperty("head", out var head);
-			var variables = JsonSerializer.Deserialize<string[]>(head, options);
+			var variables = head.Deserialize<string[]>(options);
 			if (variables.ContentsEqual(["s", "p", "o"]) == false)
 				throw new JsonException("Expected head to be ['s', 'p', 'o']");
 

@@ -7,7 +7,7 @@ using System.Reflection.Metadata;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace sfa_chat_graph.Server.Utils
+namespace sfa_chat_graph.Server.Utils.Json
 {
 	public class SparqlStarConverter : JsonConverter<SparqlStarResult>
 	{
@@ -39,7 +39,7 @@ namespace sfa_chat_graph.Server.Utils
 			var head = JsonSerializer.Deserialize<SparqlStarHead>(ref reader, options);
 
 			var mapping = head.Vars.Enumerate().ToFrozenDictionary(i => i.item, i => i.index);
-			if(reader.ReadNamedObject() != "results")
+			if (reader.ReadNamedObject() != "results")
 				throw new InvalidOperationException("Expected results object");
 
 			reader.Check(JsonTokenType.StartObject);
@@ -54,7 +54,7 @@ namespace sfa_chat_graph.Server.Utils
 
 			reader.ReadAndCheck(JsonTokenType.EndObject);
 			reader.ReadAndCheck(JsonTokenType.EndObject);
-			return new SparqlStarResult(head, results.ToArray(), mapping);	
+			return new SparqlStarResult(head, results.ToArray(), mapping);
 		}
 
 		private void WriteObject(Utf8JsonWriter writer, SparqlStarObject value, FrozenDictionary<string, int> termMapping, JsonSerializerOptions options)

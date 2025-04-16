@@ -9,7 +9,7 @@
                 </markdown>
                 <div *ngIf="msg.data.length > 0" class="data-tag-container">
                     @for(data of msg.data; track data){
-                    <button [style.color]="data.color" (click)="displayMessageData(data)"><span class="tooltip-long"
+                    <button [classList]="data.className" (click)="displayMessageData(data)"><span class="tooltip-wide"
                             [attr.data-text]="data.description">{{data.label}}</span></button>
                     }
                 </div>

@@ -14,6 +14,10 @@ using sfa_chat_graph.Server.Services.CodeExecutionService.Jupyter;
 using sfa_chat_graph.Server.Services.ChatService;
 using sfa_chat_graph.Server.Services.ChatService.OpenAI;
 using VDS.RDF;
+using StackExchange.Redis;
+using MongoDB.Driver;
+using sfa_chat_graph.Server.Utils.Json;
+using sfa_chat_graph.Server.Services.ChatHistoryService;
 
 DotNetEnv.Env.Load();
 DataAnnotationsSupport.AddDataAnnotations();
@@ -31,6 +35,19 @@ builder.Services.AddSingleton<ISparqlEndpoint>(new StardogEndpoint("https://lind
 builder.Services.AddSingleton<IGraphRag, GraphRag>();
 builder.Services.AddSingleton<ChatCodeService>();
 builder.Services.AddScoped<IChatService, OpenAIChatService>();
+
+builder.Services.AddSingleton<IConnectionMultiplexer>(sp => ConnectionMultiplexer.Connect(sp.GetRequiredService<IConfiguration>().GetConnectionString("Redis")));
+builder.Services.AddScoped<IDatabaseAsync>(sp => sp.GetRequiredService<IConnectionMultiplexer>().GetDatabase());
+builder.Services.AddScoped<IChatHistoryService, CachedChatHistoryService>();
+
+builder.Services.AddScoped<IMongoClient>(x => new MongoClient(x.GetRequiredService<IConfiguration>().GetConnectionString("Mongo")));
+builder.Services.AddScoped<IMongoDatabase>(x =>
+{
+	var client = x.GetRequiredService<IMongoClient>();
+	var config = x.GetRequiredService<IConfiguration>();
+	var url = new MongoUrl(config.GetConnectionString("Mongo"));
+	return client.GetDatabase(url.DatabaseName);
+});
 
 builder.Services.AddControllers()
 	.AddJsonOptions(opts =>

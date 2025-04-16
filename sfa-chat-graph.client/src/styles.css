@@ -22,6 +22,7 @@ body {
     --app-control-text: #262626;
     --app-control-text-dark: #fcfcfc;
     --app-corner-table-radius: .25em;
+    --app-error-color: #f35555;
 }
 
 .inverted-button {
@@ -215,6 +216,51 @@ body {
     /* making the .tooltip span a container for the tooltip text */
     /* little indicater to indicate it's hoverable */
 }
+
+.tooltip-wide {
+    position: relative;
+    padding: 0;
+    margin: 0;
+}
+
+.tooltip-wide:before {
+    height: fit-content;
+    max-height: 300px;
+    width:  fit-content;
+    text-align: left;
+
+    content: attr(data-text);
+    /* here's the magic */
+    position: absolute;
+
+    /* vertically center */
+    top: 50%;
+    transform: translateY(-100%);
+
+    /* move to right */
+    left: 100%;
+    margin-left: 15px;
+    /* and add a small left margin */
+
+    /* basic styles */
+    padding: .5em;
+    border-radius: 10px;
+    background: var(--app-background-dark);
+    color: var(--app-text-color-dark);
+    font-size: small;
+
+    display: none;
+    /* hide by default */
+    -webkit-animation: fade-in-fwd 0.6s ease-in-out 5s alternate-reverse forwards;
+    animation: fade-in-fwd 0.6s ease-in-out 5s alternate-reverse forwards;
+    animation: name duration timing-function delay iteration-count direction fill-mode;
+}
+
+.tooltip-wide:hover:before {
+    display: block;
+    z-index: 2;
+}
+
 
 .tooltip-long {
     position: relative;

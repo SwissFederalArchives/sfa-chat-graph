@@ -55,7 +55,7 @@
 }
 
 .error-message {
-    background-color: #f35555;
+    background-color: var(--app-error-color);
 }
 
 .error-header {
@@ -109,4 +109,8 @@
 .data-tag-container button:hover {
     background-color: var(--app-control-hover);
     transition: background-color 0.3s ease-in-out;
+}
+
+.data-tag-container button.tool-data-code-error {
+    background-color: var(--app-error-color);
 }

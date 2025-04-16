@@ -1,0 +1,35 @@
+services:
+  backend:
+    restart: unless-stopped
+    image: ${DOCKER_REGISTRY-}sfachatgraphserver
+    build:
+      context: .
+      dockerfile: sfa-chat-graph.Server/Dockerfile
+    environment:
+      - JUPYTEROPTIONS__ENDPOINT=http://jupyter:8888
+      - CONNECTIONSTRINGS_MONGO=mongodb://mongodb:5432/sfa-chat-graph
+      - CONNECTIONSTRINGS_REDIS=valkey:6379 
+    ports:
+      - 1220:8080
+
+  jupyter:
+    restart: unless-stopped
+    image: quay.io/jupyter/scipy-notebook
+    environment:
+      - JUPYTER_TOKEN=
+      - NotebookApp.disable_check_xsrf=True
+  
+  mongodb:
+    restart: unless-stopped
+    image: mongo
+    volumes:
+      - mongo_data:/data/db
+
+  valkey:
+    image: valkey/valkey
+    restart: unless-stopped
+
+
+volumes:
+  mongo_data:
+    driver: local

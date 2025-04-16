@@ -9,18 +9,18 @@ using VDS.RDF.Parsing;
 using VDS.RDF.Query;
 using VDS.RDF.Writing;
 
-namespace sfa_chat_graph.Server.Utils
+namespace sfa_chat_graph.Server.Utils.Json
 {
 	public class SparqlResultSetConverter : JsonConverter<SparqlResultSet>
 	{
-		
+
 
 		private static ISparqlResult ReadBinding(JsonElement element)
 		{
 			var res = new SparqlResult();
 			foreach (var obj in element.EnumerateObject())
 				res.SetValue(obj.Name, ConverterUtils.ReadNode(obj.Value));
-			
+
 			return res;
 		}
 
@@ -43,7 +43,7 @@ namespace sfa_chat_graph.Server.Utils
 				var results = root.GetProperty("results").GetProperty("bindings");
 				foreach (var element in results.EnumerateArray())
 					set.Results.Add(ReadBinding(element));
-				
+
 				return set;
 			}
 

@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using OpenAI.Chat;
 using sfa_chat_graph.Server.Models;
 using sfa_chat_graph.Server.RDF.Models;
+using sfa_chat_graph.Server.Services.ChatHistoryService;
 using sfa_chat_graph.Server.Services.ChatService;
 using sfa_chat_graph.Server.Utils;
 using SfaChatGraph.Server.Models;
@@ -25,15 +26,17 @@ namespace SfaChatGraph.Server.Controllers
 	[Route("/api/v1/rdf")]
 	public class RdfController : ControllerBase
 	{
+		private readonly IChatHistoryService _chatHistoryService;
 		private readonly IChatService _chatService;
 		private readonly IGraphRag _graphDb;
 		private ILogger _logger;
 
-		public RdfController(IGraphRag graphDb, IChatService chatService, ILoggerFactory loggerFactory)
+		public RdfController(IGraphRag graphDb, IChatService chatService, ILoggerFactory loggerFactory, IChatHistoryService chatHistoryService)
 		{
 			_graphDb=graphDb;
 			_logger=loggerFactory.CreateLogger<RdfController>();
 			_chatService = chatService;
+			_chatHistoryService=chatHistoryService;
 		}
 
 		[HttpGet("describe")]
@@ -49,10 +52,12 @@ namespace SfaChatGraph.Server.Controllers
 		[ProducesResponseType<ApiMessage[]>(StatusCodes.Status200OK)]
 		public async Task<IActionResult> ChatAsync([FromBody] ApiChatRequest chat)
 		{
-			var response = await _chatService.CompleteAsync(chat.History, chat.Temperature, chat.MaxErrors);
+			var history = await _chatHistoryService.GetChatHistoryAsync(chat.Id);
+			var response = await _chatService.CompleteAsync(history.Messages, chat.Temperature, chat.MaxErrors);
 			if (response.Success == false)
 				return StatusCode(500, "Max errors exceeded");
 
+			await _chatHistoryService.AppendAsync(chat.Id, response.Messages);
 			return Ok(response.Messages);
 		}
 	}

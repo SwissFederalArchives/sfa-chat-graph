@@ -1,10 +1,13 @@
-﻿using SfaChatGraph.Server.Models;
+﻿using MessagePack;
+using SfaChatGraph.Server.Models;
 using System.Text.Json.Serialization;
 
 namespace sfa_chat_graph.Server.Models
 {
+	[MessagePackObject]
 	public class ApiToolCallMessage : ApiMessage
 	{
+		[Key(4)]
 		public ApiToolCall[] ToolCalls { get; set; }
 
 		public ApiToolCallMessage() : base(ChatRole.ToolCall, null)

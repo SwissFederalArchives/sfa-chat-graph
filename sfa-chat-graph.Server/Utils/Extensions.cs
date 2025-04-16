@@ -1,6 +1,7 @@
 ﻿using AwosFramework.Generators.FunctionCalling;
 using Json.More;
 using Json.Schema;
+using MessagePack;
 using OpenAI.Chat;
 using sfa_chat_graph.Server.Models;
 using SfaChatGraph.Server.Models;
@@ -23,6 +24,29 @@ namespace SfaChatGraph.Server.Utils
 			while (enumerator1.MoveNext() && enumerator2.MoveNext())
 				yield return new KeyValuePair<TKey, TValue>(enumerator1.Current, enumerator2.Current);
 			
+		}
+
+		public static void WriteStringArray(this ref MessagePackWriter writer, IEnumerable<string> array)
+		{
+			writer.WriteArrayHeader(array.Count());
+			foreach(var item in array)
+				writer.Write(item);
+		}
+
+		public static string[] ReadStringArray(this ref MessagePackReader reader)
+		{
+			var len = reader.ReadArrayHeader();
+			var array = new string[len];
+			for (int i = 0; i < len; i++)
+				array[i] = reader.ReadString();
+
+			return array;
+		}
+
+		public static Uri ReadUri(this ref MessagePackReader reader)
+		{
+			var uri = reader.ReadString();
+			return new Uri(uri);
 		}
 
 		public static string ToIriList(this IEnumerable<string> iris) => string.Join(" ", iris.Select(x => $"<{x}>"));

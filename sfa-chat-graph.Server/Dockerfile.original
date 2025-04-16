@@ -9,16 +9,18 @@ EXPOSE 8081
 
 
 # This stage is used to build the service project
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS with-node
+RUN apt-get update
+RUN apt-get install curl
+RUN curl -sL https://deb.nodesource.com/setup_20.x | bash
+RUN apt-get -y install nodejs
+RUN npm install -g @angular/cli
+
+FROM with-node AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["sfa-chat-graph.Server/sfa-chat-graph.Server.csproj", "sfa-chat-graph.Server/"]
-COPY ["AwosFramework.ApiClients.Jupyter/AwosFramework.ApiClients.Jupyter.csproj", "AwosFramework.ApiClients.Jupyter/"]
-COPY ["AwosFramework.Generators.FunctionCalling/AwosFramework.Generators.FunctionCalling.csproj", "AwosFramework.Generators.FunctionCalling/"]
 COPY ["sfa-chat-graph.client/sfa-chat-graph.client.esproj", "sfa-chat-graph.client/"]
-RUN mkdir -p /src/sfa-chat-graph.client/obj/Debug/
-RUN npm install ./sfa-chat-graph.client/
-
 RUN dotnet restore "./sfa-chat-graph.Server/sfa-chat-graph.Server.csproj"
 COPY . .
 WORKDIR "/src/sfa-chat-graph.Server"

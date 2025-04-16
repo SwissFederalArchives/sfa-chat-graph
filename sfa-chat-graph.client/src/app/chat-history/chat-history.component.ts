@@ -35,17 +35,17 @@ export class DisplayData {
   mimeType: string;
   fileName: string;
   isBase64Content: boolean;
-  color?: string;
+  className?: string;
   formattingLanguage?: string;
 
-  constructor(label: string, contentString: string, isBase64Content: boolean, mimeType: string, description?: string, color?: string, formattingLanguage?: string) {
+  constructor(label: string, contentString: string, isBase64Content: boolean, mimeType: string, description?: string, className?: string, formattingLanguage?: string) {
     this.label = label;
     this.mimeType = mimeType;
     this.fileName = `${encodeURIComponent(description?.replaceAll(" ", "_")?.toLowerCase() ?? window.crypto.randomUUID())}.${mime.getExtension(mimeType)}`;
     this.description = description;
     this.content = contentString;
     this.isBase64Content = isBase64Content;
-    this.color = color;
+    this.className = className;
     this.formattingLanguage = formattingLanguage;
   }
 
@@ -70,20 +70,21 @@ class DisplayMessage {
       const label = `Code ${i + 1}`;
       const res = code.success ? code.code : code.error;
       if (res) {
-        const color = code.success ? undefined : 'red';
-        const display = new DisplayData(label, res, false, mime.getType(code.language!) || 'text/plain', 'Generated code for the visualisation', color, code.language);
+        const className = code.success ? 'tool-data-code' : 'tool-data-code-error';
+        const display = new DisplayData(label, res, false, mime.getType(code.language!) || 'text/plain', 'Generated code for the visualisation', className, code.language);
         yield display;
       }
 
       for (let j = 0; j < (code.data?.length ?? 0); j++) {
         const data = code.data![j];
         if (data.content) {
-          const label = `Data ${i + 1}.${j + 1}`;
-          const display = new DisplayData(label, data.content, data.isBase64Content, data.mimeType!, data.description);
+          const type = mime.getExtension(data.mimeType!);
+          const label = `Code ${i+1} Data (${type}) ${j + 1}`;
+          const display = new DisplayData(label, data.content, data.isBase64Content, data.mimeType!, data.description, 'tool-data-code-data');
           yield display;
         } else if (data.description) {
-          const label = `Output ${i + 1}.${j + 1}`;
-          const display = new DisplayData(label, data.description, false, 'text/plain', data.description, undefined, undefined);
+          const label = `Code ${i+1} Output ${j + 1}`;
+          const display = new DisplayData(label, data.description, false, 'text/plain', data.description, 'tool-data-code-ouput', undefined);
           yield display;
         }
       }
@@ -95,13 +96,13 @@ class DisplayMessage {
       const graph = graphs[i];
       if (graph.query) {
         const label = `Query ${i + 1}`;
-        yield new DisplayData(label, graph.query, false, 'application/sparql-query', 'Generated SPARQL query for the visualisation', undefined, 'sparql');
+        yield new DisplayData(label, graph.query, false, 'application/sparql-query', 'Generated SPARQL query for the visualisation', 'tool-data-graph-query', 'sparql');
       }
 
       if (graph.dataGraph) {
         const label = `Graph ${i + 1}`;
         const graphJson = JSON.stringify(graph.dataGraph, null, 2);
-        yield new DisplayData(label, graphJson, false, 'application/x-sparqlstar-results+json', 'Generated data graph for the visualisation', undefined, 'json');
+        yield new DisplayData(label, graphJson, false, 'application/x-sparqlstar-results+json', 'Generated data graph for the visualisation', 'tool-data-graph', 'json');
       }
     }
   }

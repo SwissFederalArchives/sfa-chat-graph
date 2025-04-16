@@ -3,7 +3,7 @@ using SfaChatGraph.Server.Models;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace sfa_chat_graph.Server.Utils
+namespace sfa_chat_graph.Server.Utils.Json
 {
 	public class ApiMessageConverter : JsonConverter<ApiMessage>
 	{

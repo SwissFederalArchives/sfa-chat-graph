@@ -1,8 +1,10 @@
-﻿using SfaChatGraph.Server.Models;
+﻿using MessagePack;
+using SfaChatGraph.Server.Models;
 using System.Text.Json.Serialization;
 
 namespace sfa_chat_graph.Server.Models
 {
+	[MessagePackObject]
 	public class ApiAssistantMessage : ApiMessage
 	{
 		public ApiAssistantMessage() : base(ChatRole.Assistant, null)
