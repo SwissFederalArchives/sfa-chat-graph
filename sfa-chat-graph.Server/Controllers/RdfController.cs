@@ -7,6 +7,8 @@ using sfa_chat_graph.Server.Models;
 using sfa_chat_graph.Server.RDF.Models;
 using sfa_chat_graph.Server.Services.ChatHistoryService;
 using sfa_chat_graph.Server.Services.ChatService;
+using sfa_chat_graph.Server.Services.ChatService.Events;
+using sfa_chat_graph.Server.Services.EventService;
 using sfa_chat_graph.Server.Utils;
 using SfaChatGraph.Server.Models;
 using SfaChatGraph.Server.RDF;
@@ -29,14 +31,16 @@ namespace SfaChatGraph.Server.Controllers
 		private readonly IChatHistoryService _chatHistoryService;
 		private readonly IChatService _chatService;
 		private readonly IGraphRag _graphDb;
+		private readonly ChatServiceEventService _eventService;
 		private ILogger _logger;
 
-		public RdfController(IGraphRag graphDb, IChatService chatService, ILoggerFactory loggerFactory, IChatHistoryService chatHistoryService)
+		public RdfController(IGraphRag graphDb, IChatService chatService, ILoggerFactory loggerFactory, IChatHistoryService chatHistoryService, ChatServiceEventService eventService)
 		{
 			_graphDb=graphDb;
 			_logger=loggerFactory.CreateLogger<RdfController>();
 			_chatService = chatService;
 			_chatHistoryService=chatHistoryService;
+			_eventService=eventService;
 		}
 
 		[HttpGet("describe")]
@@ -57,11 +61,15 @@ namespace SfaChatGraph.Server.Controllers
 	
 		[HttpPost("chat/{id}")]
 		[ProducesResponseType<ApiMessage[]>(StatusCodes.Status200OK)]
-		public async Task<IActionResult> ChatAsync([FromBody] ApiChatRequest chat, Guid id)
+		public async Task<IActionResult> ChatAsync([FromBody] ApiChatRequest chat, Guid id, [FromQuery]Guid? eventChannel)
 		{
+			IEventSink<ChatEvent> sink = null;
+			if(eventChannel.HasValue)
+				sink = _eventService.GetChannel(eventChannel.Value);
+
 			var history = await _chatHistoryService.GetChatHistoryAsync(id);
 			var messages = history.Messages.Append(chat.Message);
-			var response = await _chatService.CompleteAsync(messages, chat.Temperature, chat.MaxErrors);
+			var response = await _chatService.CompleteAsync(history.Id, sink, messages, chat.Temperature, chat.MaxErrors);
 			if (response.Success == false)
 				return StatusCode(500, "Max errors exceeded");
 

@@ -9,13 +9,18 @@ using Json.More;
 using Json.Schema;
 using Json.Schema.Generation;
 using Json.Schema.Generation.DataAnnotations;
+using MessagePack;
 using Microsoft.AspNetCore.DataProtection.KeyManagement.Internal;
 using Microsoft.EntityFrameworkCore.Migrations.Operations;
 using Microsoft.Extensions.Logging;
+using MongoDB.Bson;
+using MongoDB.Bson.Serialization;
+using sfa_chat_graph.Server.Models;
 using sfa_chat_graph.Server.RDF;
 using sfa_chat_graph.Server.RDF.Endpoints;
 using sfa_chat_graph.Server.Utils;
 using sfa_chat_graph.Server.Utils.Json;
+using sfa_chat_graph.Server.Utils.MessagePack;
 using SfaChatGraph.Server.RDF;
 using System.Buffers.Text;
 using System.ComponentModel;
@@ -1332,6 +1337,40 @@ var options = new JsonSerializerOptions();
 options.Converters.Add(new SparqlResultSetConverter());
 var resultSet = JsonSerializer.Deserialize<SparqlResultSet>(graphJson, options);
 
-var endpoint = new StardogEndpoint("https://lindas.admin.ch/query");
-var rag = new GraphRag(endpoint);
-var vis = await rag.GetVisualisationResultAsync(resultSet, query);
+var msg = new ApiToolResponseMessage
+{
+  Id = Guid.NewGuid(),
+  Content = "Test message",
+  ToolCallId = "ToolId",
+	TimeStamp = DateTime.UtcNow,
+  GraphToolData = new ApiGraphToolData
+  {
+    Query = "Sparql Query",
+		DataGraph = resultSet,
+    VisualisationGraph = resultSet
+	}
+};
+
+var result = new SparqlResult();
+result.SetValue("?a", new LiteralNode("test"));
+result.SetValue("?b", new UriNode(new Uri("http://example.com/test/node1")));
+result.SetValue("?c", null);
+result.SetValue("?d", null);
+
+var result2 = new SparqlResult();
+result2.SetValue("?a", new LiteralNode("test2"));
+result2.SetValue("?b", new UriNode(new Uri("http://example.com/test/node3")));
+result2.SetValue("?c", null);
+result2.SetValue("?d", new UriNode(new Uri("http://example.com/test/node4")));
+
+//resultSet = new SparqlResultSet([result, result2]);
+
+using var stream = new MemoryStream();
+var msgPackOptions = new MessagePackSerializerOptions(FormatterResolver.Instance)
+	.WithCompression(MessagePackCompression.Lz4BlockArray);
+
+MessagePackSerializer.Serialize(stream, resultSet, msgPackOptions);
+stream.Position = 0;
+var dMsg = MessagePackSerializer.Deserialize<SparqlResultSet>(stream, msgPackOptions); 
+
+Console.WriteLine("Done");

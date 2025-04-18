@@ -121,67 +121,68 @@ namespace sfa_chat_graph.Server.Utils.Bson
 
 
 
-		private INode DeserializeNode(BsonDeserializationContext context, BsonDeserializationArgs args)
+		private INode DeserializeNode(IBsonReader reader, BsonDeserializationArgs args)
 		{
-			if(context.Reader.CurrentBsonType == BsonType.Null)
+			var token = reader.ReadBsonType();
+			if (token == BsonType.Null)
 			{
-				context.Reader.ReadNull();
+				reader.ReadNull();
 				return null;
 			}
 
-			context.Reader.ReadStartDocument();
-			context.Reader.ReadName("type");
-			var type = (NodeType)context.Reader.ReadInt32();
+			reader.ReadStartDocument();
+			reader.ReadName("type");
+			var type = (NodeType)reader.ReadInt32();
 			try
 			{
 
 				switch (type)
 				{
 					case NodeType.Uri:
-						context.Reader.ReadName("value");
-						var uri = context.Reader.ReadString();
+						reader.ReadName("value");
+						var uri = reader.ReadString();
 						return new UriNode(new Uri(uri));
 
 					case NodeType.Literal:
-						context.Reader.ReadName("value");
-						var value = context.Reader.ReadString();
+						reader.ReadName("value");
+						var value = reader.ReadString();
 						string? language = null;
 						Uri? datatype = null;
-						if (context.Reader.ReadName() == "datatype")
+						if (reader.ReadName() == "datatype")
 						{
-							datatype = new Uri(context.Reader.ReadString());
+							datatype = new Uri(reader.ReadString());
 							return new LiteralNode(value, datatype);
 						}
-						else if (context.Reader.ReadName() == "language")
+						else if (reader.ReadName() == "language")
 						{
-							language = context.Reader.ReadString();
+							language = reader.ReadString();
 							return new LiteralNode(value, language);
 						}
 
 						return new LiteralNode(value);
 
 					case NodeType.Blank:
-						context.Reader.ReadName("value");
-						var id = context.Reader.ReadString();
+						reader.ReadName("value");
+						var id = reader.ReadString();
 						return new BlankNode(id);
 
 					case NodeType.Variable:
-						context.Reader.ReadName("variableName");
-						var variableName = context.Reader.ReadString();
+						reader.ReadName("variableName");
+						var variableName = reader.ReadString();
 						return new VariableNode(variableName);
 
 					case NodeType.Triple:
-						context.Reader.ReadName("subject");
-						var subject = DeserializeNode(context, args);
-						context.Reader.ReadName("predicate");
-						var predicate = DeserializeNode(context, args);
-						context.Reader.ReadName("object");
-						var obj = DeserializeNode(context, args);
+						reader.ReadName("subject");
+						var subject = DeserializeNode(reader, args);
+						reader.ReadName("predicate");
+						var predicate = DeserializeNode(reader, args);
+						reader.ReadName("object");
+						var obj = DeserializeNode(reader, args);
 						return new TripleNode(new Triple(subject, predicate, obj));
 
 					case NodeType.GraphLiteral:
-						context.Reader.ReadName("graph");
-						var graph = BsonSerializer.Deserialize<IGraph>(context.Reader);
+						reader.ReadName("graph");
+						var graph = BsonSerializer.Deserialize<IGraph>(reader);
 						return new GraphLiteralNode(graph);
 
 					default:
@@ -190,55 +191,67 @@ namespace sfa_chat_graph.Server.Utils.Bson
 			}
 			finally
 			{
-				context.Reader.ReadEndDocument();
+				reader.ReadEndDocument();
 			}
 		}
 
-		private SparqlResult DeserializeResult(BsonDeserializationContext context, BsonDeserializationArgs args, string[] variables)
+		private SparqlResult DeserializeResult(IBsonReader reader, BsonDeserializationArgs args, string[] variables)
 		{
-			context.Reader.ReadStartArray();
+			reader.ReadStartArray();
 			var result = new SparqlResult();
 			for (int i = 0; i < variables.Length; i++)
-				result.SetValue(variables[i], DeserializeNode(context, args));
+				result.SetValue(variables[i], DeserializeNode(reader, args));
 
-			context.Reader.ReadEndArray();
+			reader.ReadEndArray();
 			return result;
 		}
 
-		private string[] ReadStringArray(BsonDeserializationContext context, BsonDeserializationArgs args)
+		private string[] ReadStringArray(IBsonReader reader, BsonDeserializationArgs args)
 		{
-			context.Reader.ReadStartArray();
+			reader.ReadStartArray();
 			var items = new List<string>();
-			while (context.Reader.ReadBsonType() != BsonType.EndOfDocument)
-				items.Add(context.Reader.ReadString());
+			while (reader.ReadBsonType() != BsonType.EndOfDocument)
+				items.Add(reader.ReadString());
 
-			context.Reader.ReadEndArray();
+			reader.ReadEndArray();
 			return items.ToArray();
+		}
+
+		private SparqlResultSet ReadBooleanResult(IBsonReader reader)
+		{
+			reader.ReadName("result");
+			return new SparqlResultSet(reader.ReadBoolean());
+		}
+
+		private SparqlResultSet ReadVariableBindingsResult(IBsonReader reader, BsonDeserializationArgs args)
+		{
+			reader.ReadName("variables");
+			var variables = ReadStringArray(reader, args);
+			reader.ReadName("results");
+			reader.ReadStartArray();
+			var results = new List<SparqlResult>();
+			while (reader.ReadBsonType() != BsonType.EndOfDocument)
+				results.Add(DeserializeResult(reader, args, variables));
+
+			reader.ReadEndArray();
+			return new SparqlResultSet(results);
 		}
 
 		private SparqlResultSet DeserializeImpl(BsonDeserializationContext context, BsonDeserializationArgs args)
 		{
-			context.Reader.ReadStartDocument();
-			context.Reader.ReadName("type");
-			var type = (SparqlResultsType)context.Reader.ReadInt32();
-			if (type == SparqlResultsType.VariableBindings)
+			var reader = context.Reader;
+			reader.ReadStartDocument();	
+			reader.ReadName("type");
+			var type = (SparqlResultsType)reader.ReadInt32();
+			SparqlResultSet result = type switch
 			{
-				context.Reader.ReadName("variables");
-				var variables = ReadStringArray(context, args);
-				context.Reader.ReadName("results");
-				context.Reader.ReadStartArray();
-				var results = new List<SparqlResult>();
-				while (context.Reader.ReadBsonType() != BsonType.EndOfDocument)
-					results.Add(DeserializeResult(context, args, variables));
-				context.Reader.ReadEndArray();
-				return new SparqlResultSet(results);
-			}
-			else if (type == SparqlResultsType.Boolean)
-			{
-				context.Reader.ReadName("result");
-				return new SparqlResultSet(context.Reader.ReadBoolean());
-			}
-			throw new NotSupportedException($"Sparql result type {type} is not supported.");
+				SparqlResultsType.Unknown => new SparqlResultSet(),
+				SparqlResultsType.Boolean => ReadBooleanResult(reader),
+				SparqlResultsType.VariableBindings => ReadVariableBindingsResult(reader, args),
+				_ => throw new NotSupportedException($"Sparql result type {type} is not supported.")
+			};
+			reader.ReadEndDocument();
+			return result;
 		}
 
 		public SparqlResultSet Deserialize(BsonDeserializationContext context, BsonDeserializationArgs args) => DeserializeImpl(context, args);

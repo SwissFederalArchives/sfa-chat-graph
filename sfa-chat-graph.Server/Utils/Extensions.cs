@@ -6,6 +6,7 @@ using OpenAI.Chat;
 using sfa_chat_graph.Server.Models;
 using SfaChatGraph.Server.Models;
 using SfaChatGraph.Server.RDF.Models;
+using System.Buffers;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using VDS.RDF.Query;
@@ -24,6 +25,12 @@ namespace SfaChatGraph.Server.Utils
 			while (enumerator1.MoveNext() && enumerator2.MoveNext())
 				yield return new KeyValuePair<TKey, TValue>(enumerator1.Current, enumerator2.Current);
 			
+		}
+
+		public static void ForEach<T>(this IEnumerable<T> enumerable, Action<T> action)
+		{
+			foreach (var item in enumerable)
+				action(item);
 		}
 
 		public static void WriteStringArray(this ref MessagePackWriter writer, IEnumerable<string> array)
@@ -64,6 +71,22 @@ namespace SfaChatGraph.Server.Utils
 				return @string.Substring(0, len) + end;
 
 			return @string;
+		}
+
+		public static IEnumerable<(ReadOnlyMemory<T> memory, bool isLast)> AsIsLast<T>(this ReadOnlySequence<T> seq)
+		{
+			var enumerator = seq.GetEnumerator();
+			if(enumerator.MoveNext() == false)
+				yield break;
+
+			var last = enumerator.Current;
+			while (enumerator.MoveNext())
+			{
+				yield return (last, false);
+				last = enumerator.Current;
+			}
+
+			yield return (last, true);
 		}
 
 		public static IEnumerable<(int index, T item)> Enumerate<T>(this IEnumerable<T> enumerable)

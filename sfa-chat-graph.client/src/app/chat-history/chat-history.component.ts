@@ -1,11 +1,11 @@
-import { Component, ElementRef, Inject, Injector, Input, signal, Signal, ViewChild, WritableSignal } from '@angular/core';
+import { Component, ElementRef, Inject, Injector, Input, OnChanges, OnDestroy, signal, Signal, SimpleChanges, ViewChild, WritableSignal } from '@angular/core';
 import { MatIcon } from '@angular/material/icon';
 import { MatButton } from '@angular/material/button';
 import { MatIconButton } from '@angular/material/button';
 import { NgFor, NgIf } from '@angular/common';
 import { MatInputModule } from '@angular/material/input';
 import { FormsModule } from '@angular/forms';
-import { ApiCodeToolData, ApiGraphToolData, ApiMessage, ApiToolData, ChatRole } from '../services/api-client/chat-message.model';
+import { ApiChatEvent, ApiCodeToolData, ApiGraphToolData, ApiMessage, ApiToolData, ChatRole } from '../services/api-client/chat-message.model';
 import { Graph } from '../graph/graph';
 import { ApiClientService } from '../services/api-client/api-client.service';
 import { ChatRequest } from '../services/api-client/chat-request.model';
@@ -17,6 +17,7 @@ import standardTypes from 'mime/types/standard.js';
 import otherTypes from 'mime/types/other.js';
 import { ChatDataPopoutComponent } from '../chat-data-popout/chat-data-popout.component';
 import { ActivatedRoute } from '@angular/router';
+import { EventChannel } from '../services/api-client/event-channel.model';
 
 const mime = new Mime(standardTypes, otherTypes);
 mime.define({
@@ -138,14 +139,25 @@ export class ChatHistoryComponent {
   error?: string = undefined;
   toolData: Map<string, ApiToolData> = new Map<string, ApiToolData>();
   lastMesssage?: ApiMessage = undefined;
+  activity?: string;
 
   waitingForResponse: boolean = false;
   message?: string = undefined;
   @ViewChild('chatHistory') chatHistory!: ElementRef<HTMLElement>;
   roles = ChatRole;
 
-  constructor(private _apiClient: ApiClientService, private injector: Injector, private router: ActivatedRoute) {
+  constructor(private _apiClient: ApiClientService, private injector: Injector, private router: ActivatedRoute, private eventChannel: EventChannel) {
+    this.eventChannel.onReceive.subscribe((event) => this.onChatEvent(event));
+  }
 
+  public onChatEvent(event: ApiChatEvent) {
+    if (event.chatId == this.chatId) {
+      if (event.done) {
+        this.activity = undefined;
+      }else{ 
+        this.activity = event.activity;
+      }
+    }
   }
 
   public setupHistory(messages: ApiMessage[]) {
@@ -234,14 +246,14 @@ export class ChatHistoryComponent {
     if (this.waitingForResponse) return;
     this.waitingForResponse = true;
     try {
-      
-      if(this.lastMesssage == undefined) {
+
+      if (this.lastMesssage == undefined) {
         this.lastMesssage = new ApiMessage(this.message);
         this.displayMessages([this.lastMesssage]);
       }
 
       const request = new ChatRequest(this.lastMesssage);
-      const response = await this._apiClient.chatAsync(this.chatId, request);
+      const response = await this._apiClient.chatAsync(this.chatId, request, this.eventChannel?.channelId);
       let sparqlLoaded: boolean = false;
 
       for (let sparql of response.filter(m => m.role == ChatRole.ToolResponse).filter(tc => tc && tc.graphToolData && tc.graphToolData.visualisationGraph)) {
@@ -260,7 +272,7 @@ export class ChatHistoryComponent {
       this.error = e.message ?? 'Unknown error occured';
       this.scrollToBottom();
     } finally {
-      this.waitingForResponse = false;     
+      this.waitingForResponse = false;
     }
   }
 

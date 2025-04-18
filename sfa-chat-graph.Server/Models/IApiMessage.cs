@@ -1,4 +1,5 @@
 ﻿using MessagePack;
+using MongoDB.Bson.Serialization.Attributes;
 
 namespace sfa_chat_graph.Server.Models
 {

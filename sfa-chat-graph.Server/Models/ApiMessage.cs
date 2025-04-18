@@ -8,8 +8,6 @@ using VDS.RDF.Query;
 
 namespace sfa_chat_graph.Server.Models
 {
-
-
 	[MessagePackObject]
 	[BsonKnownTypes(typeof(ApiAssistantMessage), typeof(ApiToolCallMessage), typeof(ApiToolResponseMessage))]
 	public class ApiMessage : IApiMessage

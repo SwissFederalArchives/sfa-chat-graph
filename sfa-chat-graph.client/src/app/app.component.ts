@@ -1,10 +1,11 @@
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
-import { AfterViewInit, Component, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Graph } from './graph/graph';
 import { filter, firstValueFrom } from 'rxjs';
 import { ApiClientService } from './services/api-client/api-client.service';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { ChatHistoryComponent } from './chat-history/chat-history.component';
+import { EventChannel } from './services/api-client/event-channel.model';
 
 const DATABASE = "TestDB";
 const MAX_LOAD_COUNT: number = 15;
@@ -18,7 +19,7 @@ const MAX_LOAD_COUNT: number = 15;
 export class AppComponent {
 
   constructor(private router: Router, private route: ActivatedRoute) {
-    router.events
+        router.events
       .pipe(filter((event) => event instanceof NavigationEnd))
       .subscribe(async (event: NavigationEnd) => {
         if (event.url == "/") {
@@ -26,4 +27,5 @@ export class AppComponent {
         }
       });
   }
+
 }

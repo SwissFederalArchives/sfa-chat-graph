@@ -1,11 +1,12 @@
 import { HttpClient } from '@angular/common/http';
-import { AfterViewInit, Component, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, Input, OnInit, ViewChild } from '@angular/core';
 import { ApiClientService } from '../services/api-client/api-client.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ChatHistoryComponent } from '../chat-history/chat-history.component';
 import { Graph } from '../graph/graph';
 import { GraphVisualisationComponent } from '../graph-visualisation/graph-visualisation.component';
 import { NgIf } from '@angular/common';
+import { EventChannel } from '../services/api-client/event-channel.model';
 
 @Component({
   selector: 'chat-window',
@@ -21,7 +22,7 @@ export class ChatWindowComponent implements OnInit, AfterViewInit {
   chatId!: string;
 
 
-  constructor(private http: HttpClient, private apiClient: ApiClientService, private route: ActivatedRoute, private router: Router) {
+  constructor(private http: HttpClient, private apiClient: ApiClientService, private route: ActivatedRoute, private router: Router, public eventChannel: EventChannel) {
     this.graph = new Graph();
 
     this.graph.onNodeDetailsRequested.subscribe(async (data) => {

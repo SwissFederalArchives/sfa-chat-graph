@@ -217,6 +217,10 @@ body {
     /* little indicater to indicate it's hoverable */
 }
 
+.chat-message img {
+    max-width: 100%;
+}
+
 .tooltip-wide {
     position: relative;
     padding: 0;

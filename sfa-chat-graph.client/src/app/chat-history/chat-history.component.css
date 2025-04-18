@@ -36,10 +36,6 @@
     flex-direction: row;
 }
 
-.chat-message img {
-    max-width: 100%;
-}
-
 .chat-container {
     width: 100%;
     height: 100%;

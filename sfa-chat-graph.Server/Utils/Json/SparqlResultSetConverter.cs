@@ -32,21 +32,26 @@ namespace sfa_chat_graph.Server.Utils.Json
 			if (Enum.TryParse<SparqlResultsType>(type, true, out var resultsType) == false)
 				throw new JsonException($"Unknown results type {type}");
 
-			if (resultsType == SparqlResultsType.Boolean)
+			switch (resultsType)
 			{
-				var result = root.GetProperty("result").GetBoolean();
-				return new SparqlResultSet(result);
-			}
-			else
-			{
-				var set = new SparqlResultSet();
-				var results = root.GetProperty("results").GetProperty("bindings");
-				foreach (var element in results.EnumerateArray())
-					set.Results.Add(ReadBinding(element));
+				case SparqlResultsType.Boolean:
+					var result = root.GetProperty("result").GetBoolean();
+					return new SparqlResultSet(result);
 
-				return set;
-			}
+				case SparqlResultsType.Unknown:
+					return new SparqlResultSet();
 
+				case SparqlResultsType.VariableBindings:
+					var list = new List<ISparqlResult>();
+					var results = root.GetProperty("results").GetProperty("bindings");
+					foreach (var element in results.EnumerateArray())
+						list.Add(ReadBinding(element));
+
+					return new SparqlResultSet(list);
+				
+				default:
+					throw new JsonException($"Unknown results type {type}.");	
+			}
 		}
 
 		private static void WriteResult(Utf8JsonWriter writer, ISparqlResult result)

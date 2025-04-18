@@ -75,7 +75,7 @@ namespace sfa_chat_graph.Server.Utils.MessagePack
 			{
 				var row = new SparqlResult();
 				for (int j = 0; j < variables.Length; j++)
-					row.SetValue(variables[i], ReadNode(ref reader, options));
+					row.SetValue(variables[j], ReadNode(ref reader, options));
 
 				array[i] = row;
 			}
@@ -176,7 +176,7 @@ namespace sfa_chat_graph.Server.Utils.MessagePack
 				writer.WriteArrayHeader(value.Results.Count);
 				foreach (var result in value.Results)
 					for (int i = 0; i < variables.Length; i++)
-						WriteNode(ref writer, options, result[i]);
+						WriteNode(ref writer, options, result[variables[i]]);
 
 			}
 			else if (value.ResultsType == SparqlResultsType.Boolean)

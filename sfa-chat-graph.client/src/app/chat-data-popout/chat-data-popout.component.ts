@@ -65,9 +65,15 @@ export class ChatDataPopoutComponent {
     return "";
   }
 
+  public htmlEncode(content?: string): string {
+    if (!content) return "";
+    return content.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+  }
+
+
   public getMdContent() {
     if (this.data?.formattingLanguage) {
-      return `\`\`\`${this.data?.formattingLanguage}\n${this.data?.content}\n\`\`\``;
+      return `\`\`\`${this.data?.formattingLanguage}\n${this.htmlEncode(this.data?.content)}\n\`\`\``;
     } else {
       return this.formatTextData(this.data?.content, this.data?.mimeType);
     }

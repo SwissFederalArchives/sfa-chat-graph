@@ -16,6 +16,14 @@ export class ApiMessage {
   }
 }
 
+export class ApiChatEvent {
+  public chatId!: string;
+  public timeStamp!: Date;
+  public activity!: string;
+  public detail?: string;
+  public done!: boolean;
+}
+
 export class ApiGraphToolData {
   public query?: string;
   public dataGraph?: SparqlStarResult;

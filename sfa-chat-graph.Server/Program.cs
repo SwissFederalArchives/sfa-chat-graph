@@ -18,6 +18,7 @@ using StackExchange.Redis;
 using MongoDB.Driver;
 using sfa_chat_graph.Server.Utils.Json;
 using sfa_chat_graph.Server.Services.ChatHistoryService;
+using sfa_chat_graph.Server.Services.ChatService.Events;
 
 DotNetEnv.Env.Load();
 DataAnnotationsSupport.AddDataAnnotations();
@@ -34,6 +35,7 @@ builder.Services.AddSingleton<ICodeExecutionService, JupyterCodeExecutionService
 builder.Services.AddSingleton<ISparqlEndpoint>(new StardogEndpoint("https://lindas.admin.ch/query"));
 builder.Services.AddSingleton<IGraphRag, GraphRag>();
 builder.Services.AddSingleton<ChatCodeService>();
+builder.Services.AddSingleton<ChatServiceEventService>();
 builder.Services.AddScoped<IChatService, OpenAIChatService>();
 
 builder.Services.AddSingleton<IConnectionMultiplexer>(sp => ConnectionMultiplexer.Connect(sp.GetRequiredService<IConfiguration>().GetConnectionString("Redis")));
@@ -81,6 +83,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
+app.UseWebSockets();
 
 app.MapSwagger();
 app.MapControllers();

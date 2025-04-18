@@ -1,5 +1,7 @@
 ﻿using OpenAI.Chat;
 using sfa_chat_graph.Server.Models;
+using sfa_chat_graph.Server.Services.ChatService.Events;
+using sfa_chat_graph.Server.Services.EventService;
 
 namespace sfa_chat_graph.Server.Services.ChatService.OpenAI
 {
@@ -8,7 +10,7 @@ namespace sfa_chat_graph.Server.Services.ChatService.OpenAI
 		private readonly List<ChatMessage> _openAiHistory;
 		public IEnumerable<ChatMessage> OpenAIHistory => _openAiHistory;
 
-		public OpenAiChatContext(ChatMessage sysPrompt, IEnumerable<ApiMessage> history) : base(history)
+		public OpenAiChatContext(Guid chatId, IEventSink<ChatEvent> events, IEnumerable<ApiMessage> history, ChatMessage sysPrompt) : base(chatId, events, history)
 		{
 			_openAiHistory = history.Select(x => x.AsOpenAIMessage()).ToList();
 			_openAiHistory.Insert(0, sysPrompt);

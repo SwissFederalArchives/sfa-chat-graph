@@ -15,10 +15,12 @@ using sfa_chat_graph.Server.Services.CodeExecutionService;
 using System.Text;
 using AwosFramework.ApiClients.Jupyter.Utils;
 using Microsoft.AspNetCore.Http.HttpResults;
+using sfa_chat_graph.Server.Services.EventService;
+using sfa_chat_graph.Server.Services.ChatService.Events;
 
 namespace sfa_chat_graph.Server.Services.ChatService.OpenAI
 {
-	public partial class OpenAIChatService : IChatService
+	public partial class OpenAIChatService : ChatServiceBase<OpenAiChatContext>
 	{
 		private readonly FunctionCallRegistry _functionCalls;
 		private readonly IGraphRag _graphDb;
@@ -169,6 +171,8 @@ namespace sfa_chat_graph.Server.Services.ChatService.OpenAI
 		private async Task<Message> HandleToolCallImplAsync(ChatToolCall toolCall, ChatContext ctx)
 		{
 			var toolParameters = JsonDocument.Parse(toolCall.FunctionArguments);
+			var detail = JsonSerializer.Serialize(new { FunctionName = toolCall.FunctionName, Arguments = toolParameters });
+			await ctx.NotifyActivityAsync($"Handling {toolCall.FunctionName} tool call", detail);
 			var responseObj = await _functionCalls.CallFunctionAsync(toolCall.FunctionName, toolParameters, ctx);
 			switch (toolCall.FunctionName)
 			{
@@ -212,6 +216,7 @@ namespace sfa_chat_graph.Server.Services.ChatService.OpenAI
 			var opts = GetErrorHandlingOptions(toolCall);
 			while (tries-- > 0)
 			{
+				await context.NotifyActivityAsync($"Handling {toolCall.FunctionName} tool error, {tries+1} tries left", ex.ToString());
 				var messages = context.OpenAIHistory.ToList();
 				string errorDetail = null;
 				if (ex.Data.Contains("error"))
@@ -238,6 +243,7 @@ namespace sfa_chat_graph.Server.Services.ChatService.OpenAI
 				}
 			}
 
+			await context.NotifyActivityAsync($"Handling {toolCall.FunctionName} tool error, no more tries left");
 			return null;
 		}
 
@@ -270,7 +276,7 @@ namespace sfa_chat_graph.Server.Services.ChatService.OpenAI
 
 		private async Task<ToolHandleResponse> HandleResponseAsync(OpenAiChatContext ctx, ChatCompletion completion, AssistantChatMessage response, int maxErrors)
 		{
-
+			await ctx.NotifyActivityAsync("Handling response");
 			switch (completion.FinishReason)
 			{
 				case ChatFinishReason.Stop:
@@ -285,16 +291,20 @@ namespace sfa_chat_graph.Server.Services.ChatService.OpenAI
 			}
 		}
 
-		public async Task<CompletionResult> CompleteAsync(IEnumerable<ApiMessage> history, float temperature, int maxErrors)
+		public override OpenAiChatContext CreateContext(Guid chatId, IEventSink<ChatEvent> events, IEnumerable<ApiMessage> history)
 		{
-			var ctx = new OpenAiChatContext(ChatSystemMessage, history);
+			return new OpenAiChatContext(chatId, events, history, ChatSystemMessage);
+		}
+
+		public override async Task<CompletionResult> CompleteAsync(OpenAiChatContext ctx, float temperature, int maxErrors)
+		{
 			var options = new ChatCompletionOptions { Temperature = temperature };
 			options.Tools.AddRange(_chatTools);
-
 
 			ToolHandleResponse toolResponse = null;
 			do
 			{
+				await ctx.NotifyActivityAsync("Generating response");
 				var completion = await _client.CompleteChatAsync(ctx.OpenAIHistory, options);
 				var response = ChatMessage.CreateAssistantMessage(completion);
 				ctx.AddMessage(response);
@@ -304,6 +314,7 @@ namespace sfa_chat_graph.Server.Services.ChatService.OpenAI
 
 			} while (toolResponse?.RequiresAction == true);
 
+			await ctx.NotifyDoneAsync();
 			return new CompletionResult(ctx.Created.ToArray(), true);
 		}
 	}
