@@ -5,7 +5,7 @@ import { filter, firstValueFrom } from 'rxjs';
 import { ApiClientService } from './services/api-client/api-client.service';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { ChatHistoryComponent } from './chat-history/chat-history.component';
-import { EventChannel } from './services/api-client/event-channel.model';
+import { EventChannel } from './services/api-client/event-channel.service';
 
 const DATABASE = "TestDB";
 const MAX_LOAD_COUNT: number = 15;

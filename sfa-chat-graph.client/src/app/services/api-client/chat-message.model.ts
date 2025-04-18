@@ -17,11 +17,11 @@ export class ApiMessage {
 }
 
 export class ApiChatEvent {
-  public chatId!: string;
-  public timeStamp!: Date;
-  public activity!: string;
-  public detail?: string;
-  public done!: boolean;
+  public ChatId!: string;
+  public TimeStamp!: Date;
+  public Activity!: string;
+  public Detail?: string;
+  public Done!: boolean;
 }
 
 export class ApiGraphToolData {

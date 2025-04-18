@@ -17,7 +17,7 @@ import standardTypes from 'mime/types/standard.js';
 import otherTypes from 'mime/types/other.js';
 import { ChatDataPopoutComponent } from '../chat-data-popout/chat-data-popout.component';
 import { ActivatedRoute } from '@angular/router';
-import { EventChannel } from '../services/api-client/event-channel.model';
+import { EventChannel } from '../services/api-client/event-channel.service';
 
 const mime = new Mime(standardTypes, otherTypes);
 mime.define({
@@ -151,11 +151,12 @@ export class ChatHistoryComponent {
   }
 
   public onChatEvent(event: ApiChatEvent) {
-    if (event.chatId == this.chatId) {
-      if (event.done) {
+    if (event.ChatId == this.chatId) {
+      if (event.Done) {
         this.activity = undefined;
-      }else{ 
-        this.activity = event.activity;
+      } else {
+        this.activity = event.Activity;
+        this.scrollToBottom();
       }
     }
   }
@@ -165,6 +166,9 @@ export class ChatHistoryComponent {
     this.displayHistory = [];
     this.toolData = new Map<string, ApiToolData>();
     this.error = undefined;
+    messages.filter(m => m.role == ChatRole.ToolResponse && m.graphToolData && m.toolCallId)
+    .forEach(m => this.graph.loadFromSparqlStar(m.graphToolData!.visualisationGraph!, 100, m.toolCallId));
+    this.graph.updateModels();
     this.displayMessages(messages);
     this.scrollToBottom();
   }

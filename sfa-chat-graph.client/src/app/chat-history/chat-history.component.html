@@ -28,7 +28,19 @@
 
 
         }
-        @if(error){
+        @if(activity) {
+        <div id="msg-activity" class="chat-message chat-message-left">
+            <div class="activity-content">
+                <svg class="activity-spinner">
+                    <rect x="30%" y="0" width="40%" height="100%"/>
+                    <rect x="0" y="30%" width="100%" height="40%"/>
+                </svg>
+                <p class="activity-text">{{activity}}</p>
+            </div>
+        </div>
+        }
+
+        @if(error) {
         <div id="msg-error" class="error-message chat-message chat-message-right">
             <div class="error-content">
                 <div class="error-header">

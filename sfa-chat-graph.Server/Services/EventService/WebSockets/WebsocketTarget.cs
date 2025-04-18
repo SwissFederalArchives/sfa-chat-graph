@@ -28,6 +28,7 @@ namespace sfa_chat_graph.Server.Services.EventService.WebSockets
 			_logger = loggerFactory.CreateLogger($"{nameof(WebsocketTarget)}[{Id}]");
 			_closeTask = socket.ReceiveAsync(_buffer, _cts.Token).ContinueWith(HandleReceive);
 			_messageType=messageType;
+			_logger.LogInformation("New target created: {TargetId}", Id);
 		}
 
 
@@ -96,6 +97,7 @@ namespace sfa_chat_graph.Server.Services.EventService.WebSockets
 			_pool.Return(_buffer);
 			_socket.Dispose();
 			_cts.Cancel();
+			_logger.LogInformation("Target disposed: {TargetId}", Id);
 		}
 	}
 }

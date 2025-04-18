@@ -1,6 +1,7 @@
 ﻿using AwosFramework.ApiClients.Jupyter.Client;
 using AwosFramework.ApiClients.Jupyter.Rest.Models.Contents;
 using AwosFramework.ApiClients.Jupyter.Rest.Models.Session;
+using AwosFramework.ApiClients.Jupyter.Utils;
 using AwosFramework.ApiClients.Jupyter.WebSocket.Jupyter.Models.Messages;
 using AwosFramework.ApiClients.Jupyter.WebSocket.Jupyter.Models.Messages.IOPub;
 using AwosFramework.ApiClients.Jupyter.WebSocket.Terminal.Protocol;
@@ -97,7 +98,7 @@ namespace sfa_chat_graph.Server.Services.CodeExecutionService.Jupyter
 			var reply = result.Reply;
 			if (reply.Status == StatusType.Error)
 			{
-				var error = $"{reply.ExceptionName}: {reply.ExceptionValue}\n\nStacktrace:\n{string.Join("\n", reply.StackTrace)}";
+				var error = $"{reply.ExceptionName}: {reply.ExceptionValue}\n\nStacktrace:\n{string.Join("\n", reply.StackTrace.Select(AnsiCleaner.CleanAnsiString))}";
 				return new CodeExecutionResult { Success = false, Language = _kernelSpec.Spec.Language, Fragments = null, Error = error };
 			}
 			else

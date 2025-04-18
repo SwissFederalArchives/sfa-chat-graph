@@ -34,16 +34,19 @@ export class EventChannel implements OnDestroy{
 
     public async openAsync(): Promise<boolean> {
         if (!this.socket) {
-            const socket = new WebSocket(`wss://${window.location.hostname}/api/v1/events/subscribe/${this.channelId}`);
+            const socket = new WebSocket(`wss://localhost:7075/api/v1/events/subscribe/${this.channelId}`);
             socket.onmessage = (event) => {
                 const data = JSON.parse(event.data) as ApiChatEvent;
                 this.onReceive.emit(data);
             };
 
             this.socket = socket;
-            return await new Promise<boolean>((resolve, reject) => {
+            const prom = new Promise<boolean>((resolve, reject) => {
                 socket.onopen = () => { resolve(true) };
-                socket.onerror = (error) => resolve(false);
+                socket.onerror = (error) => {
+                    console.error(error); 
+                    resolve(false);
+                }
             });
         }
 

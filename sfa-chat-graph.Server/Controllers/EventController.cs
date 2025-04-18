@@ -32,6 +32,7 @@ namespace sfa_chat_graph.Server.Controllers
 			var target = new WebsocketTarget(webSocket, _loggerFactory, WebSocketMessageType.Text);
 			_eventService.RegisterTarget(channelId, target);
 			await target.WaitForCloseAsync(HttpContext.RequestAborted);
+			await target.DisposeAsync();
 		}
 	}
 }

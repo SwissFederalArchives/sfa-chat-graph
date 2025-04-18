@@ -23,7 +23,7 @@ namespace sfa_chat_graph.Server.Utils
 		{
 			var str = node switch
 			{
-				UriNode uriNode => $"<{uriNode.Uri}>",
+				UriNode uriNode => uriNode.Uri.ToString(),
 				LiteralNode literalNode => literalNode.Value,
 				_ => string.Empty
 			};

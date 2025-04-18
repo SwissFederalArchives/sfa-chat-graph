@@ -25,10 +25,10 @@ namespace sfa_chat_graph.Server.Services.ChatHistoryService
 		public async Task AppendAsync(Guid chatId, IEnumerable<ApiMessage> messages)
 		{
 			var histories = _db.GetCollection<ChatHistory>("chat-history");
-			var history = await FindDbHistoryAsync(chatId);
-			if (history == null)
+			var hasHistory = (await histories.CountDocumentsAsync(x => x.Id == chatId)) > 0;
+			if (hasHistory == false)
 			{
-				history = new ChatHistory
+				var history = new ChatHistory
 				{
 					Id = chatId,
 					Messages = messages.ToArray()
@@ -49,7 +49,13 @@ namespace sfa_chat_graph.Server.Services.ChatHistoryService
 			}
 			else
 			{
-				await SetCacheAsync(chatId, history.Messages.Concat(messages));
+				if (hasHistory) // if there was existing history, load everything to refresh cache
+				{
+					var history = await GetChatHistoryAsync(chatId);
+					messages = history.Messages;
+				}
+
+				await SetCacheAsync(chatId, messages);
 			}
 		}
 
@@ -63,12 +69,14 @@ namespace sfa_chat_graph.Server.Services.ChatHistoryService
 
 		private async Task CacheAsync(Guid chatId, IEnumerable<ApiMessage> messages)
 		{
-			using var stream = new MemoryStream();
-			foreach (var message in messages)
-				MessagePackSerializer.Serialize(stream, message, _msgPackOptions);
+			using (var stream = new MemoryStream())
+			{
+				foreach (var message in messages)
+					MessagePackSerializer.Serialize(stream, message, _msgPackOptions);
 
-			stream.Position = 0;
-			await _redis.StringAppendAsync(chatId.ToString(), RedisValue.CreateFrom(stream));
+				stream.Position = 0;
+				await _redis.StringAppendAsync(chatId.ToString(), RedisValue.CreateFrom(stream));
+			}
 		}
 
 		private async Task SetCacheAsync(Guid chatId, IEnumerable<ApiMessage> messages)
