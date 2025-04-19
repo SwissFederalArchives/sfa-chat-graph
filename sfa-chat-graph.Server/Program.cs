@@ -19,6 +19,9 @@ using MongoDB.Driver;
 using sfa_chat_graph.Server.Utils.Json;
 using sfa_chat_graph.Server.Services.ChatHistoryService;
 using sfa_chat_graph.Server.Services.ChatService.Events;
+using sfa_chat_graph.Server.Services.Cache;
+using sfa_chat_graph.Server.Models;
+using sfa_chat_graph.Server.Utils.ServiceCollection;
 
 DotNetEnv.Env.Load();
 DataAnnotationsSupport.AddDataAnnotations();
@@ -38,10 +41,15 @@ builder.Services.AddSingleton<ChatCodeService>();
 builder.Services.AddSingleton<ChatServiceEventService>();
 builder.Services.AddScoped<IChatService, OpenAIChatService>();
 
-builder.Services.AddSingleton<IConnectionMultiplexer>(sp => ConnectionMultiplexer.Connect(sp.GetRequiredService<IConfiguration>().GetConnectionString("Redis")));
-builder.Services.AddScoped<IDatabaseAsync>(sp => sp.GetRequiredService<IConnectionMultiplexer>().GetDatabase());
-builder.Services.AddScoped<IChatHistoryService, CachedChatHistoryService>();
+var redis = builder.Configuration.GetConnectionString("Redis");
+if (string.IsNullOrEmpty(redis) == false)
+{
+	builder.Services.AddSingleton<IConnectionMultiplexer>(sp => ConnectionMultiplexer.Connect(redis));
+	builder.Services.AddScoped<IDatabaseAsync>(sp => sp.GetRequiredService<IConnectionMultiplexer>().GetDatabase());
+}
 
+builder.Services.AddScoped<IChatHistoryService, CachedChatHistoryService>();
+builder.Services.AddFromConfig<IAppendableCache<Guid, IApiMessage>>(builder.Configuration.GetSection("Cache"));
 builder.Services.AddScoped<IMongoClient>(x => new MongoClient(x.GetRequiredService<IConfiguration>().GetConnectionString("Mongo")));
 builder.Services.AddScoped<IMongoDatabase>(x =>
 {

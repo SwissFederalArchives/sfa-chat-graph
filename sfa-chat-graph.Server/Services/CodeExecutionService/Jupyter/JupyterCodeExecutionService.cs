@@ -7,6 +7,9 @@ using AwosFramework.ApiClients.Jupyter.WebSocket.Jupyter.Models.Messages.IOPub;
 using AwosFramework.ApiClients.Jupyter.WebSocket.Terminal.Protocol;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using sfa_chat_graph.Server.Services.ChatHistoryService;
+using sfa_chat_graph.Server.Services.ChatService.Events;
+using sfa_chat_graph.Server.Services.EventService;
 using sfa_chat_graph.Server.Utils;
 using System.Reactive.Linq;
 
@@ -81,9 +84,11 @@ namespace sfa_chat_graph.Server.Services.CodeExecutionService.Jupyter
 			};
 		}
 
-		public async Task<CodeExecutionResult> ExecuteCodeAsync(string code, CodeExecutionData[] data, CancellationToken cancellationToken)
+		public async Task<CodeExecutionResult> ExecuteCodeAsync(string code, CodeExecutionData[] data, CancellationToken cancellationToken, Func<string, Task>? statusAsync = null)
 		{
+			await statusAsync?.Invoke("Starting jupyter client");
 			var client = await _jupyterClient.ValueAsync();
+			await statusAsync?.Invoke("Creating jupyter session");
 			using var session = await client.CreateKernelSessionAsync(opts =>
 			{
 				opts.KernelSpecName = _kernelSpec.Name;
@@ -91,9 +96,14 @@ namespace sfa_chat_graph.Server.Services.CodeExecutionService.Jupyter
 				opts.DeleteWorkingDirectoryOnDispose = true;
 			});
 
-			var tasks = data.Select(x => session.UploadFileAsync(AsContentRequest(x)));
-			await Task.WhenAll(tasks);
+			if (data.Length > 0)
+			{
+				await statusAsync?.Invoke("Uploading data");
+				var tasks = data.Select(x => session.UploadFileAsync(AsContentRequest(x)));
+				await Task.WhenAll(tasks);
+			}
 
+			await statusAsync?.Invoke("Executing code");
 			var result = await session.ExecuteCodeAsync(code, cancellationToken);
 			var reply = result.Reply;
 			if (reply.Status == StatusType.Error)

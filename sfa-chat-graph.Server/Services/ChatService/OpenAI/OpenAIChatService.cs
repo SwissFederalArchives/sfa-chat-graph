@@ -72,12 +72,13 @@ namespace sfa_chat_graph.Server.Services.ChatService.OpenAI
 			return options;
 		}
 
-		private async Task<Message> HandleQueryResultAsync(string toolCallId, SparqlResultSet result, string query)
+		private async Task<Message> HandleQueryResultAsync(string toolCallId, SparqlResultSet result, string query, ChatContext ctx)
 		{
 			SparqlResultSet visualisation = null;
 
 			try
 			{
+				await ctx.NotifyActivityAsync("Getting graph for visualisation", query);
 				visualisation = await _graphDb.GetVisualisationResultAsync(result, query);
 			}
 			catch (Exception ex)
@@ -188,7 +189,7 @@ namespace sfa_chat_graph.Server.Services.ChatService.OpenAI
 				case FunctionCallRegistry.QUERY:
 					var sparqlResult = (SparqlResultSet)responseObj;
 					var queryString = toolParameters.RootElement.GetProperty("Query").GetString();
-					return await HandleQueryResultAsync(toolCall.Id, sparqlResult, queryString);
+					return await HandleQueryResultAsync(toolCall.Id, sparqlResult, queryString, ctx);
 
 				case FunctionCallRegistry.DESCRIBE:
 					var graph = (IGraph)responseObj;

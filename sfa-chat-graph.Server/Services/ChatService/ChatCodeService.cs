@@ -27,7 +27,7 @@ namespace sfa_chat_graph.Server.Services.ChatService
 			}
 
 			var files = additionalFiles.Select(x => new CodeExecutionData {  IsBinary = false, Data = SparqlResultFormatter.ToCSV(x.GraphToolData.DataGraph), Name = $"{x.ToolCallId}.csv" }).ToArray();
-			return await _executionService.ExecuteCodeAsync(code, files, CancellationToken.None);
+			return await _executionService.ExecuteCodeAsync(code, files, CancellationToken.None, chatContext.NotifyActivityAsync);
 		}
 	}
 }

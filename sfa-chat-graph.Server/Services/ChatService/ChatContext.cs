@@ -13,10 +13,12 @@ namespace sfa_chat_graph.Server.Services.ChatService
 
 		private readonly IEventSink<ChatEvent> _events;
 
-		public async Task NotifyActivityAsync(string activity, string? detail = null)
+		public async Task NotifyActivityAsync(string activity, string? detail)
 		{
 			await _events?.PushAsync(ChatEvent.CActivity(ChatId, activity, detail));
 		}
+
+		public Task NotifyActivityAsync(string activity) => NotifyActivityAsync(activity, null);
 
 		public async Task NotifyDoneAsync()
 		{
