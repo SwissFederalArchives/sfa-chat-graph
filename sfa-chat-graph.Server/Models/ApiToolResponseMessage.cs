@@ -1,4 +1,5 @@
 ﻿using MessagePack;
+using MongoDB.Bson.Serialization.Attributes;
 using SfaChatGraph.Server.Models;
 using SfaChatGraph.Server.RDF.Models;
 using System.Text.Json.Serialization;
@@ -22,6 +23,11 @@ namespace sfa_chat_graph.Server.Models
 		{
 
 		}
+
+		[JsonIgnore]
+		[BsonIgnore]
+		[IgnoreMember]
+		public bool HasData => this.GraphToolData != null || this.CodeToolData != null;
 
 		public ApiToolResponseMessage(string id, string content) : base(ChatRole.ToolResponse, content)
 		{
