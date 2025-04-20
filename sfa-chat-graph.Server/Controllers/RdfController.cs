@@ -67,11 +67,12 @@ namespace SfaChatGraph.Server.Controllers
 			if(eventChannel.HasValue)
 				sink = _eventService.GetChannel(eventChannel.Value);
 
+			await sink?.PushAsync(ChatEvent.CActivity(id, "Loading chat history"));
 			var history = await _chatHistoryService.GetChatHistoryAsync(id);
 			var messages = history.Messages.Append(chat.Message);
 			var response = await _chatService.CompleteAsync(history.Id, sink, messages, chat.Temperature, chat.MaxErrors);
 			if (response.Success == false)
-				return StatusCode(500, "Max errors exceeded");
+				return StatusCode(500, response.Error);
 
 			await _chatHistoryService.AppendAsync(id, response.Messages.Prepend(chat.Message));
 			return Ok(response.Messages);

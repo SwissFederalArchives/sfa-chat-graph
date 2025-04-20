@@ -126,7 +126,7 @@ export class ChatHistoryComponent implements AfterViewChecked, OnInit {
 
   private isUserAtBottom(): boolean {
     const el = this.chatContainer.nativeElement;
-    return el.scrollTop + el.clientHeight >= el.scrollHeight - 20;
+    return el.scrollTop + el.clientHeight >= el.scrollHeight - 50;
   }
 
   private displayMessages(messages: ApiMessage[]) {

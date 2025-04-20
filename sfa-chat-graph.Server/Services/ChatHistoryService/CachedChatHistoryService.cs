@@ -44,7 +44,9 @@ namespace sfa_chat_graph.Server.Services.ChatHistoryService
 			if (isCached)
 				return await _cache.GetChatHistoryAsync(id);
 		
-			return await _storage.GetChatHistoryAsync(id);
+			var res = await _storage.GetChatHistoryAsync(id);
+			await _cache.CacheHistoryAsync(res);
+			return res;
 		}
 	}
 }
