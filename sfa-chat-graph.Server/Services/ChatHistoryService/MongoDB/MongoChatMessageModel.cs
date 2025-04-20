@@ -22,17 +22,13 @@ namespace sfa_chat_graph.Server.Services.ChatHistoryService.MongoDB
 		public DateTime TimeStamp { get; set; }
 		public ApiToolCall[] ToolCalls { get; set; }
 		public string ToolCallId { get; set; }
-		public bool HasGraphData { get; set; }
-		public bool HasCodeData { get; set; }
+		
+		public MongoGraphToolData GraphToolData { get; set; }
+		public MongoCodeToolData CodeToolData { get; set; }
+
 
 		[BsonIgnore]
-		public ApiGraphToolData GraphToolData { get; set; }
-
-		[BsonIgnore]
-		public ApiCodeToolData CodeToolData { get; set; }
-
-		[BsonIgnore]
-		public bool HasData => Role == ChatRole.ToolResponse && (HasGraphData || HasCodeData);
+		public bool HasData => this.GraphToolData != null || this.CodeToolData != null;
 
 		public MongoChatMessageModel()
 		{
@@ -48,15 +44,13 @@ namespace sfa_chat_graph.Server.Services.ChatHistoryService.MongoDB
 			TimeStamp=timeStamp;
 			ToolCalls=toolCalls;
 			ToolCallId=toolCallId;
-			GraphToolData=graphToolData;
-			CodeToolData=codeToolData;
-			HasGraphData = graphToolData != null;
-			HasCodeData = codeToolData != null;
+			GraphToolData=MongoGraphToolData.FromApi(graphToolData);
+			CodeToolData=MongoCodeToolData.FromApi(codeToolData);
 		}
 
 		private ApiMessage ToApiMessage() => new ApiMessage(Role, Content) { TimeStamp = TimeStamp, Id = MessageId };
 		private ApiToolCallMessage ToApiToolCallMessage() => new ApiToolCallMessage(ToolCalls) { TimeStamp = TimeStamp, Id = MessageId };
-		private ApiToolResponseMessage ToApiToolResponseMessage() => new ApiToolResponseMessage(ToolCallId, Content) { TimeStamp = TimeStamp, Id = MessageId, GraphToolData = GraphToolData, CodeToolData = CodeToolData };
+		private ApiToolResponseMessage ToApiToolResponseMessage() => new ApiToolResponseMessage(ToolCallId, Content) { TimeStamp = TimeStamp, Id = MessageId, CodeToolData = CodeToolData?.ToApi(), GraphToolData = GraphToolData?.ToApi() };
 
 		public ApiMessage ToApi => Role switch
 		{

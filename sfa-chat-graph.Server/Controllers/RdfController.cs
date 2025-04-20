@@ -57,8 +57,22 @@ namespace SfaChatGraph.Server.Controllers
 		{
 			var history = await _chatHistoryService.GetChatHistoryAsync(id);
 			return Ok(history.Messages);
-		}	
-	
+		}
+
+		[HttpGet("tool-data/{id}")]
+		[ProducesResponseType<FileResult>(StatusCodes.Status200OK)]
+		public async Task<IActionResult> GetToolDataAsync(Guid id)
+		{
+			if (_chatHistoryService.SupportsToolData == false)
+				return NotFound();
+			
+			var data = await _chatHistoryService.GetToolDataAsync(id);
+			if (data == null)
+				return NotFound();
+
+			return data;
+		}
+
 		[HttpPost("chat/{id}")]
 		[ProducesResponseType<ApiMessage[]>(StatusCodes.Status200OK)]
 		public async Task<IActionResult> ChatAsync([FromBody] ApiChatRequest chat, Guid id, [FromQuery]Guid? eventChannel)

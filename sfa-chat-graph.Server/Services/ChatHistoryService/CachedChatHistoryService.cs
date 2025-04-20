@@ -13,12 +13,14 @@ namespace sfa_chat_graph.Server.Services.ChatHistoryService
 	{
 		private readonly IChatHistoryService _storage;
 		private readonly IChatHistoryServiceCache _cache;
+		public bool SupportsToolData => _storage.SupportsToolData;
 
 		public CachedChatHistoryService([FromKeyedServices("Storage")]IChatHistoryService storage, IChatHistoryServiceCache cache)
 		{
 			_storage = storage;
 			_cache = cache;
 		}
+
 
 		public async Task AppendAsync(Guid chatId, IEnumerable<ApiMessage> messages)
 		{
@@ -48,5 +50,7 @@ namespace sfa_chat_graph.Server.Services.ChatHistoryService
 			await _cache.CacheHistoryAsync(res);
 			return res;
 		}
+
+		public Task<ApiToolData> GetToolDataAsync(Guid toolDataId) => _storage.GetToolDataAsync(toolDataId);
 	}
 }

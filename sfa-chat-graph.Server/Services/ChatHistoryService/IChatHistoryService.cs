@@ -1,4 +1,5 @@
-﻿using sfa_chat_graph.Server.Models;
+﻿using Microsoft.AspNetCore.Mvc;
+using sfa_chat_graph.Server.Models;
 
 namespace sfa_chat_graph.Server.Services.ChatHistoryService
 {
@@ -8,5 +9,7 @@ namespace sfa_chat_graph.Server.Services.ChatHistoryService
 		public Task<ChatHistory> GetChatHistoryAsync(Guid id);
 		public Task AppendAsync(Guid chatId, params ApiMessage[] messages) => AppendAsync(chatId, (IEnumerable<ApiMessage>)messages);
 		public Task AppendAsync(Guid chatId, IEnumerable<ApiMessage> messages);
+		public bool SupportsToolData { get; }
+		public Task<FileResult> GetToolDataAsync(Guid toolDataId);
 	}
 }

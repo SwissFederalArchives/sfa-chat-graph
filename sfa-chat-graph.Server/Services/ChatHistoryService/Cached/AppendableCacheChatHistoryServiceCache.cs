@@ -8,6 +8,7 @@ namespace sfa_chat_graph.Server.Services.ChatHistoryService.Cached
 	public class AppendableCacheChatHistoryServiceCache : IChatHistoryServiceCache
 	{
 		private readonly IAppendableCache<Guid, IApiMessage> _cache;
+		public bool SupportsToolData => false;
 
 		public AppendableCacheChatHistoryServiceCache(IAppendableCache<Guid, IApiMessage> cache)
 		{
@@ -29,5 +30,10 @@ namespace sfa_chat_graph.Server.Services.ChatHistoryService.Cached
 		}
 
 		public Task CacheHistoryAsync(ChatHistory history) => _cache.SetAsync(history.Id, history.Messages);
+
+		public Task<ApiToolData> GetToolDataAsync(Guid toolDataId)
+		{
+			throw new NotImplementedException();
+		}
 	}
 }
