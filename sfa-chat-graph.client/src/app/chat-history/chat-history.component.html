@@ -1,6 +1,6 @@
 <div class="chat-container">
     <div #chatHistory class="chat-history">
-        @for(msg of displayHistory; track msg){
+        @for(msg of messages; track msg){
         <div id="msg-{{msg.id}}" class="chat-message table-container" [class]="msg.cls">
             <div class="message-content">
                 <markdown [katex]="true" [emoji]="true" [clipboard]="true" [lineNumbers]="true"
@@ -9,7 +9,7 @@
                 </markdown>
                 <div *ngIf="msg.data.length > 0" class="data-tag-container">
                     @for(data of msg.data; track data){
-                    <button [classList]="data.className" (click)="displayMessageData(data)"><span class="tooltip-wide"
+                    <button [classList]="data.className" (click)="showMessageDisplayDetail(data)"><span class="tooltip-wide"
                             [attr.data-text]="data.description">{{data.label}}</span></button>
                     }
                 </div>
@@ -40,15 +40,15 @@
         </div>
         }
 
-        @if(error) {
+        @if(getError()) {
         <div id="msg-error" class="error-message chat-message chat-message-right">
             <div class="error-content">
                 <div class="error-header">
                     <b>An error occured during your request</b>
                     <mat-icon fontSet="material-symbols-outlined">error</mat-icon>
                 </div>
-                <markdown>{{error}}</markdown>
-                <button class="inverted-button" (click)="resend()">Retry</button>
+                <markdown>{{getError()}}</markdown>
+                <button class="inverted-button" (click)="retry()">Retry</button>
             </div>
 
         </div>

@@ -1,127 +1,29 @@
-import { Component, ElementRef, Inject, Injector, Input, OnChanges, OnDestroy, signal, Signal, SimpleChanges, ViewChild, WritableSignal } from '@angular/core';
+import { AfterViewChecked, AfterViewInit, Component, ElementRef, Inject, Injector, Input, OnChanges, OnDestroy, OnInit, signal, Signal, SimpleChanges, ViewChild, WritableSignal } from '@angular/core';
 import { MatIcon } from '@angular/material/icon';
 import { MatButton } from '@angular/material/button';
 import { MatIconButton } from '@angular/material/button';
 import { NgFor, NgIf } from '@angular/common';
 import { MatInputModule } from '@angular/material/input';
 import { FormsModule } from '@angular/forms';
-import { ApiChatEvent, ApiCodeToolData, ApiGraphToolData, ApiMessage, ApiToolData, ChatRole } from '../services/api-client/chat-message.model';
+import { ApiChatEvent, ApiMessage, ApiToolData, ChatRole } from '../services/api-client/chat-message.model';
 import { Graph } from '../graph/graph';
 import { ApiClientService } from '../services/api-client/api-client.service';
 import { ChatRequest } from '../services/api-client/chat-request.model';
 import { MarkdownModule } from 'ngx-markdown';
 import { CollapseContainerComponent } from "../collapse-container/collapse-container.component";
-import { downloadBlob, toBlob } from "../utils/utils"
-import { Mime } from 'mime';
-import standardTypes from 'mime/types/standard.js';
-import otherTypes from 'mime/types/other.js';
 import { ChatDataPopoutComponent } from '../chat-data-popout/chat-data-popout.component';
 import { ActivatedRoute } from '@angular/router';
 import { EventChannel } from '../services/api-client/event-channel.service';
+import { DisplayMessage } from './DisplayMessage';
+import { SubGraphMarker } from './SubGraphMarker';
+import { DisplayDetail } from './DisplayData';
 
-const mime = new Mime(standardTypes, otherTypes);
-mime.define({
-  'application/python': ['py', 'python'],
-  'application/x-sparqlstar-results+json': ['srj'],
-  'application/sparql-query': ['rq', 'sparql'],
-});
 
-class SubGraphMarker {
-  constructor(public readonly id: string, public readonly color: string, public label: string) { }
+export enum ErrorType {
+  ChatCompletion,
+  FetchHistory,
 }
 
-export class DisplayData {
-  label: string;
-  description?: string;
-  content: string;
-  mimeType: string;
-  fileName: string;
-  isBase64Content: boolean;
-  className?: string;
-  formattingLanguage?: string;
-
-  constructor(label: string, contentString: string, isBase64Content: boolean, mimeType: string, description?: string, className?: string, formattingLanguage?: string) {
-    this.label = label;
-    this.mimeType = mimeType;
-    this.fileName = `${encodeURIComponent(description?.replaceAll(" ", "_")?.toLowerCase() ?? window.crypto.randomUUID())}.${mime.getExtension(mimeType)}`;
-    this.description = description;
-    this.content = contentString;
-    this.isBase64Content = isBase64Content;
-    this.className = className;
-    this.formattingLanguage = formattingLanguage;
-  }
-
-  public download(): void {
-    const blob = toBlob(this.content, this.mimeType, this.isBase64Content);
-    downloadBlob(blob, this.fileName);
-  }
-
-}
-
-class DisplayMessage {
-  id: string;
-  message: string;
-  cls: string;
-  markers: SubGraphMarker[];
-  data: DisplayData[] = [];
-
-
-  private static *codeToDisplay(codes: ApiCodeToolData[]): Generator<DisplayData, void, unknown> {
-    for (let i = 0; i < codes.length; i++) {
-      const code = codes[i];
-      const label = `Code ${i + 1}`;
-      const res = code.success ? code.code : code.error;
-      if (res) {
-        const className = code.success ? 'tool-data-code' : 'tool-data-code-error';
-        const display = new DisplayData(label, res, false, mime.getType(code.language!) || 'text/plain', 'Generated code for the visualisation', className, code.language);
-        yield display;
-      }
-
-      for (let j = 0; j < (code.data?.length ?? 0); j++) {
-        const data = code.data![j];
-        if (data.content) {
-          const type = mime.getExtension(data.mimeType!);
-          const label = `Code ${i + 1} Data (${type}) ${j + 1}`;
-          const display = new DisplayData(label, data.content, data.isBase64Content, data.mimeType!, data.description, 'tool-data-code-data');
-          yield display;
-        } else if (data.description) {
-          const label = `Code ${i + 1} Output ${j + 1}`;
-          const display = new DisplayData(label, data.description, false, 'text/plain', data.description, 'tool-data-code-ouput', undefined);
-          yield display;
-        }
-      }
-    }
-  }
-
-  private static *graphToDisplay(graphs: ApiGraphToolData[]): Generator<DisplayData, void, unknown> {
-    for (let i = 0; i < graphs.length; i++) {
-      const graph = graphs[i];
-      if (graph.query) {
-        const label = `Query ${i + 1}`;
-        yield new DisplayData(label, graph.query, false, 'application/sparql-query', 'Generated SPARQL query for the visualisation', 'tool-data-graph-query', 'sparql');
-      }
-
-      if (graph.dataGraph) {
-        const label = `Graph ${i + 1}`;
-        const graphJson = JSON.stringify(graph.dataGraph, null, 2);
-        yield new DisplayData(label, graphJson, false, 'application/x-sparqlstar-results+json', 'Generated data graph for the visualisation', 'tool-data-graph', 'json');
-      }
-    }
-  }
-
-  constructor(id: string, message: string, cls: string, markers?: SubGraphMarker[], code?: ApiCodeToolData[], graphs?: ApiGraphToolData[]) {
-    this.message = message;
-    this.cls = cls;
-    this.id = id;
-    this.markers = markers ?? [];
-
-    if (code)
-      this.data.push(...Array.from(DisplayMessage.codeToDisplay(code)));
-
-    if (graphs)
-      this.data.push(...Array.from(DisplayMessage.graphToDisplay(graphs)));
-  }
-}
 
 @Component({
   selector: 'chat-history',
@@ -130,24 +32,38 @@ class DisplayMessage {
   templateUrl: './chat-history.component.html',
   styleUrl: './chat-history.component.css'
 })
-export class ChatHistoryComponent {
+export class ChatHistoryComponent implements AfterViewChecked, OnInit {
   @Input() graph!: Graph;
   @Input() chatId!: string;
+  @ViewChild('chatHistory') chatContainer!: ElementRef<HTMLElement>;
 
-  history: ApiMessage[] = [];
-  displayHistory: DisplayMessage[] = [];
-  error?: string = undefined;
-  toolData: Map<string, ApiToolData> = new Map<string, ApiToolData>();
-  lastMesssage?: ApiMessage = undefined;
-  activity?: string;
+  public messages: DisplayMessage[] = [];
+  public waitingForResponse: boolean = false;
+  public message?: string = undefined;
+  public activity?: string;
+  public rolesEnum = ChatRole;
 
-  waitingForResponse: boolean = false;
-  message?: string = undefined;
-  @ViewChild('chatHistory') chatHistory!: ElementRef<HTMLElement>;
-  roles = ChatRole;
+  public getError(): string | undefined { return this._error; }
 
-  constructor(private _apiClient: ApiClientService, private injector: Injector, private router: ActivatedRoute, private eventChannel: EventChannel) {
-    this.eventChannel.onReceive.subscribe((event) => this.onChatEvent(event));
+  private _lastMesssage?: ApiMessage = undefined;
+  private _toolData: Map<string, ApiToolData> = new Map<string, ApiToolData>();
+  private _shouldScroll: boolean = false;
+  private _error?: string = undefined;
+  private _errorType?: ErrorType = undefined;
+
+  constructor(private _apiClient: ApiClientService, private _injector: Injector, private _eventChannel: EventChannel) {
+    this._eventChannel.onReceive.subscribe((event) => this.onChatEvent(event));
+  }
+
+  public async ngOnInit(): Promise<void> {
+    await this.tryLoadHistory();
+  }
+
+  public ngAfterViewChecked(): void {
+    if (this._shouldScroll) {
+      this.scrollToBottom();
+      this._shouldScroll = false;
+    }
   }
 
   public onChatEvent(event: ApiChatEvent) {
@@ -156,24 +72,64 @@ export class ChatHistoryComponent {
         this.activity = undefined;
       } else {
         this.activity = event.Activity;
-        this.scrollToBottom();
+        this.setScrollToBottomFlag();
       }
     }
   }
 
-  public setupHistory(messages: ApiMessage[]) {
-    this.history = [];
-    this.displayHistory = [];
-    this.toolData = new Map<string, ApiToolData>();
-    this.error = undefined;
-    messages.filter(m => m.role == ChatRole.ToolResponse && m.graphToolData && m.toolCallId)
-    .forEach(m => this.graph.loadFromSparqlStar(m.graphToolData!.visualisationGraph!, 100, m.toolCallId));
-    this.graph.updateModels();
-    this.displayMessages(messages);
-    this.scrollToBottom();
+  private async tryLoadHistory(): Promise<void> {
+    if (this.waitingForResponse) return;
+    this.waitingForResponse = true;
+    try {
+      const history = await this._apiClient.getHistoryAsync(this.chatId);
+      this.setChatHistory(history);
+    } catch (e) {
+      console.error(e);
+      this._error = "Error loading chat history";
+      this._errorType = ErrorType.FetchHistory;
+    } finally {
+      this.waitingForResponse = false;
+    }
   }
 
-  displayMessages(messages: ApiMessage[]) {
+  private setChatHistory(messages: ApiMessage[]) {
+    this.messages = [];
+    this._toolData = new Map<string, ApiToolData>();
+    this._error = undefined;
+    messages.filter(m => m.role == ChatRole.ToolResponse && m.graphToolData && m.toolCallId)
+      .forEach(m => this.graph.loadFromSparqlStar(m.graphToolData!.visualisationGraph!, 100, m.toolCallId));
+    this.graph.updateModels();
+    this.displayMessages(messages);
+    this.setScrollToBottomFlag();
+  }
+
+  public setScrollToBottomFlag() {
+    this._shouldScroll = this.isUserAtBottom();
+  }
+
+  public scrollToBottom(): void {
+    if (this.chatContainer) {
+      this.chatContainer.nativeElement.scroll({
+        top: this.chatContainer.nativeElement.scrollHeight,
+        behavior: 'smooth'
+      });
+    }
+  }
+
+  public showMessageDisplayDetail(data: DisplayDetail) {
+    if (data.mimeType.startsWith("image/") || data.isBase64Content == false) {
+      ChatDataPopoutComponent.showPopup(this._injector, data);
+    } else {
+      data.download();
+    }
+  }
+
+  private isUserAtBottom(): boolean {
+    const el = this.chatContainer.nativeElement;
+    return el.scrollTop + el.clientHeight >= el.scrollHeight - 20;
+  }
+
+  private displayMessages(messages: ApiMessage[]) {
     const URL_SUBST_PATTERN: RegExp = new RegExp(/tool-data:\/\/([^\s()]+)/g);
     while (messages.length > 0) {
       const assistantIndex = messages.findIndex(m => m.role == ChatRole.Assitant || m.role == ChatRole.User);
@@ -198,66 +154,58 @@ export class ChatHistoryComponent {
 
         codeData.flatMap(m => m.data)
           .filter(d => d && d.isBase64Content)
-          .forEach(d => this.toolData.set(d!.id, d!))
+          .forEach(d => this._toolData.set(d!.id, d!))
 
         const content = message.content!.replaceAll(URL_SUBST_PATTERN, (match, id) => {
-          const data = this.toolData.get(id);
+          const data = this._toolData.get(id);
           if (data && data.isBase64Content && data.content && data.mimeType) {
             return `data:${data.mimeType};base64,${data.content}`;
           }
           return '';
         });
 
-        this.displayHistory.push(new DisplayMessage(message.id, content, 'chat-message-left', subGraphs, codeData, graphData));
+        this.messages.push(new DisplayMessage(message.id, content, 'chat-message-left', subGraphs, codeData, graphData));
       } else {
-        this.displayHistory.push(new DisplayMessage(message.id, message.content!, 'chat-message-right'));
+        this.messages.push(new DisplayMessage(message.id, message.content!, 'chat-message-right'));
       }
+
       messages = messages.slice(assistantIndex + 1);
     }
   }
 
-
-
-  displayMessageData(data: DisplayData) {
-    if (data.mimeType.startsWith("image/") || data.isBase64Content == false) {
-      ChatDataPopoutComponent.showPopup(this.injector, data);
-    } else {
-      data.download();
-    }
-  }
-
-  scrollToBottom() {
-    if (this.chatHistory) {
-      this.chatHistory.nativeElement.scroll({
-        top: this.chatHistory.nativeElement.scrollHeight,
-        behavior: 'smooth'
-      });
-    }
-  }
-
-  async resend() {
+  public async retry() {
     if (this.waitingForResponse) return;
-    this.error = undefined;
-    await this.sendImpl();
+    this._error = undefined;
+
+    switch (this._errorType) {
+      case ErrorType.ChatCompletion:
+        await this.sendImpl();
+        break;
+
+      case ErrorType.FetchHistory:
+        await this.tryLoadHistory();
+        break;
+    }
   }
 
-  async send() {
+  public async send() {
     if (this.waitingForResponse) return;
     await this.sendImpl();
   }
 
-  async sendImpl() {
+  private async sendImpl() {
     if (this.waitingForResponse) return;
     this.waitingForResponse = true;
     try {
 
-      if (this.lastMesssage == undefined) {
-        this.lastMesssage = new ApiMessage(this.message);
-        this.displayMessages([this.lastMesssage]);
+      if (this._lastMesssage == undefined) {
+        this._lastMesssage = new ApiMessage(this.message);
+        this.displayMessages([this._lastMesssage]);
+        this.message = undefined;
       }
 
-      const request = new ChatRequest(this.lastMesssage);
-      const response = await this._apiClient.chatAsync(this.chatId, request, this.eventChannel?.channelId);
+      const request = new ChatRequest(this._lastMesssage);
+      const response = await this._apiClient.chatAsync(this.chatId, request, this._eventChannel?.channelId);
       let sparqlLoaded: boolean = false;
 
       for (let sparql of response.filter(m => m.role == ChatRole.ToolResponse).filter(tc => tc && tc.graphToolData && tc.graphToolData.visualisationGraph)) {
@@ -269,14 +217,15 @@ export class ChatHistoryComponent {
         this.graph.updateModels();
 
       this.displayMessages(response);
-      this.lastMesssage = undefined;
+      this._lastMesssage = undefined;
       this.message = undefined;
     } catch (e: any) {
       console.error(e);
-      this.error = e.message ?? 'Unknown error occured';
-      this.scrollToBottom();
+      this._error = e.message ?? 'Unknown error occured';
+      this._errorType = ErrorType.ChatCompletion;
     } finally {
       this.waitingForResponse = false;
+      this.setScrollToBottomFlag();
     }
   }
 

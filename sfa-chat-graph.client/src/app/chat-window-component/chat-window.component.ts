@@ -1,24 +1,20 @@
 import { HttpClient } from '@angular/common/http';
-import { AfterViewInit, Component, Input, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { ApiClientService } from '../services/api-client/api-client.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ChatHistoryComponent } from '../chat-history/chat-history.component';
 import { Graph } from '../graph/graph';
-import { GraphVisualisationComponent } from '../graph-visualisation/graph-visualisation.component';
-import { NgIf } from '@angular/common';
-import { EventChannel } from '../services/api-client/event-channel.service';
 
 @Component({
-  selector: 'chat-window',
+  selector: 'chat-window-component',
   standalone: true,
-  imports: [GraphVisualisationComponent, ChatHistoryComponent, NgIf],
-  templateUrl: './chat-window.component.html',
-  styleUrl: './chat-window.component.css'
+  templateUrl: './chat-window-component.component.html',
+  styleUrl: './chat-window-component.component.css'
 })
-export class ChatWindowComponent implements OnInit {
-  @ViewChild("history") chatHistoryComponent!: ChatHistoryComponent;
+export class ChatWindowComponentComponent implements OnInit {
+  @ViewChild("chat-history") chatHistoryComponent!: ChatHistoryComponent;
 
-  graph: Graph;
+  graph?: Graph;
   chatId!: string;
 
 
@@ -37,9 +33,17 @@ export class ChatWindowComponent implements OnInit {
     });
   }
 
-  ngOnInit() {
+  async ngOnInit() {
     this.chatId = this.route.snapshot.paramMap.get("chatId")!;
+    try {
+      var history = await this.apiClient.getHistoryAsync(this.chatId);
+      this.chatHistoryComponent.setChatHistory(history);
+    } catch (e) {
+      console.error(e);
+      this.chatHistoryComponent._error = "Error loading chat history";
+    }
   }
+
 
 
   title = 'sfa-chat-graph.client';

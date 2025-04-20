@@ -1,5 +1,5 @@
 import { ApplicationRef, Component, ComponentRef, createComponent, EnvironmentInjector, HostListener, inject, Injector, Input, input, ViewContainerRef } from '@angular/core';
-import { DisplayData } from '../chat-history/chat-history.component';
+import { DisplayDetail } from '../chat-history/DisplayData';
 import { MatIcon, MatIconModule } from '@angular/material/icon';
 import { MatButton, MatIconButton } from '@angular/material/button';
 import { NgIf } from '@angular/common';
@@ -14,11 +14,11 @@ import Papa from 'papaparse';
   styleUrl: './chat-data-popout.component.css'
 })
 export class ChatDataPopoutComponent {
-  @Input() data?: DisplayData;
+  @Input() data?: DisplayDetail;
   @Input() selfRef!: ComponentRef<ChatDataPopoutComponent>;
 
 
-  static showPopup(injector: Injector, data: DisplayData): ChatDataPopoutComponent {
+  static showPopup(injector: Injector, data: DisplayDetail): ChatDataPopoutComponent {
     const appRef = injector.get(ApplicationRef);
     const compRef = createComponent(ChatDataPopoutComponent, { environmentInjector: injector.get(EnvironmentInjector), elementInjector: injector });
     compRef.instance.data = data;
