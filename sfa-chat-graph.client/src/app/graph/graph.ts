@@ -39,6 +39,9 @@ export class Graph {
   }
 
   loadFromSparqlStar(sparqlStar: SparqlStarResult, maxVisisbleChildren: number = 20, subGraphId?: string, headerVars: string[] = ['s', 'p', 'o']): void {
+    if(!sparqlStar || !sparqlStar.results)
+      return;
+    
     let childCount = 0;
     for (var key in sparqlStar.results.bindings.sort((a: any, b: any) => a[headerVars[2]].type.localeCompare(b[headerVars[2]].type))) {
       const item = sparqlStar.results.bindings[key];
