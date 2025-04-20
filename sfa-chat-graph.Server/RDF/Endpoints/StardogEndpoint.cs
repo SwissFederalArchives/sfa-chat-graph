@@ -15,6 +15,7 @@ namespace sfa_chat_graph.Server.RDF.Endpoints
 		public StardogEndpoint(Uri endpoint)
 		{
 			_httpClient = new HttpClient();
+			_httpClient.Timeout = TimeSpan.FromSeconds(60);
 			_client = new SparqlQueryClientWithError<StardogError>(_httpClient, endpoint);
 		}
 

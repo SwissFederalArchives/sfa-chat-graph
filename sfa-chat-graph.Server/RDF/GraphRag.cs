@@ -88,6 +88,29 @@ namespace sfa_chat_graph.Server.RDF
 				.Distinct();
 		}
 
+		private static SparqlResult ToResult(Triple triple)
+		{
+			var result = new SparqlResult();
+			result.SetValue("s", triple.Subject);
+			result.SetValue("p", triple.Predicate);
+			result.SetValue("o", triple.Object);
+			return result;
+		}
+
+		private async Task<IEnumerable<ISparqlResult>> DescribeAsSparqlResultAsync(string iri)
+		{
+			var graph = await _endpoint.QueryGraphAsync(Queries.DescribeQuery(iri));
+			return graph.Triples.Select(ToResult);
+		}
+
+		private async Task<SparqlResultSet> DescribeIrisAsync(string[] iris)
+		{
+			var tasks = iris.Take(25).Select(DescribeAsSparqlResultAsync).ToArray();
+			await Task.WhenAll(tasks);
+			var results = tasks.SelectMany(x => x.Result).ToArray();
+			return new SparqlResultSet(results);
+		}
+
 		public async Task<SparqlResultSet> GetVisualisationResultAsync(SparqlResultSet results, string queryString)
 		{
 			var query = _parser.ParseFromString(queryString);
@@ -99,9 +122,20 @@ namespace sfa_chat_graph.Server.RDF
 				.SelectNonNull(GetPredicateIri)
 				.ToHashSet();
 
-			var iris = GetResultSetIris(results, resultVars);
-			var relatedTriples = await _endpoint.QueryAsync(Queries.RelatedTriplesQuery(iris, predicates));
-			return relatedTriples;
+			var iris = GetResultSetIris(results, resultVars).ToArray();
+			SparqlResultSet relatedTriples = null;
+			try
+			{
+				relatedTriples = await _endpoint.QueryAsync(Queries.RelatedTriplesQuery(iris, predicates));
+				return relatedTriples;
+			}
+			catch (Exception)
+			{
+				if (relatedTriples == null || (relatedTriples.IsEmpty && iris.Length > 0))
+					return await DescribeIrisAsync(iris.ToArray());
+			}
+
+			return null;
 		}
 
 		public async Task<string[]> ListGraphsAsync(bool ignoreCached = false)
