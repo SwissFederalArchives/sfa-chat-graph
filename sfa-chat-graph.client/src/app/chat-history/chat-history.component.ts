@@ -80,6 +80,7 @@ export class ChatHistoryComponent implements AfterViewChecked, OnInit {
   private async tryLoadHistory(): Promise<void> {
     if (this.waitingForResponse) return;
     this.waitingForResponse = true;
+    this.activity = "Fetching chat history"
     try {
       const history = await this._apiClient.getHistoryAsync(this.chatId);
       this.setChatHistory(history);
@@ -88,6 +89,7 @@ export class ChatHistoryComponent implements AfterViewChecked, OnInit {
       this._error = "Error loading chat history";
       this._errorType = ErrorType.FetchHistory;
     } finally {
+      this.activity = undefined;
       this.waitingForResponse = false;
     }
   }

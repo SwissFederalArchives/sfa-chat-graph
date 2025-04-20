@@ -13,7 +13,7 @@ export class Graph {
   private _edges: Map<string, Edge> = new Map();
   private _adjacencies: Map<[Node, Node], Edge> = new Map();
   private _subGraphs: Map<string, SubGraph> = new Map();
-  private static readonly predSplitRegex: RegExp = new RegExp("#\\/");
+  private static readonly predSplitRegex: RegExp = new RegExp("[#\\/]");
 
   public readonly onNodeDetailsRequested: AwaitableEventEmitter<{ graph: Graph, node: Node }, unknown> = new AwaitableEventEmitter<{ graph: Graph, node: Node }, unknown>(true);
   public readonly onLeafNodesLoaded: EventEmitter<Node> = new EventEmitter<Node>();
@@ -101,7 +101,7 @@ export class Graph {
   createTripleLiteralObj(subIri: string, predIri: string, obj: string, subGraphId?: string): { sub: Node, obj: Node, subCreated: boolean, objCreated: boolean } {
     const node1 = this.getOrCreateNode(subIri, subIri, subIri.split("/").slice(-2).join("/"), subGraphId);
     const node2 = this.getOrCreateNode(`LITERAL(${subIri}@${predIri})`, obj, obj, subGraphId, true);
-    this.getOrCreateEdge(node1.node.id, node2.node.id, predIri, predIri.split(Graph.predSplitRegex).slice(-2).join("/"));
+    this.getOrCreateEdge(node1.node.id, node2.node.id, predIri, predIri.split(Graph.predSplitRegex).slice(-1).join("/"));
     return { sub: node1.node, subCreated: node1.created, obj: node2.node, objCreated: node2.created };
   }
 

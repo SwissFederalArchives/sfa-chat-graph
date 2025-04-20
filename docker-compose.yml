@@ -4,13 +4,13 @@ services:
     image: ${DOCKER_REGISTRY-}sfachatgraphserver
     build:
       context: .
-      dockerfile: sfa-chat-graph.Server/Dockerfile
+      dockerfile: ./sfa-chat-graph.server/Dockerfile
     environment:
       - JUPYTEROPTIONS__ENDPOINT=http://jupyter:8888
-      - CONNECTIONSTRINGS_MONGO=mongodb://mongodb:27017/sfa-chat-graph
-      - CONNECTIONSTRINGS_REDIS=valkey:6379 
+      - CONNECTIONSTRINGS__MONGO=mongodb://mongodb:27017/sfa-chat-graph
+      - OPENAI_KEY=${OPENAI_KEY} 
     ports:
-      - 1220:8080
+      - "1221:8080" 
 
   jupyter:
     restart: unless-stopped
@@ -25,9 +25,9 @@ services:
     volumes:
       - mongo_data:/data/db
 
-  valkey:
-    image: valkey/valkey
-    restart: unless-stopped
+  # valkey:
+  #   image: valkey/valkey
+  #   restart: unless-stopped
 
 
 volumes:
