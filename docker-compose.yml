@@ -4,7 +4,7 @@ services:
     image: ${DOCKER_REGISTRY-}sfachatgraphserver
     build:
       context: .
-      dockerfile: ./sfa-chat-graph.server/Dockerfile
+      dockerfile: ./sfa-chat-graph.Server/Dockerfile
     environment:
       - JUPYTEROPTIONS__ENDPOINT=http://jupyter:8888
       - CONNECTIONSTRINGS__MONGO=mongodb://mongodb:27017/sfa-chat-graph

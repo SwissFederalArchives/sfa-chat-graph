@@ -85,6 +85,9 @@ namespace sfa_chat_graph.Server.Utils.MessagePack
 
 		public SparqlResultSet Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
 		{
+			if (reader.TryReadNil())
+				return null;
+			
 			var type = (SparqlResultsType)reader.ReadByte();
 			switch (type)
 			{
@@ -168,6 +171,12 @@ namespace sfa_chat_graph.Server.Utils.MessagePack
 
 		public void Serialize(ref MessagePackWriter writer, SparqlResultSet value, MessagePackSerializerOptions options)
 		{
+			if(value == null)
+			{
+				writer.WriteNil();
+				return;
+			}
+
 			writer.Write((byte)value.ResultsType);
 			if (value.ResultsType == SparqlResultsType.VariableBindings)
 			{

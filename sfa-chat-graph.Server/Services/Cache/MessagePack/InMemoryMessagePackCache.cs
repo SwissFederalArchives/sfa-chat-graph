@@ -8,16 +8,16 @@ using System.Collections.Concurrent;
 namespace sfa_chat_graph.Server.Services.Cache.MessagePack
 {
 	[Implementation(typeof(IAppendableCache<,>), typeof(AppendableCacheOptions), ServiceLifetime.Singleton, Key = "InMemory")]
-	public class InMemoryMessagePackCache<TKey, TValue> : MessagePackCacheBase<TKey, TValue>, IHostedService
+	public class InMemoryMessagePackCache<TKey, TValue> : IAppendableCache<TKey, TValue>, IHostedService
 	{
-		private class CacheItem
+		private class CacheItem<T>
 		{
-			public RecyclableMemoryStream Stream { get; init; }
 			public DateTime Expiry { get; private set; }
+			public List<T> Items { get; init; }
 
-			public CacheItem(RecyclableMemoryStream stream)
+			public CacheItem()
 			{
-				Stream = stream;
+				Items = new List<T>(16);
 			}
 
 			public void UpdateExpiry(TimeSpan duration)
@@ -26,7 +26,7 @@ namespace sfa_chat_graph.Server.Services.Cache.MessagePack
 			}
 		}
 
-		private readonly ConcurrentDictionary<TKey, CacheItem> _cache = new ConcurrentDictionary<TKey, CacheItem>();
+		private readonly ConcurrentDictionary<TKey, CacheItem<TValue>> _cache = new ConcurrentDictionary<TKey, CacheItem<TValue>>();
 		private Task _cleanupLoop;
 		private readonly IOptions<AppendableCacheOptions> _options;
 
@@ -35,11 +35,7 @@ namespace sfa_chat_graph.Server.Services.Cache.MessagePack
 			_options=options;
 		}
 
-		public override Task<bool> ExistsAsync(TKey key)
-		{
-			return Task.FromResult(_cache.ContainsKey(key));
-		}
-
+		
 		private async Task CleanupLoop(CancellationToken cancellationToken)
 		{
 			while (cancellationToken.IsCancellationRequested == false)
@@ -51,7 +47,6 @@ namespace sfa_chat_graph.Server.Services.Cache.MessagePack
 					if (kvp.Value.Expiry < now)
 					{
 						_cache.TryRemove(kvp.Key, out _);
-						await kvp.Value.Stream.DisposeAsync();
 					}
 					else
 					{
@@ -72,38 +67,38 @@ namespace sfa_chat_graph.Server.Services.Cache.MessagePack
 		public async Task StopAsync(CancellationToken cancellationToken)
 		{
 			await Task.WhenAny(_cleanupLoop, Task.Delay(Timeout.Infinite, cancellationToken));
-			_cache.Values.ForEach(x => x.Stream.Dispose());
 		}
 
-		protected override async Task AppendAsync(TKey key, MemoryStream value)
+		public Task AppendAsync(TKey key, IEnumerable<TValue> value)
 		{
-			if (_cache.TryGetValue(key, out var item) == false)
-				await SetAsync(key, value);
-
-			await value.CopyToAsync(item.Stream);
+			var item = _cache.GetOrAdd(key, _ => new CacheItem<TValue>());
+			item.Items.AddRange(value);
 			item.UpdateExpiry(_options.Value.DefaultExpiration);
+			return Task.CompletedTask;
 		}
 
-		protected override Task<ReadOnlySequence<byte>> GetDataAsync(TKey key)
+		public Task SetAsync(TKey key, IEnumerable<TValue> value)
 		{
-			if (_cache.TryGetValue(key, out var item) == false)
-				return Task.FromResult(ReadOnlySequence<byte>.Empty);
-
-			var sequence = item.Stream.GetReadOnlySequence();
-			return Task.FromResult(sequence);
+			var item = _cache.GetOrAdd(key, _ => new CacheItem<TValue>());
+			item.Items.Clear();
+			item.Items.AddRange(value);
+			item.UpdateExpiry(_options.Value.DefaultExpiration);
+			return Task.CompletedTask;
 		}
 
-		protected override async Task SetAsync(TKey key, MemoryStream value)
+		public async IAsyncEnumerable<TValue> GetAsync(TKey key)
 		{
-			if (_cache.TryGetValue(key, out var item) == false)
+			if (_cache.TryGetValue(key, out var item))
 			{
-				item = new CacheItem(_streamManager.GetStream());
-				_cache.TryAdd(key, item);
+				foreach (var v in item.Items)
+					yield return v;
 			}
-
-			item.Stream.SetLength(0);
-			await value.CopyToAsync(item.Stream);
-			item.UpdateExpiry(_options.Value.DefaultExpiration);
+			else
+			{
+				yield break;
+			}
 		}
+
+		public Task<bool> ExistsAsync(TKey key) => Task.FromResult(_cache.ContainsKey(key));
 	}
 }
