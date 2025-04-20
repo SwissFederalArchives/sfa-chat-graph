@@ -127,15 +127,15 @@ namespace sfa_chat_graph.Server.RDF
 			try
 			{
 				relatedTriples = await _endpoint.QueryAsync(Queries.RelatedTriplesQuery(iris, predicates));
-				return relatedTriples;
 			}
 			catch (Exception)
 			{
-				if (relatedTriples == null || (relatedTriples.IsEmpty && iris.Length > 0))
-					return await DescribeIrisAsync(iris.ToArray());
 			}
 
-			return null;
+			if (relatedTriples == null || (relatedTriples.IsEmpty && iris.Length > 0))
+				relatedTriples = await DescribeIrisAsync(iris.ToArray());
+
+			return relatedTriples;
 		}
 
 		public async Task<string[]> ListGraphsAsync(bool ignoreCached = false)
