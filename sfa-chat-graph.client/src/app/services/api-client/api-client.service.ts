@@ -12,17 +12,6 @@ export class ApiClientService {
 
   constructor(private _httpClient: HttpClient) { }
 
-  public openEventChannelAsync(channelId: string): Promise<WebSocket> {
-    const scheme = window.location.protocol.endsWith("s") ? "wss" : "ws";
-    const socket = new WebSocket(`${scheme}://${window.location.host}/api/v1/events/subscribe/${channelId}`);
-    const promise = new Promise<WebSocket>((resolve, reject) => {
-      socket.onopen = () => resolve(socket);
-      socket.onerror = (error) => reject(error);
-    });
-
-    return promise;
-  }
-
   public async describeAsync(iri: string): Promise<SparqlStarResult> {
     return await firstValueFrom(this._httpClient.get<SparqlStarResult>(`/api/v1/rdf/describe?subject=${encodeURIComponent(iri)}`));
   }
@@ -31,7 +20,7 @@ export class ApiClientService {
     return await firstValueFrom(this._httpClient.get<ApiMessage[]>(`/api/v1/rdf/history/${id}`));
   }
 
-  public async chatAsync(id: string, request: ChatRequest, eventChannel?: string): Promise<ApiMessage[]>{
+  public async chatAsync(id: string, request: ChatRequest, eventChannel?: string): Promise<ApiMessage[]> {
     let endpoint = `/api/v1/rdf/chat/${id}`;
     if (eventChannel)
       endpoint += `?eventChannel=${eventChannel}`;

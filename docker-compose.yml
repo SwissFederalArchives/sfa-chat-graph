@@ -15,9 +15,7 @@ services:
   jupyter:
     restart: unless-stopped
     image: quay.io/jupyter/scipy-notebook
-    environment:
-      - JUPYTER_TOKEN=
-      - NotebookApp.disable_check_xsrf=True
+    command: start-notebook.sh --NotebookApp.token='' --NotebookApp.password='' --NotebookApp.disable_check_xsrf=True
   
   mongodb:
     restart: unless-stopped
