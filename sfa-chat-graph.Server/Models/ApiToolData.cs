@@ -22,5 +22,9 @@ namespace sfa_chat_graph.Server.Models
 
 		[Key(4)]
 		public string Content { get; set; }
+
+		[BsonIgnore]
+		[IgnoreMember]
+		public bool BlobLoaded { get; set; }
 	}
 }

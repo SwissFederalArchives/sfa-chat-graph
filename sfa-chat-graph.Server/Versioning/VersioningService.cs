@@ -1,6 +1,7 @@
 ﻿
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
+using sfa_chat_graph.Server.Services.ChatHistoryService;
 using sfa_chat_graph.Server.Utils.ServiceCollection;
 using sfa_chat_graph.Server.Versioning.Migrations;
 using SfaChatGraph.Server.Utils;
@@ -127,6 +128,11 @@ namespace sfa_chat_graph.Server.Versioning
 					await migrateable.DeleteAsync();
 
 				await reportsCollection.InsertOneAsync(finished);
+				if(fromMigrateable is IPostMigration fromPostMigration)
+					await fromPostMigration.RunPostMigrationAsync(finished, token);
+
+				if(toMigrateable is IPostMigration toPostMigration)
+					await toPostMigration.RunPostMigrationAsync(finished, token);
 			}
 		}
 

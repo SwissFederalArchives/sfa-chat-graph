@@ -17,6 +17,7 @@ using SfaChatGraph.Server.Utils;
 using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
+using System.Web;
 using VDS.RDF;
 using VDS.RDF.Query;
 using VDS.RDF.Query.Datasets;
@@ -47,13 +48,13 @@ namespace SfaChatGraph.Server.Controllers
 		[ProducesResponseType<SparqlStarResult>(StatusCodes.Status200OK)]
 		public async Task<IActionResult> DescribeAsync([FromQuery] string subject)
 		{
-			var graph = await _graphDb.DescribeAsync(subject);	
+			var graph = await _graphDb.DescribeAsync(subject);
 			return Ok(graph);
 		}
 
 		[HttpGet("history/{id}")]
 		[ProducesResponseType<ApiMessage[]>(StatusCodes.Status200OK)]
-		public async Task<IActionResult> GetHistoryAsync(Guid id, [FromQuery]bool loadBlobs = false)
+		public async Task<IActionResult> GetHistoryAsync(Guid id, [FromQuery] bool loadBlobs = false)
 		{
 			var history = await _chatHistoryService.GetChatHistoryAsync(id, loadBlobs);
 			return Ok(history.Messages);
@@ -61,24 +62,29 @@ namespace SfaChatGraph.Server.Controllers
 
 		[HttpGet("tool-data/{id}")]
 		[ProducesResponseType<FileResult>(StatusCodes.Status200OK)]
-		public async Task<IActionResult> GetToolDataAsync(Guid id)
+		public async Task<IActionResult> GetToolDataAsync(Guid id, [FromQuery] string download = null)
 		{
 			if (_chatHistoryService.SupportsToolData == false)
 				return NotFound();
-			
+
 			var data = await _chatHistoryService.GetToolDataAsync(id);
 			if (data == null)
 				return NotFound();
 
+			if (string.IsNullOrEmpty(download) == false)
+				data.FileDownloadName = HttpUtility.UrlDecode(download);
+
+			Response.Headers.CacheControl = "public, max-age=31536000, immutable"; // 1 year
+			Response.Headers.Expires = DateTime.UtcNow.AddYears(1).ToString("R");
 			return data;
 		}
 
 		[HttpPost("chat/{id}")]
 		[ProducesResponseType<ApiMessage[]>(StatusCodes.Status200OK)]
-		public async Task<IActionResult> ChatAsync([FromBody] ApiChatRequest chat, Guid id, [FromQuery]Guid? eventChannel)
+		public async Task<IActionResult> ChatAsync([FromBody] ApiChatRequest chat, Guid id, [FromQuery] Guid? eventChannel)
 		{
 			IEventSink<ChatEvent> sink = null;
-			if(eventChannel.HasValue)
+			if (eventChannel.HasValue)
 				sink = _eventService.GetChannel(eventChannel.Value);
 
 			await sink?.PushAsync(ChatEvent.CActivity(id, "Loading chat history"));

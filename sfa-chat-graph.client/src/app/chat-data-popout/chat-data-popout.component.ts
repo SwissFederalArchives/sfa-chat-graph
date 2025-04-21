@@ -1,5 +1,5 @@
 import { ApplicationRef, Component, ComponentRef, createComponent, EnvironmentInjector, HostListener, inject, Injector, Input, input, ViewContainerRef } from '@angular/core';
-import { DisplayDetail } from '../chat-history/DisplayData';
+import { DisplayDetail } from '../chat-history/DisplayDetail';
 import { MatIcon, MatIconModule } from '@angular/material/icon';
 import { MatButton, MatIconButton } from '@angular/material/button';
 import { NgIf } from '@angular/common';

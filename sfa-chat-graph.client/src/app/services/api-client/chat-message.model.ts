@@ -36,6 +36,7 @@ export class ApiToolData {
   public mimeType?: string;
   public isBase64Content!: boolean;
   public content?: string;
+  public blobLoaded!: boolean;
 }
 
 export class ApiCodeToolData {

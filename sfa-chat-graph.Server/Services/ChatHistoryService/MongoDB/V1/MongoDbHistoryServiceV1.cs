@@ -59,9 +59,9 @@ namespace sfa_chat_graph.Server.Services.ChatHistoryService.MongoDB.V1
 
 		public async Task AppendAsync(Guid chatId, IEnumerable<ApiMessage> messages)
 		{
-			var mongoMessages = messages.Select(x => MongoChatMessageModel.FromApi(chatId, x));
+			var mongoMessages = messages.Select(x => MongoChatMessageModel.FromApi(chatId, x)).ToArray();
 			await _messages.InsertManyAsync(mongoMessages);
-			var tasks = mongoMessages.Where(x => x.HasData).Select(HandleDataUploadAsync);
+			var tasks = mongoMessages.Where(x => x.HasData).Select(HandleDataUploadAsync).ToArray();
 			await Task.WhenAll(tasks);
 		}
 
@@ -91,9 +91,9 @@ namespace sfa_chat_graph.Server.Services.ChatHistoryService.MongoDB.V1
 		public override async Task<ChatHistory> GetChatHistoryAsync(Guid id)
 		{
 			var messages = await _messages.Find(x => x.HistoryId == id).SortBy(x => x.TimeStamp).ToListAsync();
-			var tasks = messages.Where(x => x.HasData).Select(LoadMessageData);
+			var tasks = messages.Where(x => x.HasData).Select(LoadMessageData).ToArray();
 			await Task.WhenAll(tasks);
-			var apiMessage = messages.Select(x => x.ToApi).ToArray();
+			var apiMessage = messages.Select(x => x.ToApi()).ToArray();
 			return new ChatHistory { Id = id, Messages = apiMessage };
 		}
 

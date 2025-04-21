@@ -16,7 +16,7 @@ import { ActivatedRoute } from '@angular/router';
 import { EventChannel } from '../services/api-client/event-channel.service';
 import { DisplayMessage } from './DisplayMessage';
 import { SubGraphMarker } from './SubGraphMarker';
-import { DisplayDetail } from './DisplayData';
+import { DisplayDetail } from './DisplayDetail';
 
 
 export enum ErrorType {
@@ -160,8 +160,10 @@ export class ChatHistoryComponent implements AfterViewChecked, OnInit {
 
         const content = message.content!.replaceAll(URL_SUBST_PATTERN, (match, id) => {
           const data = this._toolData.get(id);
-          if (data && data.isBase64Content && data.content && data.mimeType) {
-            return `/api/v1/rdf/tool-data/${data.content}`;
+          if (data && data.blobLoaded == false)  {
+            return `/api/v1/rdf/tool-data/${data.id}`;
+          }else if(data && data.blobLoaded && data.mimeType && data.isBase64Content)  {
+            return `data:${data.mimeType};base64,${data.content}`
           }
           return '';
         });

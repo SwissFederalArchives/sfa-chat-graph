@@ -25,9 +25,13 @@
                 <b>{{data.description}}</b>
             </div>
 
-            @if(data.mimeType && data.mimeType.startsWith("image/")){
+            @if(data.mimeType && data.mimeType.startsWith("image/") && data.isUrl){
+            <img src="{{data.content}}" alt="Image: {{data.description}}" />
+            }
+            @else if (data.mimeType && data.mimeType.startsWith("image/") && data.isBase64Content) {
             <img src="data:{{data.mimeType}};base64,{{data.content}}" alt="Image: {{data.description}}" />
-            } @else {
+            }
+            @else {
             <markdown [katex]="true" [emoji]="true" [clipboard]="true" [lineNumbers]="true" ngPreserveWhitespaces
                 [innerHtml]="getMdContent()">
             </markdown>

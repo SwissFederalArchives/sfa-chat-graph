@@ -8,7 +8,9 @@ using MongoDB.Driver.Linq;
 using sfa_chat_graph.Server.Models;
 using sfa_chat_graph.Server.Utils.MessagePack;
 using sfa_chat_graph.Server.Versioning;
+using sfa_chat_graph.Server.Versioning.Migrations;
 using SfaChatGraph.Server.Models;
+using SfaChatGraph.Server.Utils;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -17,7 +19,7 @@ using VDS.RDF.Query;
 namespace sfa_chat_graph.Server.Services.ChatHistoryService.MongoDB.V2
 {
 	[ServiceVersion<IChatHistoryService>(2)]
-	public class MongoDbHistoryServiceV2 : MongoDbHistoryServiceBase, IChatHistoryService
+	public class MongoDbHistoryServiceV2 : MongoDbHistoryServiceBase, IChatHistoryService, IPostMigration
 	{
 		const int Version = 2;
 		private static readonly MessagePackSerializerOptions _serializerOptions = MessagePackSerializerOptions.Standard
@@ -75,7 +77,7 @@ namespace sfa_chat_graph.Server.Services.ChatHistoryService.MongoDB.V2
 				data.ContentId = Guid.NewGuid();
 				Stream stream = new MemoryStream(Encoding.UTF8.GetBytes(data.Content));
 				if (data.IsBase64Content)
-					stream = new CryptoStream(stream, new ToBase64Transform(), CryptoStreamMode.Read, false);
+					stream = new CryptoStream(stream, new FromBase64Transform(), CryptoStreamMode.Read, false);
 
 				await _dataBucket.UploadFromStreamAsync(data.ContentId.ToString(), stream);
 				data.Content = null;
@@ -103,8 +105,12 @@ namespace sfa_chat_graph.Server.Services.ChatHistoryService.MongoDB.V2
 		public async Task AppendAsync(Guid chatId, IEnumerable<ApiMessage> messages)
 		{
 			var mongoMessages = messages.Select(x => MongoChatMessageModel.FromApi(chatId, x)).ToArray();
-			var tasks = mongoMessages.Where(x => x.HasData).Select(StoreLargeDataAsync);
+			var tasks = mongoMessages.Where(x => x.HasData).Select(StoreLargeDataAsync).ToArray();
 			await Task.WhenAll(tasks);
+			var firstEx = tasks.FirstOrDefault(x => x.IsFaulted);
+			if (firstEx != null)
+				throw firstEx.Exception;
+
 			await _messages.InsertManyAsync(mongoMessages);
 		}
 
@@ -115,28 +121,34 @@ namespace sfa_chat_graph.Server.Services.ChatHistoryService.MongoDB.V2
 			return count > 0;
 		}
 
+
+
 		private async Task LoadMongoToolDataAsync(MongoToolData data)
 		{
 			if (data.ContentId != null)
 			{
-				Stream stream = await _dataBucket.OpenDownloadStreamAsync(data.ContentId.ToString());
+				Stream stream = await _dataBucket.OpenDownloadStreamByNameAsync(data.ContentId.ToString());
 				if (data.IsBase64Content)
 					stream = new CryptoStream(stream, new ToBase64Transform(), CryptoStreamMode.Read, false);
 
 				using (var reader = new StreamReader(stream, leaveOpen: false))
+				{
 					data.Content = await reader.ReadToEndAsync();
+					data.BlobLoaded = true;
+				}
 			}
 		}
 
 		private async Task LoadCodeToolDataAsync(MongoCodeToolData data)
 		{
+			if (data.ToolData == null) return;
 			var tasks = data.ToolData.Select(LoadMongoToolDataAsync);
 			await Task.WhenAll(tasks);
 		}
 
 		private async Task<SparqlResultSet> LoadResultSetAsync(Guid id)
 		{
-			using (var stream = await _dataBucket.OpenDownloadStreamAsync(id.ToString()))
+			using (var stream = await _dataBucket.OpenDownloadStreamByNameAsync(id.ToString()))
 			{
 				return await MessagePackSerializer.DeserializeAsync<SparqlResultSet>(stream, _serializerOptions);
 			}
@@ -163,28 +175,26 @@ namespace sfa_chat_graph.Server.Services.ChatHistoryService.MongoDB.V2
 		public async Task<ChatHistory> GetChatHistoryAsync(Guid id, bool loadBlobs = false)
 		{
 			var messages = await _messages.Find(x => x.HistoryId == id).SortBy(x => x.TimeStamp).ToListAsync();
-			var tasks = messages.Where(x => x.HasData).Select(x => LoadLargeDataAsync(x, loadBlobs));
+			var tasks = messages.Where(x => x.HasData).Select(x => LoadLargeDataAsync(x, loadBlobs)).ToArray();
 			await Task.WhenAll(tasks);
-			var apiMessage = messages.Select(x => x.ToApi).ToArray();
+			var apiMessage = messages.Select(x => x.ToApi()).ToArray();
 			return new ChatHistory { Id = id, Messages = apiMessage };
 		}
 
 		public async Task<FileResult> GetToolDataAsync(Guid toolDataId)
 		{
-			var toolData = await _messages.Aggregate()
-					.Match(x => x.CodeToolData != null)
-					.Unwind<MongoChatMessageModel, MongoToolData>(x => x.CodeToolData.ToolData)
-					.Match(x => x.Id == toolDataId)
-					.FirstOrDefaultAsync();
+			var message = await _messages
+				.Find(x => x.CodeToolData != null && x.CodeToolData.ToolData.Any(y => y.Id == toolDataId))
+				.FirstOrDefaultAsync();
 
+			var toolData = message?.CodeToolData.ToolData.FirstOrDefault(x => x.Id == toolDataId);
 			if (toolData == null)
 				return null;
 
 			if (toolData.ContentId.HasValue)
 			{
-				var stream = await _dataBucket.OpenDownloadStreamByNameAsync(toolDataId.ToString());
+				var stream = await _dataBucket.OpenDownloadStreamByNameAsync(toolData.ContentId.ToString());
 				return new FileStreamResult(stream, toolData.MimeType);
-
 			}
 			else
 			{
@@ -211,6 +221,41 @@ namespace sfa_chat_graph.Server.Services.ChatHistoryService.MongoDB.V2
 				.ToListAsync();
 
 			return ids;
+		}
+
+		public async Task RunPostMigrationAsync(MigrationReport report, CancellationToken token)
+		{
+			var filter = Builders<GridFSFileInfo>.Filter.Empty;
+			var filemeta = await _dataBucket.Find(filter).ToListAsync();
+			var fileIds = filemeta.ToDictionary(x => x.Filename, x => x.Id);
+			var cursor = await _messages.Find(x => x.GraphToolData != null || x.CodeToolData != null).ToCursorAsync();
+			while (token.IsCancellationRequested == false && await cursor.MoveNextAsync())
+			{
+				var messages = cursor.Current;
+				foreach (var message in messages)
+				{
+					if (message.GraphToolData != null)
+					{
+						if (message.GraphToolData.VisualisationGraphId.HasValue)
+							fileIds.Remove(message.GraphToolData.VisualisationGraphId.Value.ToString());
+
+						if (message.GraphToolData.DataGraphId.HasValue)
+							fileIds.Remove(message.GraphToolData.DataGraphId.Value.ToString());
+					}
+
+					if (message.CodeToolData != null && message.CodeToolData.ToolData != null)
+					{
+						message.CodeToolData.ToolData.ForEach(x =>
+						{
+							if (x.ContentId.HasValue)
+								fileIds.Remove(x.ContentId.Value.ToString());
+						});
+					}
+				}
+			}
+
+			var tasks = fileIds.Values.Select(x => _dataBucket.DeleteAsync(x, token)).ToArray();
+			await Task.WhenAll(tasks);
 		}
 	}
 }

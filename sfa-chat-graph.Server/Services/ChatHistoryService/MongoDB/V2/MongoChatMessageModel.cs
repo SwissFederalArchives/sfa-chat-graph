@@ -52,7 +52,7 @@ namespace sfa_chat_graph.Server.Services.ChatHistoryService.MongoDB.V2
 		private ApiToolCallMessage ToApiToolCallMessage() => new ApiToolCallMessage(ToolCalls) { TimeStamp = TimeStamp, Id = MessageId };
 		private ApiToolResponseMessage ToApiToolResponseMessage() => new ApiToolResponseMessage(ToolCallId, Content) { TimeStamp = TimeStamp, Id = MessageId, CodeToolData = CodeToolData?.ToApi(), GraphToolData = GraphToolData?.ToApi() };
 
-		public ApiMessage ToApi => Role switch
+		public ApiMessage ToApi() => Role switch
 		{
 			ChatRole.User => ToApiMessage(),
 			ChatRole.Assistant => ToApiMessage(),

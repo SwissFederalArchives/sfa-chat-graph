@@ -16,6 +16,9 @@ namespace sfa_chat_graph.Server.Services.ChatHistoryService.MongoDB.V2
 		public Guid? ContentId { get; set; }
 		public string Content { get; set; }
 
+		[BsonIgnore]
+		public bool BlobLoaded { get; set; } = false;
+
 		public static ApiToolData ToApi(MongoToolData data)
 		{
 			return new ApiToolData
@@ -25,6 +28,7 @@ namespace sfa_chat_graph.Server.Services.ChatHistoryService.MongoDB.V2
 				Description = data.Description,
 				MimeType = data.MimeType,
 				Content = data.Content,
+				BlobLoaded = data.BlobLoaded,
 			};
 		}
 

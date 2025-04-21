@@ -1,5 +1,5 @@
 import { ApiCodeToolData, ApiGraphToolData } from '../services/api-client/chat-message.model';
-import { DisplayDetail } from './DisplayData';
+import { DisplayDetail } from './DisplayDetail';
 import { SubGraphMarker } from './SubGraphMarker';
 import { Mime } from 'mime';
 import standardTypes from 'mime/types/standard.js';
@@ -26,20 +26,24 @@ export class DisplayMessage {
       const label = `Code ${i + 1}`;
       if (code.code) {
         const className = code.success ? 'tool-data-code' : 'tool-data-code-error';
-        const display = new DisplayDetail(label, code.code, false, mime.getType(code.language!) || 'text/plain', 'Generated code for the visualisation', className, code.language, code.error);
+        const display = new DisplayDetail(label, code.code, false, false, mime.getType(code.language!) || 'text/plain', 'Generated code for the visualisation', className, code.language, code.error);
         yield display;
       }
 
       for (let j = 0; j < (code.data?.length ?? 0); j++) {
         const data = code.data![j];
-        if (data.content) {
+        let content = data.content;
+        if(data.blobLoaded == false)
+          content = '/api/v1/rdf/tool-data/' + data.id;
+
+        if (content) {
           const type = mime.getExtension(data.mimeType!);
           const label = `Code ${i + 1} Data (${type}) ${j + 1}`;
-          const display = new DisplayDetail(label, data.content, data.isBase64Content, data.mimeType!, data.description, 'tool-data-code-data');
+          const display = new DisplayDetail(label, content, data.isBase64Content, data.blobLoaded == false, data.mimeType!, data.description, 'tool-data-code-data');
           yield display;
         } else if (data.description) {
           const label = `Code ${i + 1} Output ${j + 1}`;
-          const display = new DisplayDetail(label, data.description, false, 'text/plain', data.description, 'tool-data-code-ouput', undefined);
+          const display = new DisplayDetail(label, data.description, false, false, 'text/plain', data.description, 'tool-data-code-ouput', undefined);
           yield display;
         }
       }
@@ -51,13 +55,13 @@ export class DisplayMessage {
       const graph = graphs[i];
       if (graph.query) {
         const label = `Query ${i + 1}`;
-        yield new DisplayDetail(label, graph.query, false, 'application/sparql-query', 'Generated SPARQL query for the visualisation', 'tool-data-graph-query', 'sparql');
+        yield new DisplayDetail(label, graph.query, false, false, 'application/sparql-query', 'Generated SPARQL query for the visualisation', 'tool-data-graph-query', 'sparql');
       }
 
       if (graph.dataGraph) {
         const label = `Graph ${i + 1}`;
         const graphJson = JSON.stringify(graph.dataGraph, null, 2);
-        yield new DisplayDetail(label, graphJson, false, 'application/x-sparqlstar-results+json', 'Generated data graph for the visualisation', 'tool-data-graph', 'json');
+        yield new DisplayDetail(label, graphJson, false, false, 'application/x-sparqlstar-results+json', 'Generated data graph for the visualisation', 'tool-data-graph', 'json');
       }
     }
   }
