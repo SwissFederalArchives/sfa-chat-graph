@@ -3,7 +3,7 @@ using MongoDB.Bson.Serialization.Attributes;
 using sfa_chat_graph.Server.Models;
 using VDS.RDF.Query;
 
-namespace sfa_chat_graph.Server.Services.ChatHistoryService.MongoDB
+namespace sfa_chat_graph.Server.Services.ChatHistoryService.MongoDB.V2
 {
 	public class MongoGraphToolData
 	{

@@ -18,7 +18,7 @@ namespace sfa_chat_graph.Server.Utils.ServiceCollection
 				serviceType = serviceType.GetGenericTypeDefinition();
 			}
 
-			if (ImplementationAttribute.Registry.TryGetValue(serviceType, out var implementations) == false)
+			if (ServiceImplementationAttribute.Registry.TryGetValue(serviceType, out var implementations) == false)
 				throw new InvalidOperationException($"No implementations found for {serviceType.Name}");
 			
 			var implementationKey = config.GetValue<string>("Implementation");

@@ -5,7 +5,7 @@ namespace sfa_chat_graph.Server.Utils.ServiceCollection
 {
 	public record ImplementationDetail(Type ServiceType, Type ConcreteType, Type? ConfigType, ServiceLifetime Lifetime, string? Key)
 	{
-		public static ImplementationDetail FromAttribute(ImplementationAttribute attr, Type concreteType)
+		public static ImplementationDetail FromAttribute(ServiceImplementationAttribute attr, Type concreteType)
 		{
 			if (attr.ServiceType.IsGenericType == false && concreteType.IsAssignableTo(attr.ServiceType) == false)
 				throw new InvalidOperationException($"Type {concreteType.Name} does not implement {attr.ServiceType.Name}");
@@ -18,11 +18,11 @@ namespace sfa_chat_graph.Server.Utils.ServiceCollection
 	}
 
 	[AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
-	public class ImplementationAttribute : Attribute
+	public class ServiceImplementationAttribute : Attribute
 	{
-		public static readonly FrozenDictionary<Type, ImplementationDetail[]> Registry = typeof(ImplementationAttribute)
+		public static readonly FrozenDictionary<Type, ImplementationDetail[]> Registry = typeof(ServiceImplementationAttribute)
 			.Assembly.GetTypes()
-			.SelectMany(t => t.GetCustomAttributes<ImplementationAttribute>().Select(x => ImplementationDetail.FromAttribute(x, t)))
+			.SelectMany(t => t.GetCustomAttributes<ServiceImplementationAttribute>().Select(x => ImplementationDetail.FromAttribute(x, t)))
 			.GroupBy(x => x.ServiceType).ToFrozenDictionary(x => x.Key, x => x.ToArray());
 
 		public Type ServiceType { get; init; }
@@ -30,7 +30,7 @@ namespace sfa_chat_graph.Server.Utils.ServiceCollection
 		public ServiceLifetime Lifetime { get; init; }
 		public string? Key { get; init; }
 
-		public ImplementationAttribute(Type serviceType, Type configType = null, ServiceLifetime lifetime = ServiceLifetime.Scoped)
+		public ServiceImplementationAttribute(Type serviceType, Type configType = null, ServiceLifetime lifetime = ServiceLifetime.Scoped)
 		{
 			ServiceType = serviceType;
 			ConfigType = configType;
@@ -40,7 +40,7 @@ namespace sfa_chat_graph.Server.Utils.ServiceCollection
 		public string GetKey(TypeInfo info) => this.Key ?? info.Name;
 	}
 
-	public class ImplementationAttribute<TService, TConfig> : ImplementationAttribute
+	public class ImplementationAttribute<TService, TConfig> : ServiceImplementationAttribute
 	{
 		public ImplementationAttribute(ServiceLifetime lifetime = ServiceLifetime.Scoped) : base(typeof(TService), typeof(TConfig), lifetime)
 		{

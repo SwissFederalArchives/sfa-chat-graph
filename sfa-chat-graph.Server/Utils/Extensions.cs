@@ -27,6 +27,10 @@ namespace SfaChatGraph.Server.Utils
 			
 		}
 
+		public static IEnumerable<TTo> Select<TTo, TFrom, TArg>(this IEnumerable<TFrom> enumerable, Func<TFrom, TArg, TTo> map, TArg arg1) => enumerable.Select(x => map(x, arg1));
+		public static IEnumerable<TTo> Select<TTo, TFrom, TArg, TArg2>(this IEnumerable<TFrom> enumerable, Func<TFrom, TArg, TArg2, TTo> map, TArg arg1, TArg2 arg2) => enumerable.Select(x => map(x, arg1, arg2));
+		public static IEnumerable<TTo> Select<TTo, TFrom, TArg, TArg2, TArg3>(this IEnumerable<TFrom> enumerable, Func<TFrom, TArg, TArg2, TArg3, TTo> map, TArg arg1, TArg2 arg2, TArg3 arg3) => enumerable.Select(x => map(x, arg1, arg2, arg3));
+
 		public static void ForEach<T>(this IEnumerable<T> enumerable, Action<T> action)
 		{
 			foreach (var item in enumerable)

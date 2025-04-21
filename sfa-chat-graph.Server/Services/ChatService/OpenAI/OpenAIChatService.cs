@@ -53,13 +53,7 @@ namespace sfa_chat_graph.Server.Services.ChatService.OpenAI
 			_logger = loggerFactory.CreateLogger<OpenAIChatService>();
 		}
 
-
-
-
 		record ToolHandleResponse(bool RequiresAction, bool ErrorsExceeded);
-
-
-
 		private ChatCompletionOptions GetErrorHandlingOptions(ChatToolCall toolCall)
 		{
 			var options = new ChatCompletionOptions

@@ -1,5 +1,6 @@
 ﻿using MessagePack;
 using MessagePack.Resolvers;
+using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver;
 using sfa_chat_graph.Server.Models;
 using sfa_chat_graph.Server.Services.Cache;
@@ -40,17 +41,18 @@ namespace sfa_chat_graph.Server.Services.ChatHistoryService
 
 		public Task<bool> ExistsAsync(Guid id) => _storage.ExistsAsync(id);
 
-		public async Task<ChatHistory> GetChatHistoryAsync(Guid id)
+		public async Task<ChatHistory> GetChatHistoryAsync(Guid id, bool loadBlobs = false)
 		{
 			var isCached = await _cache.ExistsAsync(id);
 			if (isCached)
-				return await _cache.GetChatHistoryAsync(id);
+				return await _cache.GetChatHistoryAsync(id, loadBlobs);
 		
-			var res = await _storage.GetChatHistoryAsync(id);
+			var res = await _storage.GetChatHistoryAsync(id, loadBlobs);
 			await _cache.CacheHistoryAsync(res);
 			return res;
 		}
 
-		public Task<ApiToolData> GetToolDataAsync(Guid toolDataId) => _storage.GetToolDataAsync(toolDataId);
+		public Task<FileResult> GetToolDataAsync(Guid toolDataId) => _storage.GetToolDataAsync(toolDataId);
+
 	}
 }

@@ -23,8 +23,9 @@ using sfa_chat_graph.Server.Services.Cache;
 using sfa_chat_graph.Server.Models;
 using sfa_chat_graph.Server.Utils.ServiceCollection;
 using MongoDB.Driver.GridFS;
-using sfa_chat_graph.Server.Services.ChatHistoryService.MongoDB;
 using sfa_chat_graph.Server.Services.ChatHistoryService.Cached;
+using sfa_chat_graph.Server.Services.ChatHistoryService.MongoDB.V2;
+using sfa_chat_graph.Server.Versioning;
 
 DotNetEnv.Env.Load();
 DataAnnotationsSupport.AddDataAnnotations();
@@ -43,6 +44,7 @@ builder.Services.AddSingleton<IGraphRag, GraphRag>();
 builder.Services.AddSingleton<ChatCodeService>();
 builder.Services.AddSingleton<ChatServiceEventService>();
 builder.Services.AddScoped<IChatService, OpenAIChatService>();
+builder.Services.AddVersioning();
 
 var redis = builder.Configuration.GetConnectionString("Redis");
 if (string.IsNullOrEmpty(redis) == false)
@@ -62,7 +64,7 @@ builder.Services.AddScoped<IMongoDatabase>(x =>
 
 builder.Services.AddFromConfig<IAppendableCache<Guid, IApiMessage>>(builder.Configuration.GetSection("Cache"));
 builder.Services.AddSingleton<IChatHistoryServiceCache, AppendableCacheChatHistoryServiceCache>();
-builder.Services.AddKeyedScoped<IChatHistoryService, MongoDbHistoryService>("Storage");
+builder.Services.AddKeyedScoped<IChatHistoryService>("Storage", (sp, _) => VersioningService.GetLatestVersion<IChatHistoryService>(sp));
 builder.Services.AddScoped<IChatHistoryService, CachedChatHistoryService>();
 
 builder.Services.AddControllers()
@@ -82,21 +84,6 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
-
-async Task MigrateMongoAsync()
-{
-	using var scope = app.Services.CreateScope();
-	var storage = scope.ServiceProvider.GetRequiredKeyedService<IChatHistoryService>("Storage");
-	var db = scope.ServiceProvider.GetRequiredService<IMongoDatabase>();
-	var collection = db.GetCollection<ChatHistory>("chat-history");
-	var histories = await collection.Find(x => x.Id == Guid.Parse("7d7740b3-9333-47e2-8859-7748b31ad460")).ToListAsync();
-	foreach (var history in histories)
-		await storage.AppendAsync(history.Id, history.Messages);
-}
-
-
-
-//await MigrateMongoAsync();
 app.UseDefaultFiles();
 app.MapStaticAssets();
 

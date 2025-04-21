@@ -1,6 +1,6 @@
 ﻿using sfa_chat_graph.Server.Models;
 
-namespace sfa_chat_graph.Server.Services.ChatHistoryService.MongoDB
+namespace sfa_chat_graph.Server.Services.ChatHistoryService.MongoDB.V2
 {
 	public class MongoCodeToolData
 	{
@@ -18,7 +18,7 @@ namespace sfa_chat_graph.Server.Services.ChatHistoryService.MongoDB
 				Code = Code,
 				Language = Language,
 				Success = Success,
-				Data = ToolData.Select(MongoToolData.ToApi).ToArray()
+				Data = ToolData?.Select(MongoToolData.ToApi)?.ToArray()
 			};
 		}
 
@@ -31,7 +31,7 @@ namespace sfa_chat_graph.Server.Services.ChatHistoryService.MongoDB
 				Code = data.Code,
 				Language = data.Language,
 				Success = data.Success,
-				ToolData = data.Data.Select(MongoToolData.FromApi).ToArray()
+				ToolData = data.Data?.Select(MongoToolData.FromApi)?.ToArray()
 			};
 		}
 	}

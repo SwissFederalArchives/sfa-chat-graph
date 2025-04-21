@@ -2,7 +2,7 @@
 using MongoDB.Bson.Serialization.Attributes;
 using sfa_chat_graph.Server.Models;
 
-namespace sfa_chat_graph.Server.Services.ChatHistoryService.MongoDB
+namespace sfa_chat_graph.Server.Services.ChatHistoryService.MongoDB.V2
 {
 	public class MongoToolData
 	{
@@ -13,8 +13,8 @@ namespace sfa_chat_graph.Server.Services.ChatHistoryService.MongoDB
 		public string MimeType { get; set; }
 
 		[BsonGuidRepresentation(GuidRepresentation.Standard)]
-		public Guid? ContentId { get; set; } 
-		public string? Content { get; set; }
+		public Guid? ContentId { get; set; }
+		public string Content { get; set; }
 
 		public static ApiToolData ToApi(MongoToolData data)
 		{
@@ -29,7 +29,7 @@ namespace sfa_chat_graph.Server.Services.ChatHistoryService.MongoDB
 		}
 
 		public static MongoToolData FromApi(ApiToolData data)
-		{	
+		{
 			return new MongoToolData
 			{
 				Id = data.Id,

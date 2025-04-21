@@ -53,9 +53,9 @@ namespace SfaChatGraph.Server.Controllers
 
 		[HttpGet("history/{id}")]
 		[ProducesResponseType<ApiMessage[]>(StatusCodes.Status200OK)]
-		public async Task<IActionResult> GetHistoryAsync(Guid id)
+		public async Task<IActionResult> GetHistoryAsync(Guid id, [FromQuery]bool loadBlobs = false)
 		{
-			var history = await _chatHistoryService.GetChatHistoryAsync(id);
+			var history = await _chatHistoryService.GetChatHistoryAsync(id, loadBlobs);
 			return Ok(history.Messages);
 		}
 

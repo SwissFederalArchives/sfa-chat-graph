@@ -7,7 +7,7 @@ using System.Buffers;
 
 namespace sfa_chat_graph.Server.Services.Cache.MessagePack
 {
-	[Implementation(typeof(IAppendableCache<,>), typeof(AppendableCacheOptions), ServiceLifetime.Singleton, Key = "Redis")]
+	[ServiceImplementation(typeof(IAppendableCache<,>), typeof(AppendableCacheOptions), ServiceLifetime.Singleton, Key = "Redis")]
 	public class RedisMessagePackCache<TKey, TValue> : MessagePackCacheBase<TKey, TValue>
 	{
 		private readonly IDatabaseAsync _redis;

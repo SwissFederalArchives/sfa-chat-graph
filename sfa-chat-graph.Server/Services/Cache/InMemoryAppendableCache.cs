@@ -7,7 +7,7 @@ using System.Collections.Concurrent;
 
 namespace sfa_chat_graph.Server.Services.Cache
 {
-	[Implementation(typeof(IAppendableCache<,>), typeof(AppendableCacheOptions), ServiceLifetime.Singleton, Key = "InMemory")]
+	[ServiceImplementation(typeof(IAppendableCache<,>), typeof(AppendableCacheOptions), ServiceLifetime.Singleton, Key = "InMemory")]
 	public class InMemoryAppendableCache<TKey, TValue> : IAppendableCache<TKey, TValue>, IHostedService
 	{
 		private class CacheItem<T>

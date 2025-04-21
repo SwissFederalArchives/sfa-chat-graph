@@ -1,4 +1,5 @@
 ﻿using MessagePack;
+using Microsoft.AspNetCore.Mvc;
 using sfa_chat_graph.Server.Models;
 using sfa_chat_graph.Server.Services.Cache;
 using sfa_chat_graph.Server.Utils.MessagePack;
@@ -19,7 +20,7 @@ namespace sfa_chat_graph.Server.Services.ChatHistoryService.Cached
 
 		public Task AppendAsync(Guid chatId, IEnumerable<ApiMessage> messages) => _cache.AppendAsync(chatId, messages);
 
-		public async Task<ChatHistory> GetChatHistoryAsync(Guid id)
+		public async Task<ChatHistory> GetChatHistoryAsync(Guid id, bool loadBlobs = false)
 		{
 			var messages = await _cache.GetAsync(id).OfType<ApiMessage>().ToArrayAsync();
 			return new ChatHistory
@@ -31,7 +32,7 @@ namespace sfa_chat_graph.Server.Services.ChatHistoryService.Cached
 
 		public Task CacheHistoryAsync(ChatHistory history) => _cache.SetAsync(history.Id, history.Messages);
 
-		public Task<ApiToolData> GetToolDataAsync(Guid toolDataId)
+		public Task<FileResult> GetToolDataAsync(Guid toolDataId)
 		{
 			throw new NotImplementedException();
 		}

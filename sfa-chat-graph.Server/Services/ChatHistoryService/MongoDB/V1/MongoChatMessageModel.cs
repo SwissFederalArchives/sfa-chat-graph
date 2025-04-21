@@ -1,14 +1,17 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using sfa_chat_graph.Server.Models;
+using sfa_chat_graph.Server.Versioning;
 using SfaChatGraph.Server.Models;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 
-namespace sfa_chat_graph.Server.Services.ChatHistoryService.MongoDB
+namespace sfa_chat_graph.Server.Services.ChatHistoryService.MongoDB.V1
 {
+	[Obsolete("This class is deprecated. Use MongoChatMessageModel in V2 instead.")]
 	public class MongoChatMessageModel
 	{
+
 		[BsonGuidRepresentation(GuidRepresentation.Standard)]
 		public Guid HistoryId { get; set; }
 
@@ -22,13 +25,17 @@ namespace sfa_chat_graph.Server.Services.ChatHistoryService.MongoDB
 		public DateTime TimeStamp { get; set; }
 		public ApiToolCall[] ToolCalls { get; set; }
 		public string ToolCallId { get; set; }
-		
-		public MongoGraphToolData GraphToolData { get; set; }
-		public MongoCodeToolData CodeToolData { get; set; }
-
+		public bool HasGraphData { get; set; }
+		public bool HasCodeData { get; set; }
 
 		[BsonIgnore]
-		public bool HasData => this.GraphToolData != null || this.CodeToolData != null;
+		public ApiGraphToolData GraphToolData { get; set; }
+
+		[BsonIgnore]
+		public ApiCodeToolData CodeToolData { get; set; }
+
+		[BsonIgnore]
+		public bool HasData => Role == ChatRole.ToolResponse && (HasGraphData || HasCodeData);
 
 		public MongoChatMessageModel()
 		{
@@ -44,13 +51,15 @@ namespace sfa_chat_graph.Server.Services.ChatHistoryService.MongoDB
 			TimeStamp=timeStamp;
 			ToolCalls=toolCalls;
 			ToolCallId=toolCallId;
-			GraphToolData=MongoGraphToolData.FromApi(graphToolData);
-			CodeToolData=MongoCodeToolData.FromApi(codeToolData);
+			GraphToolData=graphToolData;
+			CodeToolData=codeToolData;
+			HasGraphData = graphToolData != null;
+			HasCodeData = codeToolData != null;
 		}
 
 		private ApiMessage ToApiMessage() => new ApiMessage(Role, Content) { TimeStamp = TimeStamp, Id = MessageId };
 		private ApiToolCallMessage ToApiToolCallMessage() => new ApiToolCallMessage(ToolCalls) { TimeStamp = TimeStamp, Id = MessageId };
-		private ApiToolResponseMessage ToApiToolResponseMessage() => new ApiToolResponseMessage(ToolCallId, Content) { TimeStamp = TimeStamp, Id = MessageId, CodeToolData = CodeToolData?.ToApi(), GraphToolData = GraphToolData?.ToApi() };
+		private ApiToolResponseMessage ToApiToolResponseMessage() => new ApiToolResponseMessage(ToolCallId, Content) { TimeStamp = TimeStamp, Id = MessageId, GraphToolData = GraphToolData, CodeToolData = CodeToolData };
 
 		public ApiMessage ToApi => Role switch
 		{
