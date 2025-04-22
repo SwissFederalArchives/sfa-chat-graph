@@ -87,6 +87,7 @@ namespace SfaChatGraph.Server.Controllers
 			if (eventChannel.HasValue)
 				sink = _eventService.GetChannel(eventChannel.Value);
 
+			chat.Message.TimeStamp = DateTime.UtcNow;
 			await sink?.PushAsync(ChatEvent.CActivity(id, "Loading chat history"));
 			var history = await _chatHistoryService.GetChatHistoryAsync(id);
 			var messages = history.Messages.Append(chat.Message);
