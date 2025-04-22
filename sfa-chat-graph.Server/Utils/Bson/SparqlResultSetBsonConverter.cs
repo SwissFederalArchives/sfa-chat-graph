@@ -91,6 +91,12 @@ namespace sfa_chat_graph.Server.Utils.Bson
 
 		private void SerializeImpl(BsonSerializationContext context, BsonSerializationArgs args, SparqlResultSet value)
 		{
+			if (value == null)
+			{
+				context.Writer.WriteNull();
+				return;
+			}
+
 			context.Writer.WriteStartDocument();
 			context.Writer.WriteName("type");
 			context.Writer.WriteInt32((int)value.ResultsType);
