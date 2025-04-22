@@ -171,6 +171,8 @@ namespace sfa_chat_graph.Server.Services.ChatService.OpenAI
 
 		private async Task<Message> HandleToolCallImplAsync(ChatToolCall toolCall, ChatContext ctx)
 		{
+			_logger.LogInformation("Handling tool call {ToolCall}", toolCall.FunctionName);
+			_logger.LogDebug("Tool call arguments: {ToolCall}", toolCall.FunctionArguments.ToString());
 			var toolParameters = JsonDocument.Parse(toolCall.FunctionArguments);
 			var detail = JsonSerializer.Serialize(new { FunctionName = toolCall.FunctionName, Arguments = toolParameters });
 			await ctx.NotifyActivityAsync($"Handling {toolCall.FunctionName} tool call", detail);

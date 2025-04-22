@@ -17,32 +17,43 @@ namespace sfa_chat_graph.Server.RDF
 		private readonly Dictionary<string, string> _schemaCache = new();
 		private readonly SparqlQueryParser _parser = new();
 		private string[] _graphsCache = null;
+		private readonly ILogger _logger;
 
-		public GraphRag(ISparqlEndpoint endpoint)
+		public GraphRag(ISparqlEndpoint endpoint, ILoggerFactory loggerFactory)
 		{
 			_endpoint = endpoint;
+			_logger = loggerFactory.CreateLogger<GraphRag>();
 		}
 
 		public async Task<string> GetSchemaAsync(string graph, bool ignoreCached = false)
 		{
-			if (ignoreCached == false && _schemaCache.TryGetValue(graph, out var schema))
-				return schema;
-
-			int offset = 0;
-			int limit = 100;
-			var result = new SparqlResultSet();
-			SparqlResultSet page;
-
-			do
+			try
 			{
-				page = await _endpoint.QueryAsync(Queries.GraphSchemaQuery(graph, offset, limit));
-				offset += limit;
-				result.Results.AddRange(page.Results);
-			} while (page.Count >= limit);
 
-			var res = SparqlResultFormatter.ToLLMSchema(result);
-			_schemaCache[graph] = res;
-			return res;
+				if (ignoreCached == false && _schemaCache.TryGetValue(graph, out var schema))
+					return schema;
+
+				int offset = 0;
+				int limit = 100;
+				var result = new SparqlResultSet();
+				SparqlResultSet page;
+
+				do
+				{
+					page = await _endpoint.QueryAsync(Queries.GraphSchemaQuery(graph, offset, limit));
+					offset += limit;
+					result.Results.AddRange(page.Results);
+				} while (page.Count >= limit);
+
+				var res = SparqlResultFormatter.ToLLMSchema(result);
+				_schemaCache[graph] = res;
+				return res;
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Error getting schema for graph {Graph}", graph);
+				throw;
+			}
 		}
 
 		private static bool IsResultVariable(PatternItem node, FrozenSet<string> resultVars)
@@ -128,8 +139,9 @@ namespace sfa_chat_graph.Server.RDF
 			{
 				relatedTriples = await _endpoint.QueryAsync(Queries.RelatedTriplesQuery(iris, predicates));
 			}
-			catch (Exception)
+			catch (Exception ex)
 			{
+				_logger.LogError(ex, "Error getting related triples for query {Query}", queryString);
 			}
 
 			if (relatedTriples == null || (relatedTriples.IsEmpty && iris.Length > 0))
@@ -151,12 +163,28 @@ namespace sfa_chat_graph.Server.RDF
 
 		public Task<SparqlResultSet> QueryAsync(string query)
 		{
-			return _endpoint.QueryAsync(query);
+			try
+			{
+				return _endpoint.QueryAsync(query);
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Error executing query {Query}", query);
+				throw;
+			}
 		}
 
 		public Task<IGraph> DescribeAsync(string iri)
 		{
-			return _endpoint.QueryGraphAsync(Queries.DescribeQuery(iri));
+			try
+			{
+				return _endpoint.QueryGraphAsync(Queries.DescribeQuery(iri));
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Error describing {Iri}", iri);
+				throw;
+			}
 		}
 	}
 }
