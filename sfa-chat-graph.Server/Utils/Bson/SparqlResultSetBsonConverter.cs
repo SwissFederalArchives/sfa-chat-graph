@@ -246,8 +246,7 @@ namespace sfa_chat_graph.Server.Utils.Bson
 		private SparqlResultSet DeserializeImpl(BsonDeserializationContext context, BsonDeserializationArgs args)
 		{
 			var reader = context.Reader;
-			var token = reader.ReadBsonType();
-			if (token == BsonType.Null)
+			if (reader.GetCurrentBsonType() == BsonType.Null)
 			{
 				reader.ReadNull();
 				return null;
