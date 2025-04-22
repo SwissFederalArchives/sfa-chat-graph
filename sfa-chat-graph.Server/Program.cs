@@ -32,9 +32,6 @@ DataAnnotationsSupport.AddDataAnnotations();
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-var client = new OpenAIClient(System.Environment.GetEnvironmentVariable("OPENAI_KEY"));
-builder.Services.AddSingleton<OpenAIClient>(client);
-builder.Services.AddScoped(x => x.GetRequiredService<OpenAIClient>().GetChatClient("gpt-4o"));
 builder.Services.AddScoped(x => x.AsIParentResolver());
 builder.Services.AddScoped<FunctionCallRegistry>();
 builder.Services.Configure<JupyterCodeExecutionServiceOptions>(builder.Configuration.GetSection("JupyterOptions"));
@@ -43,7 +40,7 @@ builder.Services.AddSingleton<ISparqlEndpoint>(new StardogEndpoint("https://lind
 builder.Services.AddSingleton<IGraphRag, GraphRag>();
 builder.Services.AddSingleton<ChatCodeService>();
 builder.Services.AddSingleton<ChatServiceEventService>();
-builder.Services.AddScoped<IChatService, OpenAIChatService>();
+builder.Services.AddFromConfig<IChatService>(builder.Configuration.GetSection("AiConfig"));
 builder.Services.AddVersioning();
 
 var redis = builder.Configuration.GetConnectionString("Redis");

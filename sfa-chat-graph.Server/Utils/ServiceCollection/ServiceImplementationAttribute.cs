@@ -40,9 +40,9 @@ namespace sfa_chat_graph.Server.Utils.ServiceCollection
 		public string GetKey(TypeInfo info) => this.Key ?? info.Name;
 	}
 
-	public class ImplementationAttribute<TService, TConfig> : ServiceImplementationAttribute
+	public class ServiceImplementationAttribute<TService, TConfig> : ServiceImplementationAttribute
 	{
-		public ImplementationAttribute(ServiceLifetime lifetime = ServiceLifetime.Scoped) : base(typeof(TService), typeof(TConfig), lifetime)
+		public ServiceImplementationAttribute(ServiceLifetime lifetime = ServiceLifetime.Scoped) : base(typeof(TService), typeof(TConfig), lifetime)
 		{
 		}
 	}

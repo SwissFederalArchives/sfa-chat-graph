@@ -17,16 +17,21 @@ using AwosFramework.ApiClients.Jupyter.Utils;
 using Microsoft.AspNetCore.Http.HttpResults;
 using sfa_chat_graph.Server.Services.EventService;
 using sfa_chat_graph.Server.Services.ChatService.Events;
+using sfa_chat_graph.Server.Config;
+using sfa_chat_graph.Server.Utils.ServiceCollection;
+using Microsoft.Extensions.Options;
 
 namespace sfa_chat_graph.Server.Services.ChatService.OpenAI
 {
-	public partial class OpenAIChatService : ChatServiceBase<OpenAiChatContext>
+	[ServiceImplementation<IChatService, AiConfig>(Key = "OpenAI", Lifetime = ServiceLifetime.Scoped)]
+	public class OpenAIChatService : ChatServiceBase<OpenAiChatContext>
 	{
 		private readonly FunctionCallRegistry _functionCalls;
 		private readonly IGraphRag _graphDb;
 		private readonly ChatClient _client;
 		private readonly ChatTool[] _chatTools;
 		private readonly ILogger _logger;
+		private readonly AiConfig _config;
 
 		private const string CHAT_SYS_PROMPT = $"""
 		You are an helpfull assistant which answers questions with the help of generating sparql queries for the current database. Use your tool calls to query the database with sparql.
@@ -44,9 +49,10 @@ namespace sfa_chat_graph.Server.Services.ChatService.OpenAI
 
 		private static readonly SystemChatMessage ChatSystemMessage = new SystemChatMessage(CHAT_SYS_PROMPT);
 
-		public OpenAIChatService(ChatClient client, FunctionCallRegistry functionCalls, ILoggerFactory loggerFactory, ICodeExecutionService codeExecutionService, IGraphRag graphDb)
+		public OpenAIChatService(FunctionCallRegistry functionCalls, ILoggerFactory loggerFactory, ICodeExecutionService codeExecutionService, IGraphRag graphDb, IOptions<AiConfig> config)
 		{
-			_client = client;
+			_config=config.Value;
+			_client = new ChatClient(_config.Model, _config.ApiKey);
 			_functionCalls = functionCalls;
 			_chatTools = functionCalls.GetFunctionCallMetas().Select(x => x.AsChatTool()).ToArray();
 			_graphDb=graphDb;
