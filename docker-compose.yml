@@ -23,6 +23,17 @@ services:
     volumes:
       - mongo_data:/data/db
 
+  express:
+    restart: unless-stopped
+    image: mongo-express
+    ports:
+      - 1222:8081
+    environment:
+      - ME_CONFIG_MONGODB_SERVER=mongodb
+      - ME_CONFIG_MONGODB_PORT=27017
+      - ME_CONFIG_BASICAUTH_USERNAME=admin
+      - ME_CONFIG_BASICAUTH_PASSWORD=${EXPRESS_PW} 
+      
   # valkey:
   #   image: valkey/valkey
   #   restart: unless-stopped

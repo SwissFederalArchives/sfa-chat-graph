@@ -71,11 +71,13 @@ namespace sfa_chat_graph.Server.Versioning
 
 		private readonly IServiceProvider _serviceProvider;
 		private readonly VersionServiceOptions _options;
+		private readonly ILogger _logger;
 
-		public VersioningService(IOptions<VersionServiceOptions> options, IServiceProvider serviceProvider)
+		public VersioningService(IOptions<VersionServiceOptions> options, IServiceProvider serviceProvider, ILoggerFactory loggerFactory)
 		{
 			_options=options.Value;
 			_serviceProvider=serviceProvider;
+			_logger = loggerFactory.CreateLogger<VersioningService>();
 		}
 
 		private async Task MigrateAsync(VersionData from, VersionData to, IMongoCollection<MigrationReport> reportsCollection, CancellationToken token)
@@ -120,25 +122,37 @@ namespace sfa_chat_graph.Server.Versioning
 				var fromMigrateable = ActivatorUtilities.CreateInstance(scope.ServiceProvider, from.ImplementationType);
 				var toMigrateable = ActivatorUtilities.CreateInstance(scope.ServiceProvider, to.ImplementationType);
 				var report = MigrationReportBuilder.Create(from.ServiceType, from.Version, to.Version);
+				_logger.LogInformation("Migrating {ServiceName} from {FromVersion} to {ToVersion}", from.ServiceType.FullName, from.Version, to.Version);
 				var migrationTask = (Task)migrationFunction.Invoke(fromMigrateable, [toMigrateable, frozenIds, report, token]);
 				await migrationTask;
 
 				var finished = report.Build();
+				_logger.LogInformation("Finished migrating {ServiceName} from Version {FromVersion} to Version {ToVersion}, took {Seconds}s, {ErrorCount} error, {ConvertedCount} migrated", from.ServiceType.FullName, from.Version, to.Version, finished.Duration.TotalSeconds, finished.Errors.Length, finished.Migrated.Length);
 				if (_options.DeleteOldData && finished.Success && fromMigrateable is IMigrateable migrateable)
+				{
+					_logger.LogInformation("Deleting old data for {ServiceName} Version {FromVersion}", from.ServiceType.FullName, from.Version);
 					await migrateable.DeleteAsync();
+				}
 
 				await reportsCollection.InsertOneAsync(finished);
 				if(fromMigrateable is IPostMigration fromPostMigration)
+				{
 					await fromPostMigration.RunPostMigrationAsync(finished, token);
+					_logger.LogInformation("Running post-migration for {ServiceName} Version {FromVersion}", from.ServiceType.FullName, from.Version);
+				}
 
 				if(toMigrateable is IPostMigration toPostMigration)
+				{
 					await toPostMigration.RunPostMigrationAsync(finished, token);
+					_logger.LogInformation("Running post-migration for {ServiceName} Version {ToVersion}", to.ServiceType.FullName, to.Version);
+				}
 			}
 		}
 
 		private async Task HandleMigrationAsync(Type serviceType, CancellationToken token, IMongoCollection<MigrationReport> reports)
 		{
 			var latest = VersionRegistry[serviceType].MaxBy(x => x.Version);
+			_logger.LogInformation("Latest Version for {ServiceName} is {Version}", serviceType.FullName, latest);
 			var migratedVersions = await reports.Aggregate()
 				.Match(x => x.ServiceType == serviceType.FullName && x.Success)
 				.Group(x => x.FromVersion, x => x.Key)
@@ -149,15 +163,16 @@ namespace sfa_chat_graph.Server.Versioning
 				.OrderBy(x => x.Version)
 				.ToArray();
 
+			_logger.LogInformation("Missing versions for {ServiceName} are {Versions}", serviceType.FullName, string.Join(", ", missingVersions.Select(x => x.Version)));
 			foreach (var missing in missingVersions)
 				await MigrateAsync(missing, latest, reports, token);
 		}
 
 		public async Task StartAsync(CancellationToken cancellationToken)
 		{
-
 			if (_options.MigrateOnStart)
 			{
+				_logger.LogInformation("Starting versioning service");
 				using (var scope = _serviceProvider.CreateScope())
 				{
 					var reports = scope.ServiceProvider.GetRequiredService<IMongoDatabase>().GetCollection<MigrationReport>("migrations");

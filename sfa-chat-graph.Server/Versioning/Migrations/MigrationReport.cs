@@ -18,5 +18,8 @@ namespace sfa_chat_graph.Server.Versioning.Migrations
 		public string[] Migrated { get; init; }
 		public MigrationError[] Errors { get; init; }
 		public bool Success { get; init; }
+
+		[BsonIgnore]
+		public TimeSpan Duration => MigrationEnded - MigrationStarted;
 	}
 }
