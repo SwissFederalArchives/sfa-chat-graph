@@ -8,7 +8,7 @@ services:
     environment:
       - JUPYTEROPTIONS__ENDPOINT=http://jupyter:8888
       - CONNECTIONSTRINGS__MONGO=mongodb://mongodb:27017/sfa-chat-graph
-      - OPENAI_KEY=${OPENAI_KEY} 
+      - AICONFIG__APIKEY=${OPENAI_KEY} 
     ports:
       - "1221:8080" 
 
