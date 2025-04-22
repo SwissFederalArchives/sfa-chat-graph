@@ -1,6 +1,7 @@
 ﻿using System.Net.Http.Headers;
 using System.Text;
 using VDS.RDF;
+using VDS.RDF.Parsing;
 using VDS.RDF.Parsing.Handlers;
 using VDS.RDF.Query;
 
@@ -8,8 +9,10 @@ namespace sfa_chat_graph.Server.RDF.Endpoints
 {
 	public class SparqlQueryClientWithError<TErr> : SparqlQueryClient
 	{
+		private readonly RelativeCachingUriFactory _uriFactory;
 		public SparqlQueryClientWithError(HttpClient httpClient, Uri endpointUri) : base(httpClient, endpointUri)
 		{
+			_uriFactory = new RelativeCachingUriFactory(new CachingUriFactory(UriFactory.Root), endpointUri);
 		}
 
 		public new async Task<SparqlResultSet> QueryWithResultSetAsync(string sparqlQuery)
@@ -80,7 +83,7 @@ namespace sfa_chat_graph.Server.RDF.Endpoints
 			IRdfReader rdfParser = MimeTypesHelper.GetParser(ctype.MediaType);
 			Stream stream = await response.Content.ReadAsStreamAsync();
 			using StreamReader input = (string.IsNullOrEmpty(ctype.CharSet) ? new StreamReader(stream) : new StreamReader(stream, Encoding.GetEncoding(ctype.CharSet)));
-			rdfParser.Load(handler, input);
+			rdfParser.Load(handler, input, _uriFactory);
 		}
 
 	}
