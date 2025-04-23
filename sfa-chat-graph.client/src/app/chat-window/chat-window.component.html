@@ -1,4 +1,5 @@
 <div class="container">
-    <chat-history #history *ngIf="graph" [graph]="graph" [chatId]="chatId"/>
-    <graph *ngIf="graph" [graph]="graph"/>
+    <chat-history class="left-pane" [style.width.px]="leftPaneWidth" #history *ngIf="graph" [graph]="graph" [chatId]="chatId"/>
+    <div class="divider" (mousedown)="startResizing($event)"></div>
+    <graph class="right-pane" *ngIf="graph" [graph]="graph"/>
 </div>

@@ -1,10 +1,33 @@
-
 .container {
-    display: grid;
+    display: flex;
     grid-template-columns: 1fr 1fr;
+    height: 99vh;
+    width: 100%;
+    position: relative;
+    flex-direction: row;
+}
+
+.container>* {
     height: 99vh;
 }
 
-.container > *{
-    height: 99vh;
+.left-pane {
+    min-width: 10%;
+    position: relative;
+    max-width: 90%;
+    height: 100%;
+}
+
+.divider {
+    width: 3px;
+    background: var(--app-control-background-dark);
+    cursor: col-resize;
+    height: 100%;
+    z-index: 3;
+}
+
+.right-pane {
+    flex: 1;
+    flex-grow: 1;
+    height: 100%;
 }

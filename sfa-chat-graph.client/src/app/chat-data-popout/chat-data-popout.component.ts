@@ -5,6 +5,8 @@ import { MatButton, MatIconButton } from '@angular/material/button';
 import { NgIf } from '@angular/common';
 import { MarkdownComponent } from 'ngx-markdown';
 import Papa from 'papaparse';
+import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'chat-data-popout',
@@ -14,9 +16,8 @@ import Papa from 'papaparse';
   styleUrl: './chat-data-popout.component.css'
 })
 export class ChatDataPopoutComponent {
-  @Input() data?: DisplayDetail;
+  @Input() data!: DisplayDetail;
   @Input() selfRef!: ComponentRef<ChatDataPopoutComponent>;
-
 
   static showPopup(injector: Injector, data: DisplayDetail): ChatDataPopoutComponent {
     const appRef = injector.get(ApplicationRef);
@@ -29,6 +30,8 @@ export class ChatDataPopoutComponent {
     compRef.changeDetectorRef.detectChanges();
     return compRef.instance;
   }
+
+  constructor(private _httpClient: HttpClient) { }
 
   @HostListener('window:keydown', ['$event'])
   handleKeydown(event: KeyboardEvent) {
@@ -57,12 +60,21 @@ export class ChatDataPopoutComponent {
     return "";
   }
 
-  public getIFrameContent(){
-    if(this.data?.content){
-      return `data:text/html;charset=utf-8,${encodeURIComponent(this.data?.content)}`;
-    }
+  public getImgContent(): string {
+    if(this.data.isUrl)
+      return this.data.content;
 
-    return "";
+    if(this.data.isBase64Content)
+      return `data:${this.data.mimeType};base64,${this.data.content}`;
+
+    return this.data.content;
+  }
+
+  public async getHtmlContent() {
+    if (this.data?.isUrl)
+      return await firstValueFrom(this._httpClient.get(this.data?.content, { responseType: 'text' }))
+
+    return this.data?.content;
   }
 
   public htmlEncode(content?: string): string {
@@ -84,7 +96,6 @@ export class ChatDataPopoutComponent {
   }
 
   public close(): void {
-    this.data = undefined;
     this.selfRef.destroy();
   }
 }
