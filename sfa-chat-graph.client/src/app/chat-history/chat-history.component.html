@@ -1,7 +1,7 @@
 <div class="chat-container">
     <div #chatHistory class="chat-history">
         @for(msg of messages; track msg){
-        <div id="msg-{{msg.id}}" class="chat-message table-container" [class]="msg.cls">
+        <div id="msg-{{msg.id}}" class="chat-message table-container-bright" [class]="msg.cls">
             <div class="message-content">
                 <markdown [katex]="true" [emoji]="true" [clipboard]="true" [lineNumbers]="true"
                     (ready)="scrollToBottom()" ngPreserveWhitespaces>
