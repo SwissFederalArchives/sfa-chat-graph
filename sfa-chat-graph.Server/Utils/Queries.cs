@@ -24,12 +24,11 @@ namespace sfa_chat_graph.Server.Utils
 
 		public static string GraphSchemaClassesQuery(string graph, int offset = 0, int limit = 100) => string.Format(GRAPH_SCHEMA_CLASSES_FORMAT, graph, offset, limit);
 		public const string GRAPH_SCHEMA_CLASSES_FORMAT = """
-		SELECT DISTINCT ?st (count(distinct ?s) as ?count) WHERE {{
+		SELECT DISTINCT ?st WHERE {{
 		  GRAPH <{0}> {{
 		    ?s a ?st .
 		  }}
 		}}
-		GROUP BY ?s
 		OFFSET {1}
 		LIMIT {2}
 		""";
