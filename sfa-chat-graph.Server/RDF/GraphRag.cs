@@ -22,9 +22,7 @@ namespace sfa_chat_graph.Server.RDF
 		private readonly IMongoCollection<EndpointCache> _endpoints;
 		private readonly IMongoCollection<SchemaCache> _schemas;
 
-		private readonly Dictionary<string, string> _schemaCache = new();
 		private readonly SparqlQueryParser _parser = new();
-		private string[] _graphsCache = null;
 		private readonly ILogger _logger;
 
 		public GraphRag(ISparqlEndpoint endpoint, ILoggerFactory loggerFactory, IMongoDatabase db)
