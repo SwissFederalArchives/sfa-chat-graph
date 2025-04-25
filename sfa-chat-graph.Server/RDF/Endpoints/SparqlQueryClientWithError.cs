@@ -42,7 +42,7 @@ namespace sfa_chat_graph.Server.RDF.Endpoints
 			ISparqlResultsReader resultsParser = MimeTypesHelper.GetSparqlParser(ctype.MediaType);
 			Stream stream = await response.Content.ReadAsStreamAsync();
 			using StreamReader input = (string.IsNullOrEmpty(ctype.CharSet) ? new StreamReader(stream) : new StreamReader(stream, Encoding.GetEncoding(ctype.CharSet)));
-			resultsParser.Load(resultsHandler, input);
+			resultsParser.Load(resultsHandler, input, _uriFactory);
 		}
 
 		public new async Task<IGraph> QueryWithResultGraphAsync(string sparqlQuery)
