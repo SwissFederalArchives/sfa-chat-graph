@@ -1,4 +1,5 @@
-﻿using SfaChatGraph.Server.Utils;
+﻿using Microsoft.EntityFrameworkCore;
+using SfaChatGraph.Server.Utils;
 using System.Text;
 using VDS.Common.Collections.Enumerations;
 using VDS.RDF;
@@ -18,6 +19,13 @@ namespace sfa_chat_graph.Server.Utils
 				_ => $"\t{pred} -> LITERAL"
 			};
 		}
+
+		public static string FormatSchemaNode(INode node) => node switch
+		{
+			UriNode uriNode => $"<{uriNode.Uri}>",
+			LiteralNode literalNode => $"\"{literalNode.Value}\"",
+			_ => "LITERAL"
+		};
 
 		private static string CsvFormatNode(INode node)
 		{

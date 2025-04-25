@@ -22,6 +22,33 @@ namespace sfa_chat_graph.Server.Utils
 		LIMIT {1}
 		""";
 
+		public static string GraphSchemaClassesQuery(string graph, int offset = 0, int limit = 100) => string.Format(GRAPH_SCHEMA_CLASSES_FORMAT, graph, offset, limit);
+		public const string GRAPH_SCHEMA_CLASSES_FORMAT = """
+		SELECT DISTINCT ?st (count(distinct ?s) as ?count) WHERE {{
+		  GRAPH <{0}> {{
+		    ?s a ?st .
+		  }}
+		}}
+		GROUP BY ?s
+		OFFSET {1}
+		LIMIT {2}
+		""";
+
+		public static string GraphSchemaPropertiesQuery(string graph, string className, int offset = 0, int limit = 100) => string.Format(GRAPH_SCHEMA_PROPERTIES_FORMAT, graph, className, offset, limit);
+		public const string GRAPH_SCHEMA_PROPERTIES_FORMAT = """
+		SELECT DISTINCT ?p ?ot WHERE {{
+			GRAPH <{0}> {{
+				?s a <{1}> .
+		    ?s ?p ?o .
+		    OPTIONAL {{
+					?o a ?ot
+		    }}
+			}}
+		}}
+		OFFSET {2}
+		LIMIT {3} 
+		""";
+
 		public static string GraphSchemaQuery(string graph, int offset = 0, int limit = 100) => string.Format(GRAPH_SCHEMA_FORMAT, graph, offset, limit);
 		public const string GRAPH_SCHEMA_FORMAT = """
 		SELECT DISTINCT ?st ?p ?ot WHERE {{

@@ -3,6 +3,7 @@ using SfaChatGraph.Server.RDF;
 using SfaChatGraph.Server.Utils;
 using System.Collections.Frozen;
 using System.ComponentModel;
+using System.Text;
 using VDS.Common.Collections.Enumerations;
 using VDS.RDF;
 using VDS.RDF.Parsing;
@@ -25,29 +26,74 @@ namespace sfa_chat_graph.Server.RDF
 			_logger = loggerFactory.CreateLogger<GraphRag>();
 		}
 
+
+		private async IAsyncEnumerable<string> GetClassNamesAsync(string graph)
+		{
+			int offset = 0;
+			int limit = 100;
+			SparqlResultSet page;
+
+			do
+			{
+				page = await _endpoint.QueryAsync(Queries.GraphSchemaClassesQuery(graph, offset, limit));
+				foreach (var result in page.Results)
+				{
+					if (result["st"] is UriNode uriNode)
+						yield return uriNode.Uri.ToString();
+				}
+				offset += limit;
+			} while (page.Count >= limit);
+		}
+
+		private async Task<string> GetClassSchemaAsync(string graph, string className)
+		{
+			var builder = new StringBuilder();
+			int offset = 0;
+			int limit = 100;
+
+			SparqlResultSet schemaValues = new();
+			SparqlResultSet page;
+			do
+			{
+				page = await _endpoint.QueryAsync(Queries.GraphSchemaPropertiesQuery(graph, className, offset, limit));
+				offset += limit;
+				schemaValues.Results.AddRange(page.Results);
+			} while (page.Count >= limit);
+
+
+			var dict = schemaValues.Results.GroupBy(x => ((IUriNode)x["p"]).Uri.AbsoluteUri, x => SparqlResultFormatter.FormatSchemaNode(x["ot"]))
+				.ToDictionary(x => x.Key, x => x.Distinct().ToArray());
+
+			foreach (var kvp in dict)
+			{
+				var predicate = kvp.Key;
+				string target = kvp.Value switch
+				{
+					{ Length: 0 } => null,
+					{ Length: 1 } => kvp.Value[0],
+					_ => $"[\n{string.Join(",\n", kvp.Value.Select(y => $"\t\t{y}"))}\n\t]"
+				};
+
+				builder.AppendLine($"\t<{predicate}> -> {target}");
+			}
+
+			return builder.ToString();
+		}
+
 		public async Task<string> GetSchemaAsync(string graph, bool ignoreCached = false)
 		{
 			try
 			{
-
-				if (ignoreCached == false && _schemaCache.TryGetValue(graph, out var schema))
-					return schema;
-
-				int offset = 0;
-				int limit = 100;
-				var result = new SparqlResultSet();
-				SparqlResultSet page;
-
-				do
+				var sb = new StringBuilder();
+				var classNames = await GetClassNamesAsync(graph).ToArrayAsync();
+				foreach (var className in classNames)
 				{
-					page = await _endpoint.QueryAsync(Queries.GraphSchemaQuery(graph, offset, limit));
-					offset += limit;
-					result.Results.AddRange(page.Results);
-				} while (page.Count >= limit);
+					var schema = await GetClassSchemaAsync(graph, className);
+					sb.AppendLine($"<{className}> [\n{schema}\n]");
+					sb.AppendLine();
+				}
 
-				var res = SparqlResultFormatter.ToLLMSchema(result);
-				_schemaCache[graph] = res;
-				return res;
+				return sb.ToString();
 			}
 			catch (Exception ex)
 			{
