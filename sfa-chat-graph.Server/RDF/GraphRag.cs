@@ -1,5 +1,7 @@
 ﻿using J2N.Collections.Generic.Extensions;
+using MongoDB.Driver;
 using sfa_chat_graph.Server.Utils;
+using sfa_chat_graph.Server.Versioning;
 using SfaChatGraph.Server.RDF;
 using SfaChatGraph.Server.Utils;
 using System.Collections.Frozen;
@@ -16,15 +18,22 @@ namespace sfa_chat_graph.Server.RDF
 	public class GraphRag : IGraphRag
 	{
 		private readonly ISparqlEndpoint _endpoint;
+		private readonly IMongoDatabase _db;
+		private readonly IMongoCollection<EndpointCache> _endpoints;
+		private readonly IMongoCollection<SchemaCache> _schemas;
+
 		private readonly Dictionary<string, string> _schemaCache = new();
 		private readonly SparqlQueryParser _parser = new();
 		private string[] _graphsCache = null;
 		private readonly ILogger _logger;
 
-		public GraphRag(ISparqlEndpoint endpoint, ILoggerFactory loggerFactory)
+		public GraphRag(ISparqlEndpoint endpoint, ILoggerFactory loggerFactory, IMongoDatabase db)
 		{
 			_endpoint = endpoint;
 			_logger = loggerFactory.CreateLogger<GraphRag>();
+			_db=db;
+			_endpoints = db.GetCollectionVersion<EndpointCache>("endpoint-cache", 1);
+			_schemas = db.GetCollectionVersion<SchemaCache>("schema-cache", 1);
 		}
 
 
@@ -134,24 +143,37 @@ namespace sfa_chat_graph.Server.RDF
 
 		public async Task<string> GetSchemaAsync(string graph, bool ignoreCached = false)
 		{
-			try
+			var cache = ignoreCached ? null : await _schemas.Find(x => x.Graph == graph && x.Endpoint == _endpoint.Name).FirstOrDefaultAsync();
+			if (cache == null)
 			{
 				var sb = new StringBuilder();
-				var classNames = await GetClassNamesAsync(graph).ToArrayAsync();
-				foreach (var (className, count) in classNames)
+				try
 				{
-					var schema = await (count > 50000 ? GuessClassSchemaAsync(graph, className, count, (int)(count*0.1), true) : GetClassSchemaAsync(graph, className));
-					sb.AppendLine($"<{className}> [\n{schema}\n]");
-					sb.AppendLine();
+					var classNames = await GetClassNamesAsync(graph).ToArrayAsync();
+					foreach (var (className, count) in classNames)
+					{
+						var schema = await (count > 50000 ? GuessClassSchemaAsync(graph, className, count, (int)(count*0.1), true) : GetClassSchemaAsync(graph, className));
+						sb.AppendLine($"<{className}> [\n{schema}\n]");
+						sb.AppendLine();
+					}
+				}
+				catch (Exception ex)
+				{
+					_logger.LogError(ex, "Error getting schema for graph {Graph}", graph);
+					throw;
 				}
 
-				return sb.ToString();
+				cache = new SchemaCache
+				{
+					Graph = graph,
+					Schema = sb.ToString(),
+					Endpoint = _endpoint.Name,
+				};
+
+				await _schemas.ReplaceOneAsync(x => x.Graph == graph && x.Endpoint == _endpoint.Name, cache, new ReplaceOptions { IsUpsert = true });
 			}
-			catch (Exception ex)
-			{
-				_logger.LogError(ex, "Error getting schema for graph {Graph}", graph);
-				throw;
-			}
+
+			return cache.Schema;
 		}
 
 		private static bool IsResultVariable(PatternItem node, FrozenSet<string> resultVars)
@@ -250,13 +272,24 @@ namespace sfa_chat_graph.Server.RDF
 
 		public async Task<string[]> ListGraphsAsync(bool ignoreCached = false)
 		{
-			if (_graphsCache == null || ignoreCached)
+
+			EndpointCache cache = null;
+			cache = ignoreCached ? null : await _endpoints.Find(x => x.Endpoint == _endpoint.Name).FirstOrDefaultAsync();
+			if (cache == null)
 			{
 				var res = await _endpoint.QueryAsync(Queries.ListGraphsQuery());
-				_graphsCache = res.Select(x => x["g"]).OfType<UriNode>().Select(x => x.Uri.ToString()).ToArray();
+				var graphs = res.Select(x => x["g"]).OfType<UriNode>().Select(x => x.Uri.ToString()).ToArray();
+				cache = new EndpointCache
+				{
+					Endpoint = _endpoint.Name,
+					Graphs = graphs,
+				};
+
+				await _endpoints.ReplaceOneAsync(x => x.Endpoint == _endpoint.Name, cache, new ReplaceOptions { IsUpsert = true });
 			}
 
-			return _graphsCache;
+
+			return cache.Graphs;
 		}
 
 		public Task<SparqlResultSet> QueryAsync(string query)

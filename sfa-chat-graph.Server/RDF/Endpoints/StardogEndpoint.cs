@@ -7,13 +7,16 @@ namespace sfa_chat_graph.Server.RDF.Endpoints
 	{
 		private readonly SparqlQueryClientWithError<StardogError> _client;
 		private readonly HttpClient _httpClient;
+		public string Name { get; init; }
 
 		public StardogEndpoint(string endpoint) : this(new Uri(endpoint))
 		{
+
 		}
 
 		public StardogEndpoint(Uri endpoint)
 		{
+			Name = endpoint.AbsoluteUri;
 			_httpClient = new HttpClient();
 			_httpClient.Timeout = TimeSpan.FromSeconds(60);
 			_client = new SparqlQueryClientWithError<StardogError>(_httpClient, endpoint);
