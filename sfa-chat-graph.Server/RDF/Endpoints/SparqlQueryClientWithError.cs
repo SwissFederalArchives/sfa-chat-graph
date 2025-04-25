@@ -31,6 +31,7 @@ namespace sfa_chat_graph.Server.RDF.Endpoints
 
 		public new async Task QueryWithResultSetAsync(string sparqlQuery, ISparqlResultsHandler resultsHandler, CancellationToken cancellationToken)
 		{
+			resultsHandler.BaseUri ??= EndpointUri;
 			using HttpResponseMessage response = await QueryInternal(sparqlQuery, ResultsAcceptHeader, cancellationToken);
 			if (!response.IsSuccessStatusCode)
 			{

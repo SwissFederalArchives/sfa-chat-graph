@@ -29,7 +29,6 @@ using System.Reactive.Threading.Tasks;
 using System.Text;
 using System.Text.Json;
 using VDS.RDF;
-using VDS.RDF.Dynamic;
 using VDS.RDF.Nodes;
 using VDS.RDF.Parsing;
 using VDS.RDF.Query;
