@@ -271,8 +271,7 @@ namespace sfa_chat_graph.Server.RDF
 		public async Task<string[]> ListGraphsAsync(bool ignoreCached = false)
 		{
 
-			EndpointCache cache = null;
-			cache = ignoreCached ? null : await _endpoints.Find(x => x.Endpoint == _endpoint.Name).FirstOrDefaultAsync();
+			var cache = ignoreCached ? null : await _endpoints.Find(x => x.Endpoint == _endpoint.Name).FirstOrDefaultAsync();
 			if (cache == null)
 			{
 				var res = await _endpoint.QueryAsync(Queries.ListGraphsQuery());

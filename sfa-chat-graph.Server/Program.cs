@@ -37,7 +37,7 @@ builder.Services.AddScoped<FunctionCallRegistry>();
 builder.Services.Configure<JupyterCodeExecutionServiceOptions>(builder.Configuration.GetSection("JupyterOptions"));
 builder.Services.AddSingleton<ICodeExecutionService, JupyterCodeExecutionService>();
 builder.Services.AddSingleton<ISparqlEndpoint>(new StardogEndpoint("https://lindas.admin.ch/query"));
-builder.Services.AddSingleton<IGraphRag, GraphRag>();
+builder.Services.AddScoped<IGraphRag, GraphRag>();
 builder.Services.AddSingleton<ChatCodeService>();
 builder.Services.AddSingleton<ChatServiceEventService>();
 builder.Services.AddFromConfig<IChatService>(builder.Configuration.GetSection("AiConfig"));
