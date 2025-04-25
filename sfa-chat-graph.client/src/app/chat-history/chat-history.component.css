@@ -94,7 +94,12 @@
 }
 
 .error-message {
-    background-color: var(--app-error-color);
+    border-radius: .5em;
+    border-top-right-radius: 0%;
+    align-self: flex-end;
+    text-align: right;
+    background: linear-gradient(210deg, var(--app-error-color) 0%, rgb(233, 68, 68) 100%);
+    /* background-color: var(--app-error-color); */
 }
 
 .error-header {

@@ -5,7 +5,7 @@ body {}
 
 body {
     margin: 0;
-    font-family: Roboto, "Helvetica Neue", sans-serif;
+    font-family: 'Lato', sans-serif;
 }
 
 :root {
@@ -25,6 +25,26 @@ body {
     --app-control-text-dark: #fcfcfc;
     --app-corner-table-radius: .25em;
     --app-error-color: #f36666;
+}
+
+pre[class*=language-]:before,
+pre[class*=language-]:after {
+    box-shadow: none !important;
+}
+
+code {
+    font-family: 'Fira Code', monospace!important;
+}
+
+@supports (font-variation-settings: normal) {
+    code {
+        font-family: 'Fira Code VF', monospace!important;
+    }
+}
+
+b,
+strong {
+    font-weight: 600 !important;
 }
 
 .inverted-button {
@@ -47,7 +67,7 @@ body {
     transition: background-color 0.3s ease-in-out;
 }
 
-.inverted-button:disabled{
+.inverted-button:disabled {
     background-color: var(--app-control-disabled-dark);
 }
 
@@ -69,7 +89,7 @@ body {
     transition: background-color 0.3s ease-in-out;
 }
 
-.inverted-icon-button:disabled{
+.inverted-icon-button:disabled {
     background-color: var(--app-control-disabled-dark);
 }
 
@@ -139,17 +159,21 @@ body {
 .table-container-bright table tr:first-child th:first-child {
     border-radius: var(--app-corner-table-radius) 0px 0px 0px;
 }
+
 .table-container-bright table tr:first-child th:last-child {
     border-radius: 0px var(--app-corner-table-radius) 0px 0px;
 }
+
 .table-container-bright table tr:last-child td:first-child {
     border-radius: 0px 0px 0px var(--app-corner-table-radius);
 }
+
 .table-container-bright table tr:last-child td:last-child {
     border-radius: 0px 0px var(--app-corner-table-radius) 0px;
 }
 
-.table-container-bright table td, th {
+.table-container-bright table td,
+th {
     padding: .5em;
     border-top: none;
     border-bottom: #424242 1px solid;
@@ -166,7 +190,7 @@ body {
 }
 
 .table-container-bright table {
-    border-collapse:separate;
+    border-collapse: separate;
     border: #424242 1px solid;
     border-radius: var(--app-corner-table-radius);
     border-spacing: 0px;
@@ -175,17 +199,21 @@ body {
 .table-container table tr:first-child th:first-child {
     border-radius: var(--app-corner-table-radius) 0px 0px 0px;
 }
+
 .table-container table tr:first-child th:last-child {
     border-radius: 0px var(--app-corner-table-radius) 0px 0px;
 }
+
 .table-container table tr:last-child td:first-child {
     border-radius: 0px 0px 0px var(--app-corner-table-radius);
 }
+
 .table-container table tr:last-child td:last-child {
     border-radius: 0px 0px var(--app-corner-table-radius) 0px;
 }
 
-.table-container table td, th {
+.table-container table td,
+th {
     padding: .5em;
     border-top: none;
     border-bottom: #424242 1px solid;
@@ -202,7 +230,7 @@ body {
 }
 
 .table-container table {
-    border-collapse:separate;
+    border-collapse: separate;
     border: #424242 1px solid;
     border-radius: var(--app-corner-table-radius);
     border-spacing: 0px;
@@ -233,7 +261,7 @@ body {
 .tooltip-wide:before {
     height: fit-content;
     max-height: 300px;
-    width:  fit-content;
+    width: fit-content;
     text-align: left;
 
     content: attr(data-text);
