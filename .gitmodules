@@ -1,0 +1,3 @@
+[submodule "sfa-chat-graph.Server/Libraries/dotnetrdf"]
+	path = Libraries/dotnetrdf
+	url = https://github.com/Aeolin/dotnetrdf
