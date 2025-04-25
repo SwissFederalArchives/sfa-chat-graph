@@ -1,4 +1,5 @@
-﻿using sfa_chat_graph.Server.Utils;
+﻿using J2N.Collections.Generic.Extensions;
+using sfa_chat_graph.Server.Utils;
 using SfaChatGraph.Server.RDF;
 using SfaChatGraph.Server.Utils;
 using System.Collections.Frozen;
@@ -27,7 +28,7 @@ namespace sfa_chat_graph.Server.RDF
 		}
 
 
-		private async IAsyncEnumerable<string> GetClassNamesAsync(string graph)
+		private async IAsyncEnumerable<(string name, int count)> GetClassNamesAsync(string graph)
 		{
 			int offset = 0;
 			int limit = 100;
@@ -38,16 +39,32 @@ namespace sfa_chat_graph.Server.RDF
 				page = await _endpoint.QueryAsync(Queries.GraphSchemaClassesQuery(graph, offset, limit));
 				foreach (var result in page.Results)
 				{
-					if (result["st"] is UriNode uriNode)
-						yield return uriNode.Uri.ToString();
+					if (result["st"] is IUriNode uriNode && result["count"] is ILiteralNode countNode && int.TryParse(countNode.Value, out var count))
+						yield return (uriNode.Uri.ToString(), count);
 				}
 				offset += limit;
 			} while (page.Count >= limit);
 		}
 
-		private async Task<string> GetClassSchemaAsync(string graph, string className)
+		private string FormatClassProperties<T>(Dictionary<string, T> dict) where T : ICollection<string>
 		{
 			var builder = new StringBuilder();
+			foreach (var kvp in dict)
+			{
+				var predicate = kvp.Key;
+				string target = kvp.Value switch
+				{
+					{ Count: 0 } => null,
+					{ Count: 1 } => kvp.Value.First(),
+					_ => $"[\n{string.Join(",\n", kvp.Value.Select(y => $"\t\t{y}"))}\n\t]"
+				};
+				builder.AppendLine($"\t<{predicate}> -> {target}");
+			}
+			return builder.ToString();
+		}
+
+		private async Task<string> GetClassSchemaAsync(string graph, string className)
+		{
 			int offset = 0;
 			int limit = 100;
 
@@ -62,22 +79,57 @@ namespace sfa_chat_graph.Server.RDF
 
 
 			var dict = schemaValues.Results.GroupBy(x => ((IUriNode)x["p"]).Uri.AbsoluteUri, x => SparqlResultFormatter.FormatSchemaNode(x["ot"]))
-				.ToDictionary(x => x.Key, x => x.Distinct().ToArray());
+				.Where(x => x.Key != "http://www.w3.org/1999/02/22-rdf-syntax-ns#type")
+				.ToDictionary(x => x.Key, x => x.ToFrozenSet());
 
-			foreach (var kvp in dict)
+			return FormatClassProperties(dict);
+		}
+
+		public async Task<string> GuessClassSchemaAsync(string graph, string className, int countObjects, int countGuesses, bool randomOffsets = true, int stoppAfter = 50000)
+		{
+			var result = new Dictionary<string, HashSet<string>>();
+			var limit = 10000;
+			var pageCount = countObjects / limit;
+			var pages = Enumerable.Range(0, pageCount);
+			if (randomOffsets)
+				pages = pages.OrderBy(x => Random.Shared.Next());
+
+			var pageQueue = new Queue<int>(pages);
+			int lastNewProperty = 0;
+			while (countGuesses > 0 && pageQueue.Count > 0)
 			{
-				var predicate = kvp.Key;
-				string target = kvp.Value switch
-				{
-					{ Length: 0 } => null,
-					{ Length: 1 } => kvp.Value[0],
-					_ => $"[\n{string.Join(",\n", kvp.Value.Select(y => $"\t\t{y}"))}\n\t]"
-				};
+				if (lastNewProperty >= stoppAfter)
+					break;
 
-				builder.AppendLine($"\t<{predicate}> -> {target}");
+				var page = pageQueue.Dequeue();
+				var offset = page * limit;
+				var toQuery = Math.Min(countGuesses, limit);
+				var classIntances = await QueryAsync(Queries.GraphSchemaClassInstancesQuery(graph, className, offset, toQuery));
+				var iris = classIntances.Results.Select(x => x["s"]).OfType<IUriNode>().Select(x => x.Uri.AbsoluteUri);
+				var describe = await QueryAsync(Queries.GraphSchemaBatchDescribeQuery(iris));
+				lastNewProperty += toQuery;
+
+				foreach (var description in describe.Results)
+				{
+					if (description["p"] is not IUriNode predUriNode || predUriNode.Uri.AbsoluteUri == "http://www.w3.org/1999/02/22-rdf-syntax-ns#type")
+						continue;
+
+					if (result.TryGetValue(predUriNode.Uri.AbsoluteUri, out var objectTypeSet) == false)
+					{
+						objectTypeSet = new HashSet<string>();
+						result.Add(predUriNode.Uri.AbsoluteUri, objectTypeSet);
+					}
+
+					var objectType = SparqlResultFormatter.FormatSchemaNode(description["ot"]);
+					if (objectTypeSet.Add(objectType))
+						lastNewProperty = 0;
+
+				}
+
+				countGuesses -= limit;
 			}
 
-			return builder.ToString();
+			return FormatClassProperties(result);
 		}
 
 		public async Task<string> GetSchemaAsync(string graph, bool ignoreCached = false)
@@ -86,9 +138,9 @@ namespace sfa_chat_graph.Server.RDF
 			{
 				var sb = new StringBuilder();
 				var classNames = await GetClassNamesAsync(graph).ToArrayAsync();
-				foreach (var className in classNames)
+				foreach (var (className, count) in classNames)
 				{
-					var schema = await GetClassSchemaAsync(graph, className);
+					var schema = await (count > 50000 ? GuessClassSchemaAsync(graph, className, count, (int)(count*0.1), true) : GetClassSchemaAsync(graph, className));
 					sb.AppendLine($"<{className}> [\n{schema}\n]");
 					sb.AppendLine();
 				}

@@ -24,13 +24,38 @@ namespace sfa_chat_graph.Server.Utils
 
 		public static string GraphSchemaClassesQuery(string graph, int offset = 0, int limit = 100) => string.Format(GRAPH_SCHEMA_CLASSES_FORMAT, graph, offset, limit);
 		public const string GRAPH_SCHEMA_CLASSES_FORMAT = """
-		SELECT DISTINCT ?st WHERE {{
+		SELECT DISTINCT ?st (count(?s) as ?count) WHERE {{
 		  GRAPH <{0}> {{
 		    ?s a ?st .
 		  }}
 		}}
+		GROUP BY ?st
 		OFFSET {1}
 		LIMIT {2}
+		""";
+
+		public static string GraphSchemaBatchDescribeQuery(IEnumerable<string> iris) => string.Format(GRAPH_SCHEMA_BATCH_DESCRIBE_CLASS_INSTANCE_FORMAT,  iris.ToIriList());
+		public const string GRAPH_SCHEMA_BATCH_DESCRIBE_CLASS_INSTANCE_FORMAT = """
+		SELECT DISTINCT ?p ?ot WHERE {{
+			VALUES ?iris {{{0}}}
+			BIND (?iris as ?s)
+			?s ?p ?o .
+		  OPTIONAL {{
+		  	?o a ?ot
+			}}
+		}}
+		""";
+
+		public static string GraphSchemaClassInstancesQuery(string graph, string className, int offset = 0, int limit = 100) => string.Format(GRAPH_SCHEMA_CLASS_INSTANCES_FORMAT, graph, className, offset, limit);
+		public static string GRAPH_SCHEMA_CLASS_INSTANCES_FORMAT = """
+		SELECT ?s WHERE {{
+		  GRAPH <{0}> {{
+		    ?s a <{1}> .
+		  }}
+		}}
+		OFFSET {2}
+		LIMIT {3}
+		
 		""";
 
 		public static string GraphSchemaPropertiesQuery(string graph, string className, int offset = 0, int limit = 100) => string.Format(GRAPH_SCHEMA_PROPERTIES_FORMAT, graph, className, offset, limit);
