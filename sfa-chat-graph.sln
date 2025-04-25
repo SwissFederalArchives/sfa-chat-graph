@@ -14,6 +14,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AwosFramework.ApiClients.Ju
 EndProject
 Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose.dcproj", "{1234F842-1F52-4B59-BC94-07274D7DE700}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Libraries", "Libraries", "{EC72392C-0E7A-462F-821F-C83A53439CB6}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "dotNetRdf", "dotNetRdf", "{664605E9-64F6-44C1-B707-63F0E0F1A97B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "dotNetRdf", "Libraries\dotnetrdf\Libraries\dotNetRdf\dotNetRdf.csproj", "{5909225D-4F4F-4E3E-8150-3677EC68D844}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -46,8 +52,16 @@ Global
 		{1234F842-1F52-4B59-BC94-07274D7DE700}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1234F842-1F52-4B59-BC94-07274D7DE700}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1234F842-1F52-4B59-BC94-07274D7DE700}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5909225D-4F4F-4E3E-8150-3677EC68D844}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5909225D-4F4F-4E3E-8150-3677EC68D844}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5909225D-4F4F-4E3E-8150-3677EC68D844}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5909225D-4F4F-4E3E-8150-3677EC68D844}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{664605E9-64F6-44C1-B707-63F0E0F1A97B} = {EC72392C-0E7A-462F-821F-C83A53439CB6}
+		{5909225D-4F4F-4E3E-8150-3677EC68D844} = {664605E9-64F6-44C1-B707-63F0E0F1A97B}
 	EndGlobalSection
 EndGlobal

@@ -43,5 +43,5 @@ var loggerFactory = LoggerFactory.Create(builder =>
 
 var endpoint = new StardogEndpoint("https://lindas.admin.ch/query");
 var rag = new GraphRag(endpoint, loggerFactory);
-var graph = await rag.DescribeAsync("https://lod.opentransportdata.swiss/provider/456");
-Console.WriteLine(SparqlResultFormatter.ToCSV(graph));
+var schema = await rag.GetSchemaAsync("https://lindas.admin.ch/sfa/ais");
+Console.WriteLine(schema);
