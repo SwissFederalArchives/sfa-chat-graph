@@ -9,12 +9,14 @@ body {
 }
 
 :root {
-    --app-container: #f4f4f4;
+    --app-container: #fafafa;
+    --app-container-accent: #eaeaff;
     --app-background: #ffffff;
     --app-text-color: #202020;
     --app-text-color-dark: #f0f0f0;
     --app-background-dark: #202020;
-    --app-control-background: #f4f4f4;
+    --app-background-dark-accent: #252545;
+    --app-control-background: #eaeaea;
     --app-control-hover: #d9d9d9;
     --app-control-background-dark: #262626;
     --app-control-disabled-dark: #505050;
@@ -22,7 +24,7 @@ body {
     --app-control-text: #262626;
     --app-control-text-dark: #fcfcfc;
     --app-corner-table-radius: .25em;
-    --app-error-color: #f35555;
+    --app-error-color: #f36666;
 }
 
 .inverted-button {
@@ -101,6 +103,7 @@ body {
     transition: background-color 0.3s ease-in-out;
     height: max-content;
     field-sizing: content;
+    resize: none;
     font-size: medium;
     font-family: Roboto, "Helvetica Neue", sans-serif;
 }

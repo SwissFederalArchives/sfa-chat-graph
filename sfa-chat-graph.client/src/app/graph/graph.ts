@@ -80,8 +80,8 @@ export class Graph {
 
     if (this._subGraphs.has(id) == false) {
       const hue = Math.floor(Math.random() * 360);
-      const nodeColor = `hsl(${hue}, 100%, 70%)`;
-      const leafColor = `hsl(${hue}, 100%, 50%)`;
+      const nodeColor = `hsl(${hue}, 50%, 90%)`;
+      const leafColor = `hsl(${hue}, 45%, 70%)`;
       const subGraph = new SubGraph(id, nodeColor, leafColor);
       this._subGraphs.set(id, subGraph);
       return subGraph;

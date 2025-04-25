@@ -33,6 +33,7 @@ export enum ErrorType {
   styleUrl: './chat-history.component.css'
 })
 export class ChatHistoryComponent implements AfterViewChecked, OnInit {
+
   @Input() graph!: Graph;
   @Input() chatId!: string;
   @ViewChild('chatHistory') chatContainer!: ElementRef<HTMLElement>;
@@ -40,7 +41,7 @@ export class ChatHistoryComponent implements AfterViewChecked, OnInit {
   public messages: DisplayMessage[] = [];
   public waitingForResponse: boolean = false;
   public message?: string = undefined;
-  public activity?: string;
+  public activity?: string = undefined;
   public rolesEnum = ChatRole;
 
   public getError(): string | undefined { return this._error; }
@@ -75,6 +76,17 @@ export class ChatHistoryComponent implements AfterViewChecked, OnInit {
         this.setScrollToBottomFlag();
       }
     }
+  }
+
+  public async onMessageKeyPress($event: KeyboardEvent): Promise<void> {
+    if($event.key == "Enter" && !$event.shiftKey) {
+      $event.preventDefault();
+      if (this.message && this.message.trim() != "") {
+        return this.send();
+      }
+    }
+
+    return Promise.resolve();
   }
 
   private async tryLoadHistory(): Promise<void> {
@@ -160,9 +172,9 @@ export class ChatHistoryComponent implements AfterViewChecked, OnInit {
 
         const content = message.content!.replaceAll(URL_SUBST_PATTERN, (match, id) => {
           const data = this._toolData.get(id);
-          if (data && data.blobLoaded == false)  {
+          if (data && data.blobLoaded == false) {
             return `/api/v1/rdf/tool-data/${data.id}`;
-          }else if(data && data.blobLoaded && data.mimeType && data.isBase64Content)  {
+          } else if (data && data.blobLoaded && data.mimeType && data.isBase64Content) {
             return `data:${data.mimeType};base64,${data.content}`
           }
           return '';

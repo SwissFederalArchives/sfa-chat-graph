@@ -1,8 +1,9 @@
 .chat-message-left {
     border-radius: .5em;
     border-top-left-radius: 0;
-    background-color: var(--app-background-dark);
-    color: var(--app-text-color-dark);
+    /*background-color: var(--app-background-dark);*/
+    background: linear-gradient(210deg, rgb(194, 194, 194) 0%, rgb(194, 194, 205) 100%);
+    color: var(--app-text-color);
     align-self: flex-start;
     text-align: left;
 }
@@ -15,14 +16,21 @@
 }
 
 .marker {
-    width: 1em;
-    height: 1em;
+    width: 1.25em;
+    height: 1.25em;
+}
+
+.marker circle {
+    stroke-width: 3%;
+    stroke: #404040;
+    r: 14px;
 }
 
 .chat-message-right {
     border-radius: .5em;
     border-top-right-radius: 0%;
-    background-color: var(--app-text-color-dark);
+    /* background-color: var(--app-text-color-dark); */
+    background: linear-gradient(210deg, var(--app-container) 0%, var(--app-container-accent) 100%);
     color: var(--app-text-color);
     align-self: flex-end;
     text-align: right;
@@ -38,27 +46,30 @@
 
 @keyframes spinBounce {
     0% {
-      transform: rotate(0deg) scale(1);
+        transform: rotate(0deg) scale(1);
     }
+
     25% {
-      transform: rotate(90deg) scale(1);
+        transform: rotate(90deg) scale(1);
     }
+
     60% {
-      transform: rotate(90deg) scale(0.6);
+        transform: rotate(90deg) scale(0.6);
     }
+
     100% {
-      transform: rotate(90deg) scale(1);
+        transform: rotate(90deg) scale(1);
     }
-  }
-  
-  .activity-spinner {
+}
+
+.activity-spinner {
     animation: spinBounce 1.2s ease-in-out infinite;
     display: inline-block;
     transform-origin: center;
-    fill: var(--app-text-color-dark);
+    fill: var(--app-text-color);
     width: 1.5em;
     height: 1.5em;
-  }
+}
 
 .chat-message {
     padding: 0em 1em;

@@ -34,7 +34,7 @@ export class DisplayDetail {
       const blob = toBlob(this.content, this.mimeType, this.isBase64Content);
       downloadBlob(blob, this.fileName);
     }else{
-      window.open(`${this.content}?download=${encodeURIComponent( this.fileName)}`, '_blank');
+      window.open(`${this.content}?download=${encodeURIComponent(this.fileName)}`, '_blank');
     }
   }
 

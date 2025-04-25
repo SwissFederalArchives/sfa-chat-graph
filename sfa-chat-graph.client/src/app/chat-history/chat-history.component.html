@@ -9,8 +9,8 @@
                 </markdown>
                 <div *ngIf="msg.data.length > 0" class="data-tag-container">
                     @for(data of msg.data; track data){
-                    <button [classList]="data.className" (click)="showMessageDisplayDetail(data)"><span class="tooltip-wide"
-                            [attr.data-text]="data.description">{{data.label}}</span></button>
+                    <button [classList]="data.className" (click)="showMessageDisplayDetail(data)"><span
+                            class="tooltip-wide" [attr.data-text]="data.description">{{data.label}}</span></button>
                     }
                 </div>
 
@@ -32,8 +32,8 @@
         <div id="msg-activity" class="chat-message chat-message-left">
             <div class="activity-content">
                 <svg class="activity-spinner">
-                    <rect x="30%" y="0" width="40%" height="100%"/>
-                    <rect x="0" y="30%" width="100%" height="40%"/>
+                    <rect x="30%" y="0" width="40%" height="100%" />
+                    <rect x="0" y="30%" width="100%" height="40%" />
                 </svg>
                 <p class="activity-text">{{activity}}</p>
             </div>
@@ -55,9 +55,9 @@
         }
     </div>
     <form>
-        <div class="control-container form-row">
-            <textarea placeholder="Type a message..." name="message" [(ngModel)]="message" class="form-textarea grow"
-                type="text"></textarea>
+        <div class="form-row control-container">
+            <textarea placeholder="Type a message..." name="message" (keypress)="onMessageKeyPress($event)"
+                [(ngModel)]="message" class="form-textarea grow" type="text"></textarea>
             <button class="inverted-icon-button" [disabled]="waitingForResponse||!message" (click)="send()"
                 aria-label="Send">
                 <mat-icon fontSet="material-symbols-outlined">send</mat-icon>

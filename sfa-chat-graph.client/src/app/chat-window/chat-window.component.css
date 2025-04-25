@@ -20,10 +20,12 @@
 
 .divider {
     width: 3px;
-    background: var(--app-control-background-dark);
+    background: var(--app-text-color);
     cursor: col-resize;
     height: 100%;
     z-index: 3;
+    margin: 0em .5em;
+    border-radius: 5%;
 }
 
 .right-pane {
