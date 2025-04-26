@@ -185,6 +185,10 @@ th:not(:last-child) {
 }
 
 .table-container-bright table tr td, th {
+    word-wrap: break-word;
+}
+
+.table-container-bright table tr td, th {
     padding: 0.25em;
 }
 

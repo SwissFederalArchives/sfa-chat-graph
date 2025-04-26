@@ -26,6 +26,10 @@ using MongoDB.Driver.GridFS;
 using sfa_chat_graph.Server.Services.ChatHistoryService.Cached;
 using sfa_chat_graph.Server.Services.ChatHistoryService.MongoDB.V2;
 using sfa_chat_graph.Server.Versioning;
+using HarmonyLib;
+
+var harmony = new Harmony("sfa-chat-graph");
+harmony.PatchAll(typeof(Program).Assembly);
 
 DotNetEnv.Env.Load();
 DataAnnotationsSupport.AddDataAnnotations();
