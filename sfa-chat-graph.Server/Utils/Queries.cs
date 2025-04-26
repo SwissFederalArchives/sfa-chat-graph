@@ -36,7 +36,7 @@ namespace sfa_chat_graph.Server.Utils
 
 		public static string GraphSchemaBatchDescribeQuery(IEnumerable<string> iris) => string.Format(GRAPH_SCHEMA_BATCH_DESCRIBE_CLASS_INSTANCE_FORMAT,  iris.ToIriList());
 		public const string GRAPH_SCHEMA_BATCH_DESCRIBE_CLASS_INSTANCE_FORMAT = """
-		SELECT DISTINCT ?p ?ot WHERE {{
+		SELECT DISTINCT ?p (IF(BOUND(?ot), ?ot, IF(ISIRI(?o), "FIXED", "LITERAL")) AS ?type) WHERE {{
 			VALUES ?iris {{{0}}}
 			BIND (?iris as ?s)
 			?s ?p ?o .
@@ -60,7 +60,7 @@ namespace sfa_chat_graph.Server.Utils
 
 		public static string GraphSchemaPropertiesQuery(string graph, string className, int offset = 0, int limit = 100) => string.Format(GRAPH_SCHEMA_PROPERTIES_FORMAT, graph, className, offset, limit);
 		public const string GRAPH_SCHEMA_PROPERTIES_FORMAT = """
-		SELECT DISTINCT ?p ?ot WHERE {{
+		SELECT DISTINCT ?p (IF(BOUND(?ot), ?ot, IF(ISIRI(?o), "FIXED", "LITERAL")) AS ?type) WHERE {{
 			GRAPH <{0}> {{
 				?s a <{1}> .
 		    ?s ?p ?o .

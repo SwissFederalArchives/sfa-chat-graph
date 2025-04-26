@@ -6,5 +6,6 @@ namespace sfa_chat_graph.Server.Services.EventService
 	{
 		public void RegisterTarget(TChannel key, TTarget target);		
 		public IEventChannel<TChannel, TEvent, TTarget, TMessage> GetChannel(TChannel key);
+		public Task PushAsync<T>(T keyedEvent) where T : TEvent, IKeyedEvent<TChannel>;
 	}
 }

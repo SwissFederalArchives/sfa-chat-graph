@@ -22,9 +22,9 @@ namespace sfa_chat_graph.Server.Utils
 
 		public static string FormatSchemaNode(INode node) => node switch
 		{
-			UriNode uriNode => $"<{uriNode.Uri}>",
-			LiteralNode literalNode => $"\"{literalNode.Value}\"",
-			_ => "LITERAL"
+			IUriNode uriNode => $"<{uriNode.Uri}>",
+			ILiteralNode literalNode => $"{literalNode.Value}",
+			_ => "BLANK"
 		};
 
 		private static string CsvFormatNode(INode node)

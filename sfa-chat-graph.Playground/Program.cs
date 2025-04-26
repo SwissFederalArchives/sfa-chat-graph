@@ -15,6 +15,7 @@ using Microsoft.EntityFrameworkCore.Migrations.Operations;
 using Microsoft.Extensions.Logging;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
+using MongoDB.Driver;
 using sfa_chat_graph.Server.Models;
 using sfa_chat_graph.Server.RDF;
 using sfa_chat_graph.Server.RDF.Endpoints;
@@ -40,7 +41,11 @@ var loggerFactory = LoggerFactory.Create(builder =>
 	builder.SetMinimumLevel(LogLevel.Debug);
 });
 
+var client = new MongoClient("mongodb://localhost:27017");
+var database = client.GetDatabase("sfa-chat-graph-test");
+
 var endpoint = new StardogEndpoint("https://lindas.admin.ch/query");
-var rag = new GraphRag(endpoint, loggerFactory);
-var schema = await rag.GetSchemaAsync("https://lindas.admin.ch/sfa/ais");
+var rag = new GraphRag(endpoint, loggerFactory, database);
+var schema = await rag.GetSchemaAsync(null, "https://lindas.admin.ch/sfa/ais");
 Console.WriteLine(schema);
+client.DropDatabase("sfa-chat-graph-test");

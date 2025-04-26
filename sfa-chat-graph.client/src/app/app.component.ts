@@ -22,7 +22,7 @@ export class AppComponent {
         router.events
       .pipe(filter((event) => event instanceof NavigationEnd))
       .subscribe(async (event: NavigationEnd) => {
-        if (event.url == "/" || event.url == "/chat" || event.url == "" || event.url == undefined) {
+        if (event.urlAfterRedirects.startsWith("/chat/") == false) {
           await router.navigate(["/chat", window.crypto.randomUUID()]);
         }
       });

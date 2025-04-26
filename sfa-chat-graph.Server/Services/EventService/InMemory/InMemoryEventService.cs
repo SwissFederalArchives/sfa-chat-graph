@@ -23,7 +23,7 @@ namespace sfa_chat_graph.Server.Services.EventService.InMemory
 
 		private IEventChannel<TChannel, TEvent, TTarget, TMessage> UpdateChannel(TChannel key, IEventChannel<TChannel, TEvent, TTarget, TMessage> channel)
 		{
-			if(channel is DummyChannel<TChannel, TEvent, TTarget, TMessage> dummyChannel)
+			if (channel is DummyChannel<TChannel, TEvent, TTarget, TMessage> dummyChannel)
 			{
 				var newChannel = CreateChannel(key);
 				dummyChannel.PromoteToProxy(newChannel);
@@ -46,5 +46,12 @@ namespace sfa_chat_graph.Server.Services.EventService.InMemory
 			var channel = _channels.AddOrUpdate(key, CreateChannel, UpdateChannel);
 			channel.RegisterTarget(target);
 		}
+
+		public Task PushAsync<T>(T keyedEvent) where T : TEvent, IKeyedEvent<TChannel>
+		{
+			var channel = GetChannel(keyedEvent.Key);
+			return channel?.PushAsync(keyedEvent);
+		}
+
 	}
 }

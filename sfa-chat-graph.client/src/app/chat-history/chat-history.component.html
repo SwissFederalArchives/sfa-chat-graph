@@ -30,12 +30,15 @@
         }
         @if(activity) {
         <div id="msg-activity" class="chat-message chat-message-left">
-            <div class="activity-content">
-                <svg class="activity-spinner">
-                    <rect x="30%" y="0" width="40%" height="100%" />
-                    <rect x="0" y="30%" width="100%" height="40%" />
-                </svg>
-                <p class="activity-text">{{activity}}</p>
+            <div class="message-content">
+                <div class="activity-header">
+                    <svg class="activity-spinner">
+                        <rect x="30%" y="0" width="40%" height="100%" />
+                        <rect x="0" y="30%" width="100%" height="40%" />
+                    </svg>
+                    <p class="activity-text">{{activity.Activity}}</p>
+                </div>
+                <p *ngIf="activity.Detail" class="activity-detail">{{activity.Detail}}</p>
             </div>
         </div>
         }
