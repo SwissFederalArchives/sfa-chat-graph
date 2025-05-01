@@ -1,5 +1,6 @@
 ﻿using System.Net.Http.Headers;
 using System.Text;
+using System.Text.Json;
 using VDS.RDF;
 using VDS.RDF.Parsing;
 using VDS.RDF.Parsing.Handlers;
@@ -35,14 +36,18 @@ namespace sfa_chat_graph.Server.RDF.Endpoints
 			using HttpResponseMessage response = await QueryInternal(sparqlQuery, ResultsAcceptHeader, cancellationToken);
 			if (!response.IsSuccessStatusCode)
 			{
-				var error = await response.Content.ReadFromJsonAsync<TErr>();
+				var content = await response.Content.ReadAsStringAsync();
+				TErr error = default;
+				if (content.Length > 0)
+					error = JsonSerializer.Deserialize<TErr>(content);
+
 				throw new RdfQueryException($"Server reports {(int)response.StatusCode}: {response.ReasonPhrase}.") { Data = { ["error"] = error } };
 			}
 
 			MediaTypeHeaderValue ctype = response.Content.Headers.ContentType;
 			ISparqlResultsReader resultsParser = MimeTypesHelper.GetSparqlParser(ctype.MediaType);
 			Stream stream = await response.Content.ReadAsStreamAsync();
-			using StreamReader input = (string.IsNullOrEmpty(ctype.CharSet) ? new StreamReader(stream) : new StreamReader(stream, Encoding.GetEncoding(ctype.CharSet)));	
+			using StreamReader input = (string.IsNullOrEmpty(ctype.CharSet) ? new StreamReader(stream) : new StreamReader(stream, Encoding.GetEncoding(ctype.CharSet)));
 			resultsParser.Load(resultsHandler, input, _uriFactory);
 		}
 

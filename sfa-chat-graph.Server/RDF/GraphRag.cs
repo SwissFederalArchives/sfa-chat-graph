@@ -98,7 +98,7 @@ namespace sfa_chat_graph.Server.RDF
 		public async Task<string> GuessClassSchemaAsync(IChatActivity activities, string graph, string className, int countObjects, int countGuesses, bool randomOffsets = true, int stoppAfter = 50000)
 		{
 			var result = new Dictionary<string, HashSet<string>>();
-			var limit = 10000;
+			var limit = 5000;
 			var pageCount = countObjects / limit;
 			var pages = Enumerable.Range(0, pageCount);
 			if (randomOffsets)
@@ -190,7 +190,7 @@ namespace sfa_chat_graph.Server.RDF
 					.SetOnInsert(x => x.Id, ObjectId.GenerateNewId())
 					.SetOnInsert(x => x.Endpoint, _endpoint.Name);
 
-				cache = await _schemas.FindOneAndUpdateAsync(x => x.Graph == graph && x.Endpoint == _endpoint.Name, 
+				cache = await _schemas.FindOneAndUpdateAsync(x => x.Graph == graph && x.Endpoint == _endpoint.Name,
 					update, new FindOneAndUpdateOptions<SchemaCache> { ReturnDocument = ReturnDocument.After, IsUpsert = true });
 			}
 
@@ -276,6 +276,7 @@ namespace sfa_chat_graph.Server.RDF
 
 			var iris = GetResultSetIris(results, resultVars).ToArray();
 			SparqlResultSet relatedTriples = null;
+
 			try
 			{
 				relatedTriples = await _endpoint.QueryAsync(Queries.RelatedTriplesQuery(iris, predicates));
