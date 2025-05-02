@@ -97,7 +97,7 @@ namespace sfa_chat_graph.Server.Controllers
 			await _chatHistoryService.AppendAsync(id, ctx.Created);
 
 			// return only newly generated messages, since client already has user message
-			return Ok(response.Messages);
+			return Ok(ctx.Created.Skip(1));
 		}
 	}
 }
