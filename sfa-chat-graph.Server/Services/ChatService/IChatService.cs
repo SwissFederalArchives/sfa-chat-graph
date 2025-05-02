@@ -18,10 +18,21 @@ namespace sfa_chat_graph.Server.Services.ChatService
 			var result = await CompleteAsync(context, temperature, maxErrors);
 			return result;
 		}
+
+		ChatContext IChatService.CreateContext(Guid chatId, IEventSink<ChatEvent> events, IEnumerable<ApiMessage> history) => CreateContext(chatId, events, history);
+
+		public Task<CompletionResult> CompleteAsync(ChatContext ctx, float temperature, int maxErrors)
+		{
+			if(ctx is not TContext tCtx)
+				throw new InvalidOperationException($"ChatContext is not of type {typeof(TContext).Name}");
+
+			return CompleteAsync(tCtx, temperature, maxErrors);
+		}
 	}
 
 	public interface IChatService
 	{
-		Task<CompletionResult> CompleteAsync(Guid chatId, IEventSink<ChatEvent> events, IEnumerable<ApiMessage> history, float temperature, int maxErrors);
+		ChatContext CreateContext(Guid chatId, IEventSink<ChatEvent> events, IEnumerable<ApiMessage> history);
+		Task<CompletionResult> CompleteAsync(ChatContext ctx, float temperature, int maxErrors);
 	}
 }

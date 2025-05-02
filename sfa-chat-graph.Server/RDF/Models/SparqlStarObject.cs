@@ -1,8 +1,8 @@
-﻿using SfaChatGraph.Server.Utils;
+﻿using sfa_chat_graph.Server.Utils;
 using System.Collections.Frozen;
 using System.Dynamic;
 
-namespace SfaChatGraph.Server.RDF.Models
+namespace sfa_chat_graph.Server.RDF.Models
 {
 	public class SparqlStarObject
 	{

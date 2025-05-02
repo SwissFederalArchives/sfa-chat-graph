@@ -1,11 +1,10 @@
 ﻿using AwosFramework.Generators.FunctionCalling;
 using OpenAI.Chat;
-using SfaChatGraph.Server.RDF.Models;
 using System.ComponentModel;
 using VDS.RDF;
 using VDS.RDF.Query;
 
-namespace SfaChatGraph.Server.RDF
+namespace sfa_chat_graph.Server.RDF
 {
 	public interface IGraphRag
 	{
@@ -15,11 +14,11 @@ namespace SfaChatGraph.Server.RDF
 
 		[FunctionCall("get_schema")]
 		[Description("Gets the schema of a graph")]
-		public Task<string> GetSchemaAsync([Description("The iri of the graph to load the schema of")]string graph, [Description("Whether to allow cached schemas, always allow caching if the user not explicitly asks for a refresh")]bool ignoreCached = false);
+		public Task<string> GetSchemaAsync([Description("The iri of the graph to load the schema of")] string graph, [Description("Whether to allow cached schemas, always allow caching if the user not explicitly asks for a refresh")] bool ignoreCached = false);
 
 		[FunctionCall("query")]
 		[Description("Queries the database in sparql")]
-		public Task<SparqlResultSet> QueryAsync([Description("A well formed sparql query string")]string query);
+		public Task<SparqlResultSet> QueryAsync([Description("A well formed sparql query string")] string query);
 
 		[FunctionCall("describe")]
 		[Description("Describes a subject in the database")]

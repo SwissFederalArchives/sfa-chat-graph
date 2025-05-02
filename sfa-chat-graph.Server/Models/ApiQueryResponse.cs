@@ -1,11 +1,10 @@
-﻿using SfaChatGraph.Server.RDF.Models;
-using VDS.RDF.Query;
+﻿using VDS.RDF.Query;
 
-namespace SfaChatGraph.Server.Models
+namespace sfa_chat_graph.Server.Models
 {
 	public class ApiQueryResponse
 	{
-		public bool IsSuccess { get; set; } 
+		public bool IsSuccess { get; set; }
 		public bool IncompatibleSchema { get; set; }
 		public string Answer { get; set; }
 		public string Error { get; set; }

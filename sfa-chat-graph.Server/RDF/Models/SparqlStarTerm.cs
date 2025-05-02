@@ -1,7 +1,7 @@
 ﻿using System.Text.Json.Serialization;
 using VDS.RDF;
 
-namespace SfaChatGraph.Server.RDF.Models
+namespace sfa_chat_graph.Server.RDF.Models
 {
 	public class SparqlStarTerm
 	{

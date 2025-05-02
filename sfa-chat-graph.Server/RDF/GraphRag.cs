@@ -2,8 +2,6 @@
 using MongoDB.Driver;
 using sfa_chat_graph.Server.Utils;
 using sfa_chat_graph.Server.Versioning;
-using SfaChatGraph.Server.RDF;
-using SfaChatGraph.Server.Utils;
 using System.Collections.Frozen;
 using System.ComponentModel;
 using System.Text;

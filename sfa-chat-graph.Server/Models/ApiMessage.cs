@@ -2,7 +2,6 @@
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using OpenAI.Assistants;
-using SfaChatGraph.Server.Models;
 using System.Text.Json.Serialization;
 using VDS.RDF.Query;
 
@@ -24,6 +23,9 @@ namespace sfa_chat_graph.Server.Models
 
 		[Key(3)]
 		public DateTime TimeStamp { get; set; } = DateTime.UtcNow;
+
+		[Key(4)]
+		public int Index { get; set; }
 
 		public ApiMessage() : this(ChatRole.User, null)
 		{

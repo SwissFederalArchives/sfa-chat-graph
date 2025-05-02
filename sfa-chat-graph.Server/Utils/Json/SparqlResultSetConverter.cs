@@ -1,5 +1,4 @@
 ﻿using OpenAI.Assistants;
-using SfaChatGraph.Server.Utils;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using VDS.Common.Collections.Enumerations;

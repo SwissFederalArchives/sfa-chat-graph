@@ -4,14 +4,13 @@ using Json.Schema;
 using MessagePack;
 using OpenAI.Chat;
 using sfa_chat_graph.Server.Models;
-using SfaChatGraph.Server.Models;
-using SfaChatGraph.Server.RDF.Models;
+using sfa_chat_graph.Server.Utils;
 using System.Buffers;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using VDS.RDF.Query;
 
-namespace SfaChatGraph.Server.Utils
+namespace sfa_chat_graph.Server.Utils
 {
 	public static class Extensions
 	{
@@ -24,7 +23,7 @@ namespace SfaChatGraph.Server.Utils
 			using var enumerator2 = other.GetEnumerator();
 			while (enumerator1.MoveNext() && enumerator2.MoveNext())
 				yield return new KeyValuePair<TKey, TValue>(enumerator1.Current, enumerator2.Current);
-			
+
 		}
 
 		public static IEnumerable<TTo> Select<TTo, TFrom, TArg>(this IEnumerable<TFrom> enumerable, Func<TFrom, TArg, TTo> map, TArg arg1) => enumerable.Select(x => map(x, arg1));
@@ -40,7 +39,7 @@ namespace SfaChatGraph.Server.Utils
 		public static void WriteStringArray(this ref MessagePackWriter writer, IEnumerable<string> array)
 		{
 			writer.WriteArrayHeader(array.Count());
-			foreach(var item in array)
+			foreach (var item in array)
 				writer.Write(item);
 		}
 
@@ -71,7 +70,7 @@ namespace SfaChatGraph.Server.Utils
 		public static string Ellipsis(this string @string, int maxLen, string end = "...")
 		{
 			var len = maxLen - end.Length;
-			if(@string.Length > len)
+			if (@string.Length > len)
 				return @string.Substring(0, len) + end;
 
 			return @string;
@@ -80,7 +79,7 @@ namespace SfaChatGraph.Server.Utils
 		public static IEnumerable<(ReadOnlyMemory<T> memory, bool isLast)> AsIsLast<T>(this ReadOnlySequence<T> seq)
 		{
 			var enumerator = seq.GetEnumerator();
-			if(enumerator.MoveNext() == false)
+			if (enumerator.MoveNext() == false)
 				yield break;
 
 			var last = enumerator.Current;

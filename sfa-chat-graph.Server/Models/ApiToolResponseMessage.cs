@@ -1,7 +1,5 @@
 ﻿using MessagePack;
 using MongoDB.Bson.Serialization.Attributes;
-using SfaChatGraph.Server.Models;
-using SfaChatGraph.Server.RDF.Models;
 using System.Text.Json.Serialization;
 using VDS.RDF.Query;
 
@@ -10,13 +8,13 @@ namespace sfa_chat_graph.Server.Models
 	[MessagePackObject]
 	public class ApiToolResponseMessage : ApiMessage
 	{
-		[Key(4)]
+		[Key(5)]
 		public string ToolCallId { get; set; }
 
-		[Key(5)]
+		[Key(6)]
 		public ApiGraphToolData GraphToolData { get; set; }
 
-		[Key(6)]
+		[Key(7)]
 		public ApiCodeToolData CodeToolData { get; set; }
 
 		public ApiToolResponseMessage() : base(ChatRole.ToolResponse, null)

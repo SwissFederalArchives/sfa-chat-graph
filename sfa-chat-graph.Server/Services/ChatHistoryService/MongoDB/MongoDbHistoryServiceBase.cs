@@ -13,12 +13,17 @@ namespace sfa_chat_graph.Server.Services.ChatHistoryService.MongoDB
 		public abstract Task StoreAsync(ChatHistory history);
 		public abstract Task<IEnumerable<Guid>> GetChatHistoryIdsAsync();
 
+		public virtual void ModifyMigrationSource(ChatHistory history)
+		{
+
+		}
+
 		public async virtual Task MigrateToAsync(IMigrateableChatHistoryService target, FrozenSet<string> alreadyMigrated, MigrationReportBuilder report, CancellationToken token)
 		{
 			var ids = await this.GetChatHistoryIdsAsync();
 			foreach (var id in ids.Where(x => alreadyMigrated.Contains(x.ToString()) == false))
 			{
-				if(token.IsCancellationRequested)
+				if (token.IsCancellationRequested)
 				{
 					report.ReportCancelled();
 					return;
@@ -27,6 +32,8 @@ namespace sfa_chat_graph.Server.Services.ChatHistoryService.MongoDB
 				try
 				{
 					var history = await this.GetChatHistoryAsync(id);
+					ModifyMigrationSource(history);
+					target.ModifyMigrationSource(history);
 					await target.StoreAsync(history);
 					report.ReportMigrated(id);
 				}
@@ -36,6 +43,5 @@ namespace sfa_chat_graph.Server.Services.ChatHistoryService.MongoDB
 				}
 			}
 		}
-
 	}
 }

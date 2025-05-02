@@ -1,5 +1,4 @@
 ﻿using MessagePack;
-using SfaChatGraph.Server.Models;
 using System.Text.Json.Serialization;
 
 namespace sfa_chat_graph.Server.Models

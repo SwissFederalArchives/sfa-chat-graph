@@ -1,5 +1,4 @@
 ﻿using sfa_chat_graph.Server.Models;
-using SfaChatGraph.Server.Models;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 

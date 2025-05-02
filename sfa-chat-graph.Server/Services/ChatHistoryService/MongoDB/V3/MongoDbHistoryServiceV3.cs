@@ -10,17 +10,18 @@ using sfa_chat_graph.Server.Utils;
 using sfa_chat_graph.Server.Utils.MessagePack;
 using sfa_chat_graph.Server.Versioning;
 using sfa_chat_graph.Server.Versioning.Migrations;
+using System.Collections.Frozen;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using VDS.RDF.Query;
 
-namespace sfa_chat_graph.Server.Services.ChatHistoryService.MongoDB.V2
+namespace sfa_chat_graph.Server.Services.ChatHistoryService.MongoDB.V3
 {
-	[ServiceVersion<IChatHistoryService>(2)]
-	public class MongoDbHistoryServiceV2 : MongoDbHistoryServiceBase, IChatHistoryService, IPostMigration
+	[ServiceVersion<IChatHistoryService>(3)]
+	public class MongoDbHistoryServiceV3 : MongoDbHistoryServiceBase, IChatHistoryService, IPostMigration
 	{
-		const int Version = 2;
+		const int Version = 3;
 		private static readonly MessagePackSerializerOptions _serializerOptions = MessagePackSerializerOptions.Standard
 			.WithCompression(MessagePackCompression.Lz4BlockArray)
 			.WithResolver(FormatterResolver.Instance);
@@ -32,7 +33,7 @@ namespace sfa_chat_graph.Server.Services.ChatHistoryService.MongoDB.V2
 
 		public bool SupportsToolData => true;
 
-		public MongoDbHistoryServiceV2(IMongoDatabase database)
+		public MongoDbHistoryServiceV3(IMongoDatabase database)
 		{
 			_db=database;
 			_messages = _db.GetCollectionVersion<MongoChatMessageModel>("messages", Version);
@@ -173,10 +174,10 @@ namespace sfa_chat_graph.Server.Services.ChatHistoryService.MongoDB.V2
 
 		public async Task<ChatHistory> GetChatHistoryAsync(Guid id, bool loadBlobs = false)
 		{
-			var messages = await _messages.Find(x => x.HistoryId == id).SortBy(x => x.TimeStamp).ToListAsync();
+			var messages = await _messages.Find(x => x.HistoryId == id).ToListAsync();
 			var tasks = messages.Where(x => x.HasData).Select(x => LoadLargeDataAsync(x, loadBlobs)).ToArray();
 			await Task.WhenAll(tasks);
-			var apiMessage = messages.Select(x => x.ToApi()).ToArray();
+			var apiMessage = messages.Select(x => x.ToApi()).OrderBy(x => x.Index).ToArray();
 			return new ChatHistory { Id = id, Messages = apiMessage };
 		}
 
@@ -220,6 +221,12 @@ namespace sfa_chat_graph.Server.Services.ChatHistoryService.MongoDB.V2
 				.ToListAsync();
 
 			return ids;
+		}
+
+		public override void ModifyMigrationSource(ChatHistory history)
+		{
+			for (int i = 0; i < history.Messages.Length; i++)
+				history.Messages[i].Index = i;
 		}
 
 		public async Task RunPostMigrationAsync(MigrationReport report, CancellationToken token)

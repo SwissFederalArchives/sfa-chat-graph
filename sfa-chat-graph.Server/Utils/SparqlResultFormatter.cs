@@ -1,5 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using SfaChatGraph.Server.Utils;
+using sfa_chat_graph.Server.Utils;
 using System.Text;
 using VDS.Common.Collections.Enumerations;
 using VDS.RDF;
