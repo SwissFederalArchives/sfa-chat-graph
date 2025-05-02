@@ -128,8 +128,7 @@ namespace sfa_chat_graph.Server.Utils.Bson
 
 		private INode DeserializeNode(IBsonReader reader, BsonDeserializationArgs args)
 		{
-			var token = reader.ReadBsonType();
-			if (token == BsonType.Null)
+			if (reader.ReadBsonType() == BsonType.Null)
 			{
 				reader.ReadNull();
 				return null;
@@ -153,12 +152,13 @@ namespace sfa_chat_graph.Server.Utils.Bson
 						var value = reader.ReadString();
 						string? language = null;
 						Uri? datatype = null;
-						if (reader.ReadName() == "datatype")
+						var name = reader.ReadName();
+						if (name == "datatype")
 						{
 							datatype = new Uri(reader.ReadString());
 							return new LiteralNode(value, datatype);
 						}
-						else if (reader.ReadName() == "language")
+						else if (name == "language")
 						{
 							language = reader.ReadString();
 							return new LiteralNode(value, language);
