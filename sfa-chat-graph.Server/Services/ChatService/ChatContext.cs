@@ -30,7 +30,7 @@ namespace sfa_chat_graph.Server.Services.ChatService
 			_created.Add(message);
 		}
 
-		public async Task NotifyActivityAsync(string activity, string? detail)
+		public async Task NotifyActivityAsync(string activity, string? detail, string? trace = null)
 		{
 			await _events?.PushAsync(ChatEvent.CActivity(ChatId, activity, detail, trace));
 		}

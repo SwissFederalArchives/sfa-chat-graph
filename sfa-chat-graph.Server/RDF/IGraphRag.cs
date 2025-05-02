@@ -1,5 +1,6 @@
 ﻿using AwosFramework.Generators.FunctionCalling;
 using OpenAI.Chat;
+using sfa_chat_graph.Server.Services.ChatService;
 using System.ComponentModel;
 using VDS.RDF;
 using VDS.RDF.Query;
