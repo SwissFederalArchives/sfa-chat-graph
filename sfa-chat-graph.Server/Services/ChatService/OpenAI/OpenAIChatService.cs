@@ -8,9 +8,7 @@ using System.Text.Json;
 using System;
 using VDS.RDF.Query;
 using VDS.RDF;
-using SfaChatGraph.Server.Utils;
 using Microsoft.EntityFrameworkCore.Query.Internal;
-using SfaChatGraph.Server.RDF;
 using sfa_chat_graph.Server.Services.CodeExecutionService;
 using System.Text;
 using AwosFramework.ApiClients.Jupyter.Utils;
@@ -20,6 +18,7 @@ using sfa_chat_graph.Server.Services.ChatService.Events;
 using sfa_chat_graph.Server.Config;
 using sfa_chat_graph.Server.Utils.ServiceCollection;
 using Microsoft.Extensions.Options;
+using sfa_chat_graph.Server.RDF;
 
 namespace sfa_chat_graph.Server.Services.ChatService.OpenAI
 {
@@ -231,7 +230,7 @@ namespace sfa_chat_graph.Server.Services.ChatService.OpenAI
 				if (response == null || response.Value.ToolCalls.Count != 1)
 					continue;
 
-				completion = ChatMessage.CreateAssistantMessage(response);
+				//completion = ChatMessage.CreateAssistantMessage(response);
 				toolCall = response.Value.ToolCalls.First();
 
 				try
@@ -317,8 +316,8 @@ namespace sfa_chat_graph.Server.Services.ChatService.OpenAI
 					if (toolResponse.ErrorsExceeded)
 						return new CompletionResult(null, "Max errors exceeded", false);
 
-					if (ctx.Created.Count > 30)
-						return new CompletionResult(ctx.Created.ToArray(), "Max messages exceeded", false);
+				if(ctx.Created.Count() > 30)
+					return new CompletionResult(ctx.Created.ToArray(), "Max messages exceeded", false);
 
 				} while (toolResponse?.RequiresAction == true);
 

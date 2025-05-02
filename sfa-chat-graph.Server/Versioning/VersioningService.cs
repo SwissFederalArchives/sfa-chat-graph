@@ -2,9 +2,9 @@
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using sfa_chat_graph.Server.Services.ChatHistoryService;
+using sfa_chat_graph.Server.Utils;
 using sfa_chat_graph.Server.Utils.ServiceCollection;
 using sfa_chat_graph.Server.Versioning.Migrations;
-using SfaChatGraph.Server.Utils;
 using System.Collections.Frozen;
 using System.Reflection;
 using VDS.RDF.Query.Algebra;

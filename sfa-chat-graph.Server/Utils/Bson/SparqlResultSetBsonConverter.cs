@@ -1,7 +1,6 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Bson.IO;
 using MongoDB.Bson.Serialization;
-using SfaChatGraph.Server.RDF.Models;
 using VDS.RDF;
 using VDS.RDF.Query;
 

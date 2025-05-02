@@ -1,6 +1,5 @@
 ﻿using Lucene.Net.Index;
-using SfaChatGraph.Server.RDF.Models;
-using SfaChatGraph.Server.Utils;
+using sfa_chat_graph.Server.RDF.Models;
 using System.Collections.Frozen;
 using System.Dynamic;
 using System.Reflection.Metadata;

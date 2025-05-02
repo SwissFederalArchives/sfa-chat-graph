@@ -16,22 +16,28 @@ namespace sfa_chat_graph.Server.Services.ChatService.OpenAI
 			_openAiHistory.Insert(0, sysPrompt);
 		}
 
+		public override void AddUserMessage(ApiMessage message)
+		{
+			base.AddUserMessage(message);
+			_openAiHistory.Add(message.AsOpenAIMessage());
+		}
+
 		public void AddMessage(ApiMessage message)
 		{
-			Created.Add(message);
 			_openAiHistory.Add(message.AsOpenAIMessage());
+			AddCreated(message);
 		}
 
 		public void AddMessage(ChatMessage message)
 		{
-			Created.Add(message.AsApiMessage());
 			_openAiHistory.Add(message);
+			AddCreated(message.AsApiMessage());
 		}
 
 		public void AddMessage(Message message)
 		{
 			_openAiHistory.Add(message.OpenAi);
-			Created.Add(message.Api);
+			AddCreated(message.Api);
 		}
 	}
 }

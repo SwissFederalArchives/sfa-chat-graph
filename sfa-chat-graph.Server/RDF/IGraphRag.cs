@@ -1,12 +1,11 @@
 ﻿using AwosFramework.Generators.FunctionCalling;
 using OpenAI.Chat;
 using sfa_chat_graph.Server.Services.ChatService;
-using SfaChatGraph.Server.RDF.Models;
 using System.ComponentModel;
 using VDS.RDF;
 using VDS.RDF.Query;
 
-namespace SfaChatGraph.Server.RDF
+namespace sfa_chat_graph.Server.RDF
 {
 	public interface IGraphRag
 	{
@@ -20,7 +19,7 @@ namespace SfaChatGraph.Server.RDF
 
 		[FunctionCall("query")]
 		[Description("Queries the database in sparql")]
-		public Task<SparqlResultSet> QueryAsync([Description("A well formed sparql query string")]string query);
+		public Task<SparqlResultSet> QueryAsync([Description("A well formed sparql query string")] string query);
 
 		[FunctionCall("describe")]
 		[Description("Describes a subject in the database")]

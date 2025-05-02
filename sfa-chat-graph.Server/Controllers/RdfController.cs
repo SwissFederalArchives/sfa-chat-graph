@@ -4,16 +4,13 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using OpenAI.Chat;
 using sfa_chat_graph.Server.Models;
+using sfa_chat_graph.Server.RDF;
 using sfa_chat_graph.Server.RDF.Models;
 using sfa_chat_graph.Server.Services.ChatHistoryService;
 using sfa_chat_graph.Server.Services.ChatService;
 using sfa_chat_graph.Server.Services.ChatService.Events;
 using sfa_chat_graph.Server.Services.EventService;
 using sfa_chat_graph.Server.Utils;
-using SfaChatGraph.Server.Models;
-using SfaChatGraph.Server.RDF;
-using SfaChatGraph.Server.RDF.Models;
-using SfaChatGraph.Server.Utils;
 using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
@@ -23,7 +20,7 @@ using VDS.RDF.Query;
 using VDS.RDF.Query.Datasets;
 using VDS.RDF.Writing.Formatting;
 
-namespace SfaChatGraph.Server.Controllers
+namespace sfa_chat_graph.Server.Controllers
 {
 	[ApiController]
 	[Route("/api/v1/rdf")]
@@ -90,12 +87,16 @@ namespace SfaChatGraph.Server.Controllers
 			chat.Message.TimeStamp = DateTime.UtcNow;
 			await sink?.PushAsync(ChatEvent.CActivity(id, "Loading chat history"));
 			var history = await _chatHistoryService.GetChatHistoryAsync(id);
-			var messages = history.Messages.Append(chat.Message);
-			var response = await _chatService.CompleteAsync(history.Id, sink, messages, chat.Temperature, chat.MaxErrors);
+			var ctx = _chatService.CreateContext(id, sink, history.Messages);
+			ctx.AddUserMessage(chat.Message);
+			var response = await _chatService.CompleteAsync(ctx, chat.Temperature, chat.MaxErrors);
 			if (response.Success == false)
 				return StatusCode(500, response.Error);
 
-			await _chatHistoryService.AppendAsync(id, response.Messages.Prepend(chat.Message));
+			// append created to history since created contains user message as well
+			await _chatHistoryService.AppendAsync(id, ctx.Created);
+
+			// return only newly generated messages, since client already has user message
 			return Ok(response.Messages);
 		}
 	}

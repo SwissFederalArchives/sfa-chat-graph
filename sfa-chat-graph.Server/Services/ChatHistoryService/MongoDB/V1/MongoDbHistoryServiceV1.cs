@@ -7,7 +7,6 @@ using sfa_chat_graph.Server.Models;
 using sfa_chat_graph.Server.Utils.MessagePack;
 using sfa_chat_graph.Server.Versioning;
 using sfa_chat_graph.Server.Versioning.Migrations;
-using SfaChatGraph.Server.Models;
 using System.Text.Json;
 
 namespace sfa_chat_graph.Server.Services.ChatHistoryService.MongoDB.V1

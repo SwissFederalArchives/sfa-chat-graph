@@ -1,7 +1,7 @@
 ﻿using System.Collections.Frozen;
 using System.Text.Json.Serialization;
 
-namespace SfaChatGraph.Server.RDF.Models
+namespace sfa_chat_graph.Server.RDF.Models
 {
 	public class SparqlStarResult
 	{

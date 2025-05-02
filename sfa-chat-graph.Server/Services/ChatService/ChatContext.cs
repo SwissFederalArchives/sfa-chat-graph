@@ -8,12 +8,29 @@ namespace sfa_chat_graph.Server.Services.ChatService
 	public class ChatContext : IChatActivity
 	{
 		public Guid ChatId { get; init; }
-		public List<ApiMessage> Created { get; init; } = new();
+		private List<ApiMessage> _created { get; init; } = new();
 		public ApiMessage[] History { get; init; }
+		private int _nextMessageIndex;
+
+		public IEnumerable<ApiMessage> Created => _created;
 
 		private readonly IEventSink<ChatEvent> _events;
 
-		public async Task NotifyActivityAsync(string activity, string? detail = null, string trace = null)
+		public virtual void AddUserMessage(ApiMessage message)
+		{
+			if (message.Role != ChatRole.User)
+				throw new ArgumentException($"Message role must be {ChatRole.User} but was {message.Role}");
+
+			AddCreated(message);
+		}
+
+		protected void AddCreated(ApiMessage message)
+		{
+			message.Index = _nextMessageIndex++;
+			_created.Add(message);
+		}
+
+		public async Task NotifyActivityAsync(string activity, string? detail, string? trace = null)
 		{
 			await _events?.PushAsync(ChatEvent.CActivity(ChatId, activity, detail, trace));
 		}
@@ -24,14 +41,15 @@ namespace sfa_chat_graph.Server.Services.ChatService
 		{
 			await _events?.PushAsync(ChatEvent.CDone(ChatId));
 		}
-	
-		public IEnumerable<ApiToolResponseMessage> ToolResponses => History.OfType<ApiToolResponseMessage>().Concat(Created.OfType<ApiToolResponseMessage>());
+
+		public IEnumerable<ApiToolResponseMessage> ToolResponses => History.OfType<ApiToolResponseMessage>().Concat(_created.OfType<ApiToolResponseMessage>());
 
 		public ChatContext(Guid chatId, IEventSink<ChatEvent> events, IEnumerable<ApiMessage> history)
 		{
 			this.History = history.ToArray();
 			this.ChatId =chatId;
 			_events = events;
+			_nextMessageIndex = history.Max(x => x.Index) + 1;
 		}
 	}
 }

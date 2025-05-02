@@ -1,6 +1,4 @@
 using OpenAI;
-using SfaChatGraph.Server.RDF;
-using SfaChatGraph.Server.RDF.Models;
 using System.ClientModel;
 using System.Collections.Frozen;
 using VDS.RDF.Storage.Management;

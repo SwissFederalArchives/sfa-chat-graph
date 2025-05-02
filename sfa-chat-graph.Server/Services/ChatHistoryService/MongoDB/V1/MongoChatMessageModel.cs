@@ -2,7 +2,6 @@
 using MongoDB.Bson.Serialization.Attributes;
 using sfa_chat_graph.Server.Models;
 using sfa_chat_graph.Server.Versioning;
-using SfaChatGraph.Server.Models;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 

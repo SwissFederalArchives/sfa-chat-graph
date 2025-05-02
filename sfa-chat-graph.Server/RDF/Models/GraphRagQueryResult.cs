@@ -1,6 +1,4 @@
-﻿using SfaChatGraph.Server.RDF.Models;
-
-namespace sfa_chat_graph.Server.RDF.Models
+﻿namespace sfa_chat_graph.Server.RDF.Models
 {
 	public class GraphRagQueryResult
 	{

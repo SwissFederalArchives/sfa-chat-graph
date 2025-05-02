@@ -1,6 +1,5 @@
 ﻿using MessagePack;
 using MessagePack.Formatters;
-using SfaChatGraph.Server.Utils;
 using VDS.Common.Collections.Enumerations;
 using VDS.RDF;
 using VDS.RDF.Query;

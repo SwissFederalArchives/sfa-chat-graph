@@ -1,6 +1,4 @@
-﻿using SfaChatGraph.Server.Utils;
-
-namespace sfa_chat_graph.Server.Utils
+﻿namespace sfa_chat_graph.Server.Utils
 {
 	public static class Queries
 	{

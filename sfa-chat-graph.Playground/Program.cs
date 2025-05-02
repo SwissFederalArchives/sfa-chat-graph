@@ -23,7 +23,6 @@ using sfa_chat_graph.Server.Services.ChatService;
 using sfa_chat_graph.Server.Utils;
 using sfa_chat_graph.Server.Utils.Json;
 using sfa_chat_graph.Server.Utils.MessagePack;
-using SfaChatGraph.Server.RDF;
 using System.Buffers.Text;
 using System.ComponentModel;
 using System.Reactive.Linq;
