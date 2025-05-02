@@ -5,7 +5,7 @@ using sfa_chat_graph.Server.Services.EventService;
 
 namespace sfa_chat_graph.Server.Services.ChatService
 {	
-	public class ChatContext
+	public class ChatContext : IChatActivity
 	{
 		public Guid ChatId { get; init; }
 		private List<ApiMessage> _created { get; init; } = new();
@@ -32,7 +32,7 @@ namespace sfa_chat_graph.Server.Services.ChatService
 
 		public async Task NotifyActivityAsync(string activity, string? detail)
 		{
-			await _events?.PushAsync(ChatEvent.CActivity(ChatId, activity, detail));
+			await _events?.PushAsync(ChatEvent.CActivity(ChatId, activity, detail, trace));
 		}
 
 		public Task NotifyActivityAsync(string activity) => NotifyActivityAsync(activity, null);

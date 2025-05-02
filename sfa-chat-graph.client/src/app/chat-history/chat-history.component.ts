@@ -41,7 +41,7 @@ export class ChatHistoryComponent implements AfterViewChecked, OnInit {
   public messages: DisplayMessage[] = [];
   public waitingForResponse: boolean = false;
   public message?: string = undefined;
-  public activity?: string = undefined;
+  public activity?: ApiChatEvent = undefined;
   public rolesEnum = ChatRole;
 
   public getError(): string | undefined { return this._error; }
@@ -72,7 +72,7 @@ export class ChatHistoryComponent implements AfterViewChecked, OnInit {
       if (event.Done) {
         this.activity = undefined;
       } else {
-        this.activity = event.Activity;
+        this.activity = event;
         this.setScrollToBottomFlag();
       }
     }
@@ -92,7 +92,7 @@ export class ChatHistoryComponent implements AfterViewChecked, OnInit {
   private async tryLoadHistory(): Promise<void> {
     if (this.waitingForResponse) return;
     this.waitingForResponse = true;
-    this.activity = "Fetching chat history"
+    this.activity = new ApiChatEvent("Fetching chat history");
     try {
       const history = await this._apiClient.getHistoryAsync(this.chatId);
       this.setChatHistory(history);

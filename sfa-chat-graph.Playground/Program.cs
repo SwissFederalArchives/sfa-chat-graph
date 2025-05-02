@@ -22,6 +22,7 @@ using sfa_chat_graph.Server.RDF.Endpoints;
 using sfa_chat_graph.Server.Utils;
 using sfa_chat_graph.Server.Utils.Json;
 using sfa_chat_graph.Server.Utils.MessagePack;
+using SfaChatGraph.Server.RDF;
 using System.Buffers.Text;
 using System.ComponentModel;
 using System.Reactive.Linq;
@@ -40,12 +41,11 @@ var loggerFactory = LoggerFactory.Create(builder =>
 	builder.SetMinimumLevel(LogLevel.Debug);
 });
 
-var mongoClient = new MongoClient("mongodb://localhost:27017/sfa-chat-graph-playground");
-var db = mongoClient.GetDatabase("sfa-chat-graph-playground");
+var client = new MongoClient("mongodb://localhost:27017");
+var database = client.GetDatabase("sfa-chat-graph-test");
 
 var endpoint = new StardogEndpoint("https://lindas.admin.ch/query");
-var rag = new GraphRag(endpoint, loggerFactory, db);
-var schema = await rag.GetSchemaAsync("https://lindas.admin.ch/sbb/nova");
+var rag = new GraphRag(endpoint, loggerFactory, database);
+var schema = await rag.GetSchemaAsync(null, "https://lindas.admin.ch/sfa/ais");
 Console.WriteLine(schema);
-
-await mongoClient.DropDatabaseAsync("sfa-chat-graph-playground");
+client.DropDatabase("sfa-chat-graph-test");

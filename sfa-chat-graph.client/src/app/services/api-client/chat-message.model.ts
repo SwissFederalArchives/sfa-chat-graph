@@ -17,10 +17,17 @@ export class ApiMessage {
 }
 
 export class ApiChatEvent {
+
+  constructor(activity: string, detail?: string) {
+    this.Activity = activity;
+    this.Detail = detail;
+  }
+
   public ChatId!: string;
   public TimeStamp!: Date;
   public Activity!: string;
   public Detail?: string;
+  public Trace?: string;
   public Done!: boolean;
 }
 

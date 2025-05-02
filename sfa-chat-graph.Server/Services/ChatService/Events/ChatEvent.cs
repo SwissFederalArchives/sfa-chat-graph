@@ -9,15 +9,17 @@ namespace sfa_chat_graph.Server.Services.ChatService.Events
 		public Guid ChatId { get; init; }
 		public string Activity { get; init; }
 		public string? Detail { get; init; }
+		public string? Trace { get; init; }
 		public bool Done { get; init; }
 
 
-		public static ChatEvent CActivity(Guid chatId, string activity, string? detail = null) => new ChatEvent
+		public static ChatEvent CActivity(Guid chatId, string activity, string? detail = null, string? trace = null) => new ChatEvent
 		{
 			ChatId = chatId,
 			Detail = detail,
 			Activity = activity,
-			Done = false	
+			Done = false,
+			Trace = trace
 		};
 
 		public static ChatEvent CDone(Guid chatId) => new ChatEvent

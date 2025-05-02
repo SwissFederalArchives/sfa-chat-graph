@@ -15,6 +15,7 @@ body {
     --app-text-color: #202020;
     --app-text-color-dark: #f0f0f0;
     --app-background-dark: #202020;
+    --app-table-border: #424242;
     --app-background-dark-accent: #252545;
     --app-control-background: #eaeaea;
     --app-control-hover: #d9d9d9;
@@ -33,12 +34,12 @@ pre[class*=language-]:after {
 }
 
 code {
-    font-family: 'Fira Code', monospace!important;
+    font-family: 'Fira Code', monospace !important;
 }
 
 @supports (font-variation-settings: normal) {
     code {
-        font-family: 'Fira Code VF', monospace!important;
+        font-family: 'Fira Code VF', monospace !important;
     }
 }
 
@@ -172,12 +173,19 @@ strong {
     border-radius: 0px 0px var(--app-corner-table-radius) 0px;
 }
 
-.table-container-bright table td,
+.table-container-bright table tr:not(:last-child) td,
 th {
     padding: .5em;
-    border-top: none;
-    border-bottom: #424242 1px solid;
-    border-right: #424242 1px solid;
+    border-bottom: var(--app-table-border) 1px solid;
+}
+
+.table-container-bright table tr td:not(:last-child),
+th:not(:last-child) {
+    border-right: var(--app-table-border) 1px solid;
+}
+
+.table-container-bright table tr td, th {
+    padding: 0.25em;
 }
 
 .table-container-bright table a {
@@ -191,53 +199,12 @@ th {
 
 .table-container-bright table {
     border-collapse: separate;
-    border: #424242 1px solid;
+    border: var(--app-table-border) 1px solid;
     border-radius: var(--app-corner-table-radius);
-    border-spacing: 0px;
-}
-
-.table-container table tr:first-child th:first-child {
-    border-radius: var(--app-corner-table-radius) 0px 0px 0px;
-}
-
-.table-container table tr:first-child th:last-child {
-    border-radius: 0px var(--app-corner-table-radius) 0px 0px;
-}
-
-.table-container table tr:last-child td:first-child {
-    border-radius: 0px 0px 0px var(--app-corner-table-radius);
-}
-
-.table-container table tr:last-child td:last-child {
-    border-radius: 0px 0px var(--app-corner-table-radius) 0px;
-}
-
-.table-container table td,
-th {
-    padding: .5em;
-    border-top: none;
-    border-bottom: #424242 1px solid;
-    border-right: #424242 1px solid;
-}
-
-.table-container table a {
-    color: var(--app-text-color-dark);
-}
-
-.table-container table th {
-    background-color: #303030;
-    font-weight: normal;
-}
-
-.table-container table {
-    border-collapse: separate;
-    border: #424242 1px solid;
-    border-radius: var(--app-corner-table-radius);
-    border-spacing: 0px;
 }
 
 .chat-message a {
-    color: var(--app-text-color-dark);
+    color: var(--app-text-color);
 }
 
 .tooltip {
@@ -373,6 +340,24 @@ th {
 
 .tooltip:hover:before {
     display: block;
+}
+
+.chat-message hr {
+    border: none;
+    border-top: 2px solid var(--app-text-color) !important;
+    margin: 1em 0em;
+}
+
+.chat-message h1,
+h2,
+h3,
+h4 {
+    margin-top: 1em;
+    margin-bottom: 0.5em;
+}
+
+.chat-message ul {
+    margin: 0.5em 0em;
 }
 
 @-webkit-keyframes fade-in-fwd {

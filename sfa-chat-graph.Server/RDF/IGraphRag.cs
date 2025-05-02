@@ -14,7 +14,7 @@ namespace sfa_chat_graph.Server.RDF
 
 		[FunctionCall("get_schema")]
 		[Description("Gets the schema of a graph")]
-		public Task<string> GetSchemaAsync([Description("The iri of the graph to load the schema of")] string graph, [Description("Whether to allow cached schemas, always allow caching if the user not explicitly asks for a refresh")] bool ignoreCached = false);
+		public Task<string> GetSchemaAsync([Context] IChatActivity activities, [Description("The iri of the graph to load the schema of")]string graph, [Description("Whether to allow cached schemas, always allow caching if the user not explicitly asks for a refresh")]bool ignoreCached = false);
 
 		[FunctionCall("query")]
 		[Description("Queries the database in sparql")]

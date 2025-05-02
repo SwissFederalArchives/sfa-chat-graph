@@ -2,7 +2,7 @@
     border-radius: .5em;
     border-top-left-radius: 0;
     /*background-color: var(--app-background-dark);*/
-    background: linear-gradient(210deg, rgb(194, 194, 194) 0%, rgb(194, 194, 205) 100%);
+    background: linear-gradient(210deg, rgb(194, 194, 194) 0%, rgb(190, 190, 211) 100%);
     color: var(--app-text-color);
     align-self: flex-start;
     text-align: left;
@@ -30,13 +30,13 @@
     border-radius: .5em;
     border-top-right-radius: 0%;
     /* background-color: var(--app-text-color-dark); */
-    background: linear-gradient(210deg, var(--app-container) 0%, var(--app-container-accent) 100%);
+    background: linear-gradient(210deg, var(--app-control-background) 0%, var(--app-container-accent) 100%);
     color: var(--app-text-color);
     align-self: flex-end;
     text-align: right;
 }
 
-.activity-content {
+.activity-header {
     display: flex;
     flex-direction: row;
     gap: 0.5em;
@@ -44,7 +44,16 @@
     align-items: center;
 }
 
-@keyframes spinBounce {
+.activity-spinner {
+    animation: spin-bounce 1.2s ease-in-out infinite;
+    display: inline-block;
+    transform-origin: center;
+    fill: var(--app-text-color);
+    width: 1.5em;
+    height: 1.5em;
+}
+
+@keyframes spin-bounce {
     0% {
         transform: rotate(0deg) scale(1);
     }
@@ -62,14 +71,7 @@
     }
 }
 
-.activity-spinner {
-    animation: spinBounce 1.2s ease-in-out infinite;
-    display: inline-block;
-    transform-origin: center;
-    fill: var(--app-text-color);
-    width: 1.5em;
-    height: 1.5em;
-}
+
 
 .chat-message {
     padding: 0em 1em;

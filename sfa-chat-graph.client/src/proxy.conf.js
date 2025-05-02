@@ -17,6 +17,14 @@ const PROXY_CONFIG = [
     ],
     target: "http://localhost:7200",
     secure: false
+  },
+  {
+    context: [
+      "/api/v1/events/**"
+    ],
+    target,
+    secure: false,
+    ws: true
   }
 ]
 

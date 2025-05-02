@@ -1,5 +1,7 @@
 ﻿using J2N.Collections.Generic.Extensions;
+using MongoDB.Bson;
 using MongoDB.Driver;
+using sfa_chat_graph.Server.Services.ChatService;
 using sfa_chat_graph.Server.Utils;
 using sfa_chat_graph.Server.Versioning;
 using System.Collections.Frozen;
@@ -9,6 +11,7 @@ using VDS.Common.Collections.Enumerations;
 using VDS.RDF;
 using VDS.RDF.Parsing;
 using VDS.RDF.Query;
+using VDS.RDF.Query.Algebra;
 using VDS.RDF.Query.Patterns;
 
 namespace sfa_chat_graph.Server.RDF
@@ -83,14 +86,14 @@ namespace sfa_chat_graph.Server.RDF
 			} while (page.Count >= limit);
 
 
-			var dict = schemaValues.Results.GroupBy(x => ((IUriNode)x["p"]).Uri.AbsoluteUri, x => SparqlResultFormatter.FormatSchemaNode(x["ot"]))
+			var dict = schemaValues.Results.GroupBy(x => ((IUriNode)x["p"]).Uri.AbsoluteUri, x => SparqlResultFormatter.FormatSchemaNode(x["type"]))
 				.Where(x => x.Key != "http://www.w3.org/1999/02/22-rdf-syntax-ns#type")
 				.ToDictionary(x => x.Key, x => x.ToFrozenSet());
 
 			return FormatClassProperties(dict);
 		}
 
-		public async Task<string> GuessClassSchemaAsync(string graph, string className, int countObjects, int countGuesses, bool randomOffsets = true, int stoppAfter = 50000)
+		public async Task<string> GuessClassSchemaAsync(IChatActivity activities, string graph, string className, int countObjects, int countGuesses, bool randomOffsets = true, int stoppAfter = 50000)
 		{
 			var result = new Dictionary<string, HashSet<string>>();
 			var limit = 10000;
@@ -125,30 +128,43 @@ namespace sfa_chat_graph.Server.RDF
 						result.Add(predUriNode.Uri.AbsoluteUri, objectTypeSet);
 					}
 
-					var objectType = SparqlResultFormatter.FormatSchemaNode(description["ot"]);
+					var objectType = SparqlResultFormatter.FormatSchemaNode(description["type"]);
 					if (objectTypeSet.Add(objectType))
 						lastNewProperty = 0;
 
 				}
 
 				countGuesses -= limit;
+				activities?.NotifyActivityAsync($"Guessed properties for {className}", $"Found {result.Count} properties total, {countGuesses} are left, early stopp after no new properties {lastNewProperty}/{stoppAfter}");
 			}
 
 			return FormatClassProperties(result);
 		}
 
-		public async Task<string> GetSchemaAsync(string graph, bool ignoreCached = false)
+		public async Task<string> GetSchemaAsync(IChatActivity activities, string graph, bool ignoreCached = false)
 		{
 			var cache = ignoreCached ? null : await _schemas.Find(x => x.Graph == graph && x.Endpoint == _endpoint.Name).FirstOrDefaultAsync();
 			if (cache == null)
 			{
+				await activities?.NotifyActivityAsync("Fetching schema classes");
 				var sb = new StringBuilder();
 				try
 				{
 					var classNames = await GetClassNamesAsync(graph).ToArrayAsync();
 					foreach (var (className, count) in classNames)
 					{
-						var schema = await (count > 50000 ? GuessClassSchemaAsync(graph, className, count, (int)(count*0.1), true) : GetClassSchemaAsync(graph, className));
+						string schema = null;
+						if (count> 50000)
+						{
+							await activities?.NotifyActivityAsync($"Guessing schema for {className}", $"Schema for {className} has {count} object instances, querying all instance to generate a schema is too slow and strainous for the database, schema is guessed by looking a 10% of all instance at random");
+							schema = await GuessClassSchemaAsync(activities, graph, className, count, (int)(count*0.1), true, 50000);
+						}
+						else
+						{
+							await activities?.NotifyActivityAsync($"Fetching schema for {className}");
+							schema = await GetClassSchemaAsync(graph, className);
+						}
+
 						sb.AppendLine($"<{className}> [\n{schema}\n]");
 						sb.AppendLine();
 					}
@@ -166,7 +182,14 @@ namespace sfa_chat_graph.Server.RDF
 					Endpoint = _endpoint.Name,
 				};
 
-				await _schemas.ReplaceOneAsync(x => x.Graph == graph && x.Endpoint == _endpoint.Name, cache, new ReplaceOptions { IsUpsert = true });
+				var update = Builders<SchemaCache>.Update
+					.Set(x => x.Schema, cache.Schema)
+					.SetOnInsert(x => x.Graph, graph)
+					.SetOnInsert(x => x.Id, ObjectId.GenerateNewId())
+					.SetOnInsert(x => x.Endpoint, _endpoint.Name);
+
+				cache = await _schemas.FindOneAndUpdateAsync(x => x.Graph == graph && x.Endpoint == _endpoint.Name, 
+					update, new FindOneAndUpdateOptions<SchemaCache> { ReturnDocument = ReturnDocument.After, IsUpsert = true });
 			}
 
 			return cache.Schema;
@@ -268,21 +291,19 @@ namespace sfa_chat_graph.Server.RDF
 
 		public async Task<string[]> ListGraphsAsync(bool ignoreCached = false)
 		{
-
 			var cache = ignoreCached ? null : await _endpoints.Find(x => x.Endpoint == _endpoint.Name).FirstOrDefaultAsync();
 			if (cache == null)
 			{
 				var res = await _endpoint.QueryAsync(Queries.ListGraphsQuery());
 				var graphs = res.Select(x => x["g"]).OfType<UriNode>().Select(x => x.Uri.ToString()).ToArray();
-				cache = new EndpointCache
-				{
-					Endpoint = _endpoint.Name,
-					Graphs = graphs,
-				};
 
-				await _endpoints.ReplaceOneAsync(x => x.Endpoint == _endpoint.Name, cache, new ReplaceOptions { IsUpsert = true });
+				var update = Builders<EndpointCache>.Update
+					.Set(x => x.Graphs, graphs)
+					.SetOnInsert(x => x.Id, ObjectId.GenerateNewId())
+					.SetOnInsert(x => x.Endpoint, _endpoint.Name);
+
+				cache = await _endpoints.FindOneAndUpdateAsync(x => x.Endpoint == _endpoint.Name, update, new FindOneAndUpdateOptions<EndpointCache> { IsUpsert = true, ReturnDocument = ReturnDocument.After });
 			}
-
 
 			return cache.Graphs;
 		}
