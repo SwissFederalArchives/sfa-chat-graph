@@ -1,6 +1,8 @@
-﻿namespace sfa_chat_graph.Server.Config
+﻿using sfa_chat_graph.Server.Utils.ServiceCollection;
+
+namespace sfa_chat_graph.Server.Config
 {
-	public class AiConfig
+	public class AiConfig : IServiceConfig
 	{
 		public string Implementation { get; set; } = "OpenAI";
 		public string Model { get; set; } = "gpt-4o";

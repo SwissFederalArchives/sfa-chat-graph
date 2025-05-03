@@ -3,6 +3,7 @@ using Lucene.Net.Util;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using OpenAI.Chat;
+using sfa_chat_graph.Server.Config;
 using sfa_chat_graph.Server.Models;
 using sfa_chat_graph.Server.RDF;
 using sfa_chat_graph.Server.RDF.Models;
@@ -11,6 +12,7 @@ using sfa_chat_graph.Server.Services.ChatService;
 using sfa_chat_graph.Server.Services.ChatService.Events;
 using sfa_chat_graph.Server.Services.EventService;
 using sfa_chat_graph.Server.Utils;
+using sfa_chat_graph.Server.Utils.ServiceCollection;
 using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
@@ -27,18 +29,20 @@ namespace sfa_chat_graph.Server.Controllers
 	public class RdfController : ControllerBase
 	{
 		private readonly IChatHistoryService _chatHistoryService;
+		private readonly IServiceProvider _serviceProvider;
 		private readonly IChatService _chatService;
 		private readonly IGraphRag _graphDb;
 		private readonly ChatServiceEventService _eventService;
 		private ILogger _logger;
 
-		public RdfController(IGraphRag graphDb, IChatService chatService, ILoggerFactory loggerFactory, IChatHistoryService chatHistoryService, ChatServiceEventService eventService)
+		public RdfController(IGraphRag graphDb, IChatService chatService, ILoggerFactory loggerFactory, IChatHistoryService chatHistoryService, ChatServiceEventService eventService, IServiceProvider serviceProvider = null)
 		{
 			_graphDb=graphDb;
 			_logger=loggerFactory.CreateLogger<RdfController>();
 			_chatService = chatService;
 			_chatHistoryService=chatHistoryService;
 			_eventService=eventService;
+			_serviceProvider=serviceProvider;
 		}
 
 		[HttpGet("describe")]
@@ -80,6 +84,13 @@ namespace sfa_chat_graph.Server.Controllers
 		[ProducesResponseType<ApiMessage[]>(StatusCodes.Status200OK)]
 		public async Task<IActionResult> ChatAsync([FromBody] ApiChatRequest chat, Guid id, [FromQuery] Guid? eventChannel)
 		{
+			var service = _chatService;
+			if (chat.AiConfig != null)
+				service = _serviceProvider.GetFromConfig<IChatService, AiConfig>(chat.AiConfig);
+
+			if(service == null)
+				return NotFound($"No service found for {chat.AiConfig.Implementation}");
+
 			IEventSink<ChatEvent> sink = null;
 			if (eventChannel.HasValue)
 				sink = _eventService.GetChannel(eventChannel.Value);
@@ -87,9 +98,9 @@ namespace sfa_chat_graph.Server.Controllers
 			chat.Message.TimeStamp = DateTime.UtcNow;
 			await sink?.PushAsync(ChatEvent.CActivity(id, "Loading chat history"));
 			var history = await _chatHistoryService.GetChatHistoryAsync(id);
-			var ctx = _chatService.CreateContext(id, sink, history.Messages);
+			var ctx = service.CreateContext(id, sink, history.Messages);
 			ctx.AddUserMessage(chat.Message);
-			var response = await _chatService.CompleteAsync(ctx, chat.Temperature, chat.MaxErrors);
+			var response = await service.CompleteAsync(ctx, chat.Temperature, chat.MaxErrors);
 			if (response.Success == false)
 				return StatusCode(500, response.Error);
 
