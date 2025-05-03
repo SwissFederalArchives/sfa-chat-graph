@@ -86,7 +86,7 @@ namespace sfa_chat_graph.Server.RDF
 			} while (page.Count >= limit);
 
 
-			var dict = schemaValues.Results.GroupBy(x => ((IUriNode)x["p"]).Uri.AbsoluteUri, x => SparqlResultFormatter.FormatSchemaNode(x["type"]))
+			var dict = schemaValues.Results.GroupBy(x => ((IUriNode)x["p"]).Uri.AbsoluteUri, x => LLMFormatter.FormatSchemaNode(x["type"]))
 				.Where(x => x.Key != "http://www.w3.org/1999/02/22-rdf-syntax-ns#type")
 				.ToDictionary(x => x.Key, x => x.ToFrozenSet());
 
@@ -128,7 +128,7 @@ namespace sfa_chat_graph.Server.RDF
 						result.Add(predUriNode.Uri.AbsoluteUri, objectTypeSet);
 					}
 
-					var objectType = SparqlResultFormatter.FormatSchemaNode(description["type"]);
+					var objectType = LLMFormatter.FormatSchemaNode(description["type"]);
 					if (objectTypeSet.Add(objectType))
 						lastNewProperty = 0;
 

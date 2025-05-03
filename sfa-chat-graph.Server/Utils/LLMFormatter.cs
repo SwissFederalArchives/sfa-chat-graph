@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using AwosFramework.ApiClients.Jupyter.Utils;
+using Microsoft.EntityFrameworkCore;
+using sfa_chat_graph.Server.Services.CodeExecutionService;
 using sfa_chat_graph.Server.Utils;
 using System.Text;
 using VDS.Common.Collections.Enumerations;
@@ -7,7 +9,7 @@ using VDS.RDF.Query;
 
 namespace sfa_chat_graph.Server.Utils
 {
-	public class SparqlResultFormatter
+	public class LLMFormatter
 	{
 		private static string FormatSchemaTriple(ISparqlResult result)
 		{
@@ -102,6 +104,49 @@ namespace sfa_chat_graph.Server.Utils
 			}
 
 			return builder.ToString();
+		}
+
+		public static string FormatCodeResponse(CodeExecutionResult result)
+		{
+			if (result.Success == false)
+			{
+				return $"The code yielded Errors:\n{result.Error}";
+			}
+			else
+			{
+				var builder = new StringBuilder();
+				builder.AppendLine("The code yielded the following results:");
+				foreach (var (isLast, fragment) in result.Fragments.IsLast())
+				{
+					builder.Append($"Fragment: {fragment.Id}");
+					if (string.IsNullOrEmpty(fragment.Description) == false)
+					{
+						builder.Append("Description: ");
+						builder.AppendLine(fragment.Description);
+					}
+
+					foreach (var (key, value) in fragment.BinaryData)
+					{
+						if (key.StartsWith("text/") || key.Equals("application/json", StringComparison.OrdinalIgnoreCase))
+						{
+							builder.Append("Data[");
+							builder.Append(key);
+							builder.AppendLine("]:");
+							builder.AppendLine(value.Ellipsis(512, "result cut off after 512 chars"));
+						}
+						else
+						{
+							builder.AppendLine($"BinaryData[{key}]: tool-data://{fragment.BinaryIDs[key]}");
+						}
+					}
+
+					if (isLast == false)
+						builder.AppendLine();
+
+				}
+
+				return builder.ToString();
+			}
 		}
 
 		public static string ToLLMSchema(SparqlResultSet resultSet)

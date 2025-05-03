@@ -26,7 +26,7 @@ namespace sfa_chat_graph.Server.Services.ChatService
 				return new CodeExecutionResult { Success = false, Error = $"Not all tool data was found. Following calls are missing or have no data {string.Join(",", missing)}" };
 			}
 
-			var files = additionalFiles.Select(x => new CodeExecutionData {  IsBinary = false, Data = SparqlResultFormatter.ToCSV(x.GraphToolData.DataGraph), Name = $"{x.ToolCallId}.csv" }).ToArray();
+			var files = additionalFiles.Select(x => new CodeExecutionData {  IsBinary = false, Data = LLMFormatter.ToCSV(x.GraphToolData.DataGraph), Name = $"{x.ToolCallId}.csv" }).ToArray();
 			return await _executionService.ExecuteCodeAsync(code, files, CancellationToken.None, chatContext.NotifyActivityAsync);
 		}
 	}
