@@ -6,7 +6,6 @@ using OpenAI.Chat;
 using sfa_chat_graph.Server.Config;
 using sfa_chat_graph.Server.Models;
 using sfa_chat_graph.Server.RDF;
-using sfa_chat_graph.Server.RDF.Models;
 using sfa_chat_graph.Server.Services.ChatHistoryService;
 using sfa_chat_graph.Server.Services.ChatService;
 using sfa_chat_graph.Server.Services.ChatService.Events;
@@ -46,7 +45,7 @@ namespace sfa_chat_graph.Server.Controllers
 		}
 
 		[HttpGet("describe")]
-		[ProducesResponseType<SparqlStarResult>(StatusCodes.Status200OK)]
+		[ProducesResponseType(StatusCodes.Status200OK)]
 		public async Task<IActionResult> DescribeAsync([FromQuery] string subject)
 		{
 			var graph = await _graphDb.DescribeAsync(subject);

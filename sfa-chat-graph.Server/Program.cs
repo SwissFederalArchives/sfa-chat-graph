@@ -69,7 +69,6 @@ builder.Services.AddScoped<IChatHistoryService, CachedChatHistoryService>();
 builder.Services.AddControllers()
 	.AddJsonOptions(opts =>
 	{
-		opts.JsonSerializerOptions.Converters.Add(new SparqlStarConverter());
 		opts.JsonSerializerOptions.Converters.Add(new SparqlResultSetConverter());
 		opts.JsonSerializerOptions.Converters.Add(new ApiMessageConverter());
 		opts.JsonSerializerOptions.Converters.Add(new GraphConverter<Graph>());
