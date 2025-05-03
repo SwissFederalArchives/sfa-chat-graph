@@ -13,15 +13,15 @@ export class ApiClientService {
   constructor(private _httpClient: HttpClient) { }
 
   public async describeAsync(iri: string): Promise<SparqlStarResult> {
-    return await firstValueFrom(this._httpClient.get<SparqlStarResult>(`/api/v1/rdf/describe?subject=${encodeURIComponent(iri)}`));
+    return await firstValueFrom(this._httpClient.get<SparqlStarResult>(`/api/v1/chat/describe?subject=${encodeURIComponent(iri)}`));
   }
 
   public async getHistoryAsync(id: string, loadBlobs: boolean = false): Promise<ApiMessage[]> {
-    return await firstValueFrom(this._httpClient.get<ApiMessage[]>(`/api/v1/rdf/history/${id}?loadBlobs=${loadBlobs}`));
+    return await firstValueFrom(this._httpClient.get<ApiMessage[]>(`/api/v1/chat/history/${id}?loadBlobs=${loadBlobs}`));
   }
 
   public async chatAsync(id: string, request: ChatRequest, eventChannel?: string): Promise<ApiMessage[]> {
-    let endpoint = `/api/v1/rdf/chat/${id}`;
+    let endpoint = `/api/v1/chat/complete/${id}`;
     if (eventChannel)
       endpoint += `?eventChannel=${eventChannel}`;
 

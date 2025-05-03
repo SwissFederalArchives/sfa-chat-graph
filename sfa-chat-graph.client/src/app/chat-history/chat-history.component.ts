@@ -173,7 +173,7 @@ export class ChatHistoryComponent implements AfterViewChecked, OnInit {
         const content = message.content!.replaceAll(URL_SUBST_PATTERN, (match, id) => {
           const data = this._toolData.get(id);
           if (data && data.blobLoaded == false) {
-            return `/api/v1/rdf/tool-data/${data.id}`;
+            return `/api/v1/chat/tool-data/${data.id}`;
           } else if (data && data.blobLoaded && data.mimeType && data.isBase64Content) {
             return `data:${data.mimeType};base64,${data.content}`
           }

@@ -24,8 +24,8 @@ using VDS.RDF.Writing.Formatting;
 namespace SfaChatGraph.Server.Controllers
 {
 	[ApiController]
-	[Route("/api/v1/rdf")]
-	public class RdfController : ControllerBase
+	[Route("/api/v1/chat")]
+	public class ChatController : ControllerBase
 	{
 		private readonly IChatHistoryService _chatHistoryService;
 		private readonly IServiceProvider _serviceProvider;
@@ -34,10 +34,10 @@ namespace SfaChatGraph.Server.Controllers
 		private readonly ChatServiceEventService _eventService;
 		private ILogger _logger;
 
-		public RdfController(IGraphRag graphDb, IChatService chatService, ILoggerFactory loggerFactory, IChatHistoryService chatHistoryService, ChatServiceEventService eventService, IServiceProvider serviceProvider = null)
+		public ChatController(IGraphRag graphDb, IChatService chatService, ILoggerFactory loggerFactory, IChatHistoryService chatHistoryService, ChatServiceEventService eventService, IServiceProvider serviceProvider = null)
 		{
 			_graphDb=graphDb;
-			_logger=loggerFactory.CreateLogger<RdfController>();
+			_logger=loggerFactory.CreateLogger<ChatController>();
 			_chatService = chatService;
 			_chatHistoryService=chatHistoryService;
 			_eventService=eventService;
@@ -79,7 +79,7 @@ namespace SfaChatGraph.Server.Controllers
 			return data;
 		}
 
-		[HttpPost("chat/{id}")]
+		[HttpPost("complete/{id}")]
 		[ProducesResponseType<ApiMessage[]>(StatusCodes.Status200OK)]
 		public async Task<IActionResult> ChatAsync([FromBody] ApiChatRequest chat, Guid id, [FromQuery] Guid? eventChannel)
 		{

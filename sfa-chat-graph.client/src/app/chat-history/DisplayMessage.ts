@@ -34,7 +34,7 @@ export class DisplayMessage {
         const data = code.data![j];
         let content = data.content;
         if(data.blobLoaded == false)
-          content = '/api/v1/rdf/tool-data/' + data.id;
+          content = '/api/v1/chat/tool-data/' + data.id;
 
         if (content) {
           const type = mime.getExtension(data.mimeType!);
