@@ -1,4 +1,4 @@
-﻿namespace sfa_chat_graph.Server.Services.EventService
+﻿namespace SfaChatGraph.Server.Services.EventService
 {
 	public class DummyChannel<TChannel, TEvent, TTarget, TMessage> : IEventChannel<TChannel, TEvent, TTarget, TMessage> where TEvent : IEvent where TTarget : IEventTarget<TMessage>
 	{

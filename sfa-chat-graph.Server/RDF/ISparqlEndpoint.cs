@@ -1,7 +1,7 @@
 ﻿using VDS.RDF;
 using VDS.RDF.Query;
 
-namespace sfa_chat_graph.Server.RDF
+namespace SfaChatGraph.Server.RDF
 {
 	public interface ISparqlEndpoint
 	{

@@ -3,15 +3,15 @@ using Lucene.Net.Util;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using OpenAI.Chat;
-using sfa_chat_graph.Server.Config;
-using sfa_chat_graph.Server.Models;
-using sfa_chat_graph.Server.RDF;
-using sfa_chat_graph.Server.Services.ChatHistoryService;
-using sfa_chat_graph.Server.Services.ChatService;
-using sfa_chat_graph.Server.Services.ChatService.Events;
-using sfa_chat_graph.Server.Services.EventService;
-using sfa_chat_graph.Server.Utils;
-using sfa_chat_graph.Server.Utils.ServiceCollection;
+using SfaChatGraph.Server.Config;
+using SfaChatGraph.Server.Models;
+using SfaChatGraph.Server.RDF;
+using SfaChatGraph.Server.Services.ChatHistoryService;
+using SfaChatGraph.Server.Services.ChatService;
+using SfaChatGraph.Server.Services.ChatService.Events;
+using SfaChatGraph.Server.Services.EventService;
+using SfaChatGraph.Server.Utils;
+using SfaChatGraph.Server.Utils.ServiceCollection;
 using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
@@ -21,7 +21,7 @@ using VDS.RDF.Query;
 using VDS.RDF.Query.Datasets;
 using VDS.RDF.Writing.Formatting;
 
-namespace sfa_chat_graph.Server.Controllers
+namespace SfaChatGraph.Server.Controllers
 {
 	[ApiController]
 	[Route("/api/v1/rdf")]

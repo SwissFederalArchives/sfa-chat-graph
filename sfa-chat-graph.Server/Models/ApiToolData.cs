@@ -2,7 +2,7 @@
 using MongoDB.Bson.Serialization.Attributes;
 using MongoDB.Bson;
 
-namespace sfa_chat_graph.Server.Models
+namespace SfaChatGraph.Server.Models
 {
 	[MessagePackObject]
 	public class ApiToolData

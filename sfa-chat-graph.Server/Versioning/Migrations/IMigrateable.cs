@@ -1,6 +1,6 @@
 ﻿using System.Collections.Frozen;
 
-namespace sfa_chat_graph.Server.Versioning.Migrations
+namespace SfaChatGraph.Server.Versioning.Migrations
 {
 	public interface IMigrateable
 	{

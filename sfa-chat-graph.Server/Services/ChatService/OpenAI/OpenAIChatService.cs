@@ -3,15 +3,15 @@ using Lucene.Net.Util;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Writers;
 using OpenAI.Chat;
-using sfa_chat_graph.Server.Config;
-using sfa_chat_graph.Server.Models;
-using sfa_chat_graph.Server.RDF;
-using sfa_chat_graph.Server.Services.ChatService.Abstract;
-using sfa_chat_graph.Server.Services.ChatService.Events;
-using sfa_chat_graph.Server.Services.EventService;
-using sfa_chat_graph.Server.Utils.ServiceCollection;
+using SfaChatGraph.Server.Config;
+using SfaChatGraph.Server.Models;
+using SfaChatGraph.Server.RDF;
+using SfaChatGraph.Server.Services.ChatService.Abstract;
+using SfaChatGraph.Server.Services.ChatService.Events;
+using SfaChatGraph.Server.Services.EventService;
+using SfaChatGraph.Server.Utils.ServiceCollection;
 
-namespace sfa_chat_graph.Server.Services.ChatService.OpenAI
+namespace SfaChatGraph.Server.Services.ChatService.OpenAI
 {
 	[ServiceImplementation<IChatService, AiConfig>(Key = "OpenAI", Lifetime = ServiceLifetime.Scoped)]
 	public class OpenAIChatService : AbstractChatService<ChatMessage, OpenAIChatContext, ChatCompletionOptions>

@@ -7,13 +7,13 @@ using AwosFramework.ApiClients.Jupyter.WebSocket.Jupyter.Models.Messages.IOPub;
 using AwosFramework.ApiClients.Jupyter.WebSocket.Terminal.Protocol;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using sfa_chat_graph.Server.Services.ChatHistoryService;
-using sfa_chat_graph.Server.Services.ChatService.Events;
-using sfa_chat_graph.Server.Services.EventService;
-using sfa_chat_graph.Server.Utils;
+using SfaChatGraph.Server.Services.ChatHistoryService;
+using SfaChatGraph.Server.Services.ChatService.Events;
+using SfaChatGraph.Server.Services.EventService;
+using SfaChatGraph.Server.Utils;
 using System.Reactive.Linq;
 
-namespace sfa_chat_graph.Server.Services.CodeExecutionService.Jupyter
+namespace SfaChatGraph.Server.Services.CodeExecutionService.Jupyter
 {
 	public class JupyterCodeExecutionService : IDisposable, ICodeExecutionService
 	{

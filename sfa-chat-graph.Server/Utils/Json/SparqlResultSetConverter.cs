@@ -8,7 +8,7 @@ using VDS.RDF.Parsing;
 using VDS.RDF.Query;
 using VDS.RDF.Writing;
 
-namespace sfa_chat_graph.Server.Utils.Json
+namespace SfaChatGraph.Server.Utils.Json
 {
 	public class SparqlResultSetConverter : JsonConverter<SparqlResultSet>
 	{

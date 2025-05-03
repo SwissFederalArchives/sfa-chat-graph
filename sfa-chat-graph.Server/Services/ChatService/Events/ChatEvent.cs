@@ -1,6 +1,6 @@
-﻿using sfa_chat_graph.Server.Services.EventService;
+﻿using SfaChatGraph.Server.Services.EventService;
 
-namespace sfa_chat_graph.Server.Services.ChatService.Events
+namespace SfaChatGraph.Server.Services.ChatService.Events
 {
 	public class ChatEvent : IEvent
 	{

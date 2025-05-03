@@ -1,10 +1,10 @@
 ﻿using MessagePack;
 using MongoDB.Bson.Serialization.Attributes;
-using sfa_chat_graph.Server.Utils.Bson;
+using SfaChatGraph.Server.Utils.Bson;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace sfa_chat_graph.Server.Models
+namespace SfaChatGraph.Server.Models
 {
 	[MessagePackObject]
 	public class ApiToolCall

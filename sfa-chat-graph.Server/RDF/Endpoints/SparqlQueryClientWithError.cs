@@ -6,7 +6,7 @@ using VDS.RDF.Parsing;
 using VDS.RDF.Parsing.Handlers;
 using VDS.RDF.Query;
 
-namespace sfa_chat_graph.Server.RDF.Endpoints
+namespace SfaChatGraph.Server.RDF.Endpoints
 {
 	public class SparqlQueryClientWithError<TErr> : SparqlQueryClient
 	{

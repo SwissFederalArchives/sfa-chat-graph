@@ -1,6 +1,6 @@
-﻿using sfa_chat_graph.Server.Models;
+﻿using SfaChatGraph.Server.Models;
 
-namespace sfa_chat_graph.Server.Services.ChatService.Abstract
+namespace SfaChatGraph.Server.Services.ChatService.Abstract
 {
 	public class Message<TMessage>
 	{

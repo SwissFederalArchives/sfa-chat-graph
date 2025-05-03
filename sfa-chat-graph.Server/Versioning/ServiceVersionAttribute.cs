@@ -1,4 +1,4 @@
-﻿namespace sfa_chat_graph.Server.Versioning
+﻿namespace SfaChatGraph.Server.Versioning
 {
 
 	[AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]

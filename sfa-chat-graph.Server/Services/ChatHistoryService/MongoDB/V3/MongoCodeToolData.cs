@@ -1,6 +1,6 @@
-﻿using sfa_chat_graph.Server.Models;
+﻿using SfaChatGraph.Server.Models;
 
-namespace sfa_chat_graph.Server.Services.ChatHistoryService.MongoDB.V3
+namespace SfaChatGraph.Server.Services.ChatHistoryService.MongoDB.V3
 {
 	public class MongoCodeToolData
 	{

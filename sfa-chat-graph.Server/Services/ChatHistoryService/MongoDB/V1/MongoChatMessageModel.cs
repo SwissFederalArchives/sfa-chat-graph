@@ -1,11 +1,11 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
-using sfa_chat_graph.Server.Models;
-using sfa_chat_graph.Server.Versioning;
+using SfaChatGraph.Server.Models;
+using SfaChatGraph.Server.Versioning;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 
-namespace sfa_chat_graph.Server.Services.ChatHistoryService.MongoDB.V1
+namespace SfaChatGraph.Server.Services.ChatHistoryService.MongoDB.V1
 {
 	[Obsolete("This class is deprecated. Use MongoChatMessageModel in V2 instead.")]
 	public class MongoChatMessageModel

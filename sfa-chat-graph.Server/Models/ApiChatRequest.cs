@@ -1,6 +1,6 @@
-﻿using sfa_chat_graph.Server.Config;
+﻿using SfaChatGraph.Server.Config;
 
-namespace sfa_chat_graph.Server.Models
+namespace SfaChatGraph.Server.Models
 {
 	public class ApiChatRequest
 	{

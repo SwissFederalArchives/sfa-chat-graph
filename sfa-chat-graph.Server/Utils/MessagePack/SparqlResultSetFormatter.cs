@@ -5,7 +5,7 @@ using VDS.RDF;
 using VDS.RDF.Query;
 using VDS.RDF.Query.Algebra;
 
-namespace sfa_chat_graph.Server.Utils.MessagePack
+namespace SfaChatGraph.Server.Utils.MessagePack
 {
 	public class SparqlResultSetFormatter : IMessagePackFormatter<SparqlResultSet>
 	{

@@ -1,8 +1,8 @@
-﻿using sfa_chat_graph.Server.Versioning.Migrations;
+﻿using SfaChatGraph.Server.Versioning.Migrations;
 using System.Collections.Frozen;
 using VDS.RDF.Query.Algebra;
 
-namespace sfa_chat_graph.Server.Services.ChatHistoryService.MongoDB
+namespace SfaChatGraph.Server.Services.ChatHistoryService.MongoDB
 {
 	public abstract class MongoDbHistoryServiceBase : IMigrateable<IMigrateableChatHistoryService>, IMigrateableChatHistoryService
 	{

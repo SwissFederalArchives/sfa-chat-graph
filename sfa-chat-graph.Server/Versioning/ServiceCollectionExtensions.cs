@@ -1,6 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
 
-namespace sfa_chat_graph.Server.Versioning
+namespace SfaChatGraph.Server.Versioning
 {
 	public static class ServiceCollectionExtensions
 	{

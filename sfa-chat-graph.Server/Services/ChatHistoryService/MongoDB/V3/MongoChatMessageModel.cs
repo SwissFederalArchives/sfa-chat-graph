@@ -1,10 +1,10 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
-using sfa_chat_graph.Server.Models;
+using SfaChatGraph.Server.Models;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 
-namespace sfa_chat_graph.Server.Services.ChatHistoryService.MongoDB.V3
+namespace SfaChatGraph.Server.Services.ChatHistoryService.MongoDB.V3
 {
 	public class MongoChatMessageModel
 	{

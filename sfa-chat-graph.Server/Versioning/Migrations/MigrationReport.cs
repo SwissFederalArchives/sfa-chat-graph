@@ -1,7 +1,7 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
-namespace sfa_chat_graph.Server.Versioning.Migrations
+namespace SfaChatGraph.Server.Versioning.Migrations
 {
 	public class MigrationReport
 	{

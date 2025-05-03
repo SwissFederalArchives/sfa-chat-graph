@@ -1,11 +1,11 @@
 ﻿using AwosFramework.Generators.FunctionCalling;
 using Json.Schema.Generation.Intents;
-using sfa_chat_graph.Server.Models;
-using sfa_chat_graph.Server.Services.CodeExecutionService;
-using sfa_chat_graph.Server.Utils;
+using SfaChatGraph.Server.Models;
+using SfaChatGraph.Server.Services.CodeExecutionService;
+using SfaChatGraph.Server.Utils;
 using System.ComponentModel;
 
-namespace sfa_chat_graph.Server.Services.ChatService
+namespace SfaChatGraph.Server.Services.ChatService
 {
 	public class ChatCodeService
 	{

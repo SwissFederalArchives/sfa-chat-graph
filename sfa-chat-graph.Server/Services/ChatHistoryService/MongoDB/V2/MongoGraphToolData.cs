@@ -1,10 +1,10 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
-using sfa_chat_graph.Server.Models;
-using sfa_chat_graph.Server.Utils.Bson;
+using SfaChatGraph.Server.Models;
+using SfaChatGraph.Server.Utils.Bson;
 using VDS.RDF.Query;
 
-namespace sfa_chat_graph.Server.Services.ChatHistoryService.MongoDB.V2
+namespace SfaChatGraph.Server.Services.ChatHistoryService.MongoDB.V2
 {
 	public class MongoGraphToolData
 	{

@@ -1,6 +1,6 @@
 ﻿using VDS.RDF.Query;
 
-namespace sfa_chat_graph.Server.Models
+namespace SfaChatGraph.Server.Models
 {
 	public class ApiQueryResponse
 	{

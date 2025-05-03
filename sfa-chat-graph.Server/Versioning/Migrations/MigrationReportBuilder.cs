@@ -1,6 +1,6 @@
 ﻿using MongoDB.Bson;
 
-namespace sfa_chat_graph.Server.Versioning.Migrations
+namespace SfaChatGraph.Server.Versioning.Migrations
 {
 	public class MigrationReportBuilder
 	{

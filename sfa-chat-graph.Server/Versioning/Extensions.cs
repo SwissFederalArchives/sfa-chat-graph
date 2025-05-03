@@ -1,7 +1,7 @@
 ﻿using MongoDB.Driver;
 using MongoDB.Driver.GridFS;
 
-namespace sfa_chat_graph.Server.Versioning
+namespace SfaChatGraph.Server.Versioning
 {
 	public static class Extensions
 	{

@@ -1,10 +1,10 @@
 ﻿using Microsoft.Extensions.Options;
 using Microsoft.IO;
-using sfa_chat_graph.Server.Utils.ServiceCollection;
+using SfaChatGraph.Server.Utils.ServiceCollection;
 using System.Buffers;
 using System.Collections.Concurrent;
 
-namespace sfa_chat_graph.Server.Services.Cache
+namespace SfaChatGraph.Server.Services.Cache
 {
 	[ServiceImplementation(typeof(IAppendableCache<,>), typeof(AppendableCacheOptions), ServiceLifetime.Singleton, Key = "InMemory")]
 	public class InMemoryAppendableCache<TKey, TValue> : IAppendableCache<TKey, TValue>, IHostedService

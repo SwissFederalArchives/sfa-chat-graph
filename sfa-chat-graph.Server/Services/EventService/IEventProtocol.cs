@@ -1,6 +1,6 @@
 ﻿using System.Net.WebSockets;
 
-namespace sfa_chat_graph.Server.Services.EventService
+namespace SfaChatGraph.Server.Services.EventService
 {
 	public interface IEventProtocol<TEvent, TMessage>
 	{

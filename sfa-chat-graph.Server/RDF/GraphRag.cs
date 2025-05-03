@@ -1,9 +1,9 @@
 ﻿using J2N.Collections.Generic.Extensions;
 using MongoDB.Bson;
 using MongoDB.Driver;
-using sfa_chat_graph.Server.Services.ChatService;
-using sfa_chat_graph.Server.Utils;
-using sfa_chat_graph.Server.Versioning;
+using SfaChatGraph.Server.Services.ChatService;
+using SfaChatGraph.Server.Utils;
+using SfaChatGraph.Server.Versioning;
 using System.Collections.Frozen;
 using System.ComponentModel;
 using System.Text;
@@ -14,7 +14,7 @@ using VDS.RDF.Query;
 using VDS.RDF.Query.Algebra;
 using VDS.RDF.Query.Patterns;
 
-namespace sfa_chat_graph.Server.RDF
+namespace SfaChatGraph.Server.RDF
 {
 	public class GraphRag : IGraphRag
 	{

@@ -1,6 +1,6 @@
 ﻿using System.Collections.Frozen;
 
-namespace sfa_chat_graph.Server.Versioning
+namespace SfaChatGraph.Server.Versioning
 {
 	public class VersionServiceOptions
 	{

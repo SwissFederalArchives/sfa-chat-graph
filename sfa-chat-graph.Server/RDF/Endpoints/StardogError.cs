@@ -1,4 +1,4 @@
-﻿namespace sfa_chat_graph.Server.RDF.Endpoints
+﻿namespace SfaChatGraph.Server.RDF.Endpoints
 {
 	public class StardogError
 	{

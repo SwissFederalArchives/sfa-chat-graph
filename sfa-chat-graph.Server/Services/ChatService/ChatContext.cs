@@ -1,9 +1,9 @@
 ﻿using OpenAI.Chat;
-using sfa_chat_graph.Server.Models;
-using sfa_chat_graph.Server.Services.ChatService.Events;
-using sfa_chat_graph.Server.Services.EventService;
+using SfaChatGraph.Server.Models;
+using SfaChatGraph.Server.Services.ChatService.Events;
+using SfaChatGraph.Server.Services.EventService;
 
-namespace sfa_chat_graph.Server.Services.ChatService
+namespace SfaChatGraph.Server.Services.ChatService
 {	
 	public class ChatContext : IChatActivity
 	{

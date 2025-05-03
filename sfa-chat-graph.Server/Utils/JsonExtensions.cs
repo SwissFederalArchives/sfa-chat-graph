@@ -1,7 +1,7 @@
 ﻿using System.Reflection.Metadata;
 using System.Text.Json;
 
-namespace sfa_chat_graph.Server.Utils
+namespace SfaChatGraph.Server.Utils
 {
 	public static class JsonExtensions
 	{

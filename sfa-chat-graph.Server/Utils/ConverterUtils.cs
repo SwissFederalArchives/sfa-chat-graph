@@ -2,7 +2,7 @@
 using System.Text.Json;
 using VDS.RDF;
 
-namespace sfa_chat_graph.Server.Utils
+namespace SfaChatGraph.Server.Utils
 {
 	public static class ConverterUtils
 	{

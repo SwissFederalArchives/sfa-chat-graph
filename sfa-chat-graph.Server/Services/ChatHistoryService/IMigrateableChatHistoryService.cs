@@ -1,6 +1,6 @@
-﻿using sfa_chat_graph.Server.Versioning.Migrations;
+﻿using SfaChatGraph.Server.Versioning.Migrations;
 
-namespace sfa_chat_graph.Server.Services.ChatHistoryService
+namespace SfaChatGraph.Server.Services.ChatHistoryService
 {
 	public interface IMigrateableChatHistoryService : IMigrateable<IMigrateableChatHistoryService>
 	{

@@ -1,4 +1,4 @@
-﻿namespace sfa_chat_graph.Server.Services.ChatHistoryService
+﻿namespace SfaChatGraph.Server.Services.ChatHistoryService
 {
 	public interface IChatHistoryServiceCache : IChatHistoryService
 	{

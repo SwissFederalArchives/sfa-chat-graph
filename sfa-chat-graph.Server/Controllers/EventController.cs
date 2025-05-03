@@ -1,9 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using sfa_chat_graph.Server.Services.ChatService.Events;
-using sfa_chat_graph.Server.Services.EventService.WebSockets;
+using SfaChatGraph.Server.Services.ChatService.Events;
+using SfaChatGraph.Server.Services.EventService.WebSockets;
 using System.Net.WebSockets;
 
-namespace sfa_chat_graph.Server.Controllers
+namespace SfaChatGraph.Server.Controllers
 {
 	[ApiController]
 	[Route("/api/v1/events")]

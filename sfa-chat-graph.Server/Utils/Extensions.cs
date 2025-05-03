@@ -3,14 +3,14 @@ using Json.More;
 using Json.Schema;
 using MessagePack;
 using OpenAI.Chat;
-using sfa_chat_graph.Server.Models;
-using sfa_chat_graph.Server.Utils;
+using SfaChatGraph.Server.Models;
+using SfaChatGraph.Server.Utils;
 using System.Buffers;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using VDS.RDF.Query;
 
-namespace sfa_chat_graph.Server.Utils
+namespace SfaChatGraph.Server.Utils
 {
 	public static class Extensions
 	{

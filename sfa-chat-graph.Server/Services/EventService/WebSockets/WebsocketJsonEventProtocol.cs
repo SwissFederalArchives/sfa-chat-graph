@@ -3,7 +3,7 @@ using System.Buffers;
 using System.Net.WebSockets;
 using System.Text.Json;
 
-namespace sfa_chat_graph.Server.Services.EventService.WebSockets
+namespace SfaChatGraph.Server.Services.EventService.WebSockets
 {
 	public class WebsocketJsonEventProtocol<TEvent> : IEventProtocol<TEvent, ReadOnlySequence<byte>>
 	{

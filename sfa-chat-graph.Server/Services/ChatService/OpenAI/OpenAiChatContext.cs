@@ -1,10 +1,10 @@
 ﻿using OpenAI.Chat;
-using sfa_chat_graph.Server.Models;
-using sfa_chat_graph.Server.Services.ChatService.Abstract;
-using sfa_chat_graph.Server.Services.ChatService.Events;
-using sfa_chat_graph.Server.Services.EventService;
+using SfaChatGraph.Server.Models;
+using SfaChatGraph.Server.Services.ChatService.Abstract;
+using SfaChatGraph.Server.Services.ChatService.Events;
+using SfaChatGraph.Server.Services.EventService;
 
-namespace sfa_chat_graph.Server.Services.ChatService.OpenAI
+namespace SfaChatGraph.Server.Services.ChatService.OpenAI
 {
 	public class OpenAIChatContext : AbstractChatContext<ChatMessage>
 	{

@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 using VDS.RDF;
 using VDS.RDF.Query;
 
-namespace sfa_chat_graph.Server.Utils.Json
+namespace SfaChatGraph.Server.Utils.Json
 {
 	public class GraphConverter<T> : JsonConverter<T> where T : IGraph
 	{

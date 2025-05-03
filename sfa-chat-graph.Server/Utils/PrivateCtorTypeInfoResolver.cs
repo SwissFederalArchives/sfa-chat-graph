@@ -3,7 +3,7 @@ using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
 
-namespace sfa_chat_graph.Server.Utils
+namespace SfaChatGraph.Server.Utils
 {
 	public class PrivateCtorTypeInfoResolver : DefaultJsonTypeInfoResolver
 	{

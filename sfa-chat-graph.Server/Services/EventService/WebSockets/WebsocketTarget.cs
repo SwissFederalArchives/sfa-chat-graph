@@ -1,9 +1,9 @@
 ﻿using J2N.Threading.Atomic;
-using sfa_chat_graph.Server.Utils;
+using SfaChatGraph.Server.Utils;
 using System.Buffers;
 using System.Net.WebSockets;
 
-namespace sfa_chat_graph.Server.Services.EventService.WebSockets
+namespace SfaChatGraph.Server.Services.EventService.WebSockets
 {
 	public class WebsocketTarget : IEventTarget<ReadOnlySequence<byte>>
 	{

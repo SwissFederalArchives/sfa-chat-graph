@@ -1,6 +1,6 @@
-﻿using sfa_chat_graph.Server.Utils.ServiceCollection;
+﻿using SfaChatGraph.Server.Utils.ServiceCollection;
 
-namespace sfa_chat_graph.Server.Config
+namespace SfaChatGraph.Server.Config
 {
 	public class AiConfig : IServiceConfig
 	{

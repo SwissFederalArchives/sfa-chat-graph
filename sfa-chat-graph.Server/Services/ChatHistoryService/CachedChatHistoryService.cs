@@ -2,13 +2,13 @@
 using MessagePack.Resolvers;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver;
-using sfa_chat_graph.Server.Models;
-using sfa_chat_graph.Server.Services.Cache;
-using sfa_chat_graph.Server.Utils.MessagePack;
+using SfaChatGraph.Server.Models;
+using SfaChatGraph.Server.Services.Cache;
+using SfaChatGraph.Server.Utils.MessagePack;
 using StackExchange.Redis;
 using System.Text.Json;
 
-namespace sfa_chat_graph.Server.Services.ChatHistoryService
+namespace SfaChatGraph.Server.Services.ChatHistoryService
 {
 	public class CachedChatHistoryService : IChatHistoryService
 	{

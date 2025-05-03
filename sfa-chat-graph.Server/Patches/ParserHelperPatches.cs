@@ -3,7 +3,7 @@ using VDS.RDF.Parsing;
 using VDS.RDF;
 using HarmonyLib;
 
-namespace sfa_chat_graph.Server.Patches
+namespace SfaChatGraph.Server.Patches
 {
 	/// <summary>
 	/// Patches a bug in dotNetRdf, this is done to keep compatability to the original library without recompiling or submoduling it

@@ -1,10 +1,10 @@
 ﻿
 using MessagePack;
 using Microsoft.IO;
-using sfa_chat_graph.Server.Utils.MessagePack;
+using SfaChatGraph.Server.Utils.MessagePack;
 using System.Buffers;
 
-namespace sfa_chat_graph.Server.Services.Cache.MessagePack
+namespace SfaChatGraph.Server.Services.Cache.MessagePack
 {
 	public abstract class MessagePackCacheBase<TKey, TValue> : IAppendableCache<TKey, TValue>
 	{

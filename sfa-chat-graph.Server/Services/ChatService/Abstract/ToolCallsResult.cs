@@ -1,4 +1,4 @@
-﻿namespace sfa_chat_graph.Server.Services.ChatService.Abstract
+﻿namespace SfaChatGraph.Server.Services.ChatService.Abstract
 {
 	public enum ToolCallsResult
 	{

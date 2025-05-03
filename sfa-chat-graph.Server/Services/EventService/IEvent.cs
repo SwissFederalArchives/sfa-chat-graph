@@ -1,4 +1,4 @@
-﻿namespace sfa_chat_graph.Server.Services.EventService
+﻿namespace SfaChatGraph.Server.Services.EventService
 {
 	public interface IEvent : IComparable<IEvent>
 	{

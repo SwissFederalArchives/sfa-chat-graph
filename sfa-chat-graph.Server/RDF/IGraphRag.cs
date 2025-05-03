@@ -1,11 +1,11 @@
 ﻿using AwosFramework.Generators.FunctionCalling;
 using OpenAI.Chat;
-using sfa_chat_graph.Server.Services.ChatService;
+using SfaChatGraph.Server.Services.ChatService;
 using System.ComponentModel;
 using VDS.RDF;
 using VDS.RDF.Query;
 
-namespace sfa_chat_graph.Server.RDF
+namespace SfaChatGraph.Server.RDF
 {
 	public interface IGraphRag
 	{

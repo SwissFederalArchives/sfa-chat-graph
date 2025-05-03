@@ -1,7 +1,7 @@
 ﻿using VDS.RDF;
 using VDS.RDF.Query;
 
-namespace sfa_chat_graph.Server.RDF.Endpoints
+namespace SfaChatGraph.Server.RDF.Endpoints
 {
 	public class StardogEndpoint : ISparqlEndpoint
 	{

@@ -1,4 +1,4 @@
-﻿namespace sfa_chat_graph.Server.Utils
+﻿namespace SfaChatGraph.Server.Utils
 {
 	public class AsyncLazy<T> : IDisposable
 	{

@@ -1,7 +1,7 @@
 ﻿using MessagePack;
 using MongoDB.Bson.Serialization.Attributes;
 
-namespace sfa_chat_graph.Server.Models
+namespace SfaChatGraph.Server.Models
 {
 	[Union(0, typeof(ApiMessage))]
 	[Union(1, typeof(ApiAssistantMessage))]

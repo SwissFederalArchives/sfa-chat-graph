@@ -1,4 +1,4 @@
-﻿namespace sfa_chat_graph.Server.Services.ChatService
+﻿namespace SfaChatGraph.Server.Services.ChatService
 {
 	public interface IChatActivity 
 	{

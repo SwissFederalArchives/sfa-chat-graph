@@ -5,7 +5,7 @@ using System.Diagnostics;
 using System.Net.WebSockets;
 using System.Threading.Channels;
 
-namespace sfa_chat_graph.Server.Services.EventService.InMemory
+namespace SfaChatGraph.Server.Services.EventService.InMemory
 {
 	public class InMemoryEventChannel<TChannel, TEvent, TTarget, TMessage> : IAsyncDisposable, IEventChannel<TChannel, TEvent, TTarget, TMessage>
 		where TEvent : IEvent

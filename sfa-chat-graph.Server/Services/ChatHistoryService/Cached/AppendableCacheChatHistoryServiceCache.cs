@@ -1,10 +1,10 @@
 ﻿using MessagePack;
 using Microsoft.AspNetCore.Mvc;
-using sfa_chat_graph.Server.Models;
-using sfa_chat_graph.Server.Services.Cache;
-using sfa_chat_graph.Server.Utils.MessagePack;
+using SfaChatGraph.Server.Models;
+using SfaChatGraph.Server.Services.Cache;
+using SfaChatGraph.Server.Utils.MessagePack;
 
-namespace sfa_chat_graph.Server.Services.ChatHistoryService.Cached
+namespace SfaChatGraph.Server.Services.ChatHistoryService.Cached
 {
 	public class AppendableCacheChatHistoryServiceCache : IChatHistoryServiceCache
 	{

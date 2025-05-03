@@ -3,7 +3,7 @@ using Microsoft.Extensions.Options;
 using System.Reflection;
 using ConfigEx = Microsoft.Extensions.DependencyInjection.OptionsConfigurationServiceCollectionExtensions;
 
-namespace sfa_chat_graph.Server.Utils.ServiceCollection
+namespace SfaChatGraph.Server.Utils.ServiceCollection
 {
 	public static class Extensions
 	{

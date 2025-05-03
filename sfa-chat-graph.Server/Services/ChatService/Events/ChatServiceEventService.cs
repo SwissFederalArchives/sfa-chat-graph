@@ -1,7 +1,7 @@
-﻿using sfa_chat_graph.Server.Services.EventService.InMemory;
+﻿using SfaChatGraph.Server.Services.EventService.InMemory;
 using System.Text.Json;
 
-namespace sfa_chat_graph.Server.Services.ChatService.Events
+namespace SfaChatGraph.Server.Services.ChatService.Events
 {
 	public class ChatServiceEventService : JsonWebsocketEventService<Guid, ChatEvent>
 	{

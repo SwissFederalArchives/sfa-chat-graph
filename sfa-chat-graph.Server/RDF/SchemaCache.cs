@@ -2,7 +2,7 @@
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.IdGenerators;
 
-namespace sfa_chat_graph.Server.RDF
+namespace SfaChatGraph.Server.RDF
 {
 	public class SchemaCache
 	{

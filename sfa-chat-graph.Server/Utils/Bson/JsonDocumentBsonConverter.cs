@@ -2,7 +2,7 @@
 using MongoDB.Bson.Serialization;
 using System.Text.Json;
 
-namespace sfa_chat_graph.Server.Utils.Bson
+namespace SfaChatGraph.Server.Utils.Bson
 {
 	public class JsonDocumentBsonConverter : IBsonSerializer<JsonDocument>
 	{

@@ -1,13 +1,13 @@
 ﻿using AwosFramework.ApiClients.Jupyter.Utils;
 using Microsoft.EntityFrameworkCore;
-using sfa_chat_graph.Server.Services.CodeExecutionService;
-using sfa_chat_graph.Server.Utils;
+using SfaChatGraph.Server.Services.CodeExecutionService;
+using SfaChatGraph.Server.Utils;
 using System.Text;
 using VDS.Common.Collections.Enumerations;
 using VDS.RDF;
 using VDS.RDF.Query;
 
-namespace sfa_chat_graph.Server.Utils
+namespace SfaChatGraph.Server.Utils
 {
 	public class LLMFormatter
 	{

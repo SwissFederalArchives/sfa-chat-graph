@@ -2,7 +2,7 @@
 using MessagePack.Formatters;
 using System.Text.Json;
 
-namespace sfa_chat_graph.Server.Utils.MessagePack
+namespace SfaChatGraph.Server.Utils.MessagePack
 {
 	public class JsonDocumentFormatter : IMessagePackFormatter<JsonDocument>
 	{

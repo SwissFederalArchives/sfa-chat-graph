@@ -1,4 +1,4 @@
-﻿namespace sfa_chat_graph.Server.Utils.ServiceCollection
+﻿namespace SfaChatGraph.Server.Utils.ServiceCollection
 {
 	public interface IServiceConfig
 	{

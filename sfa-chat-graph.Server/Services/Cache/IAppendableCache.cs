@@ -1,4 +1,4 @@
-﻿namespace sfa_chat_graph.Server.Services.Cache
+﻿namespace SfaChatGraph.Server.Services.Cache
 {
 	public interface IAppendableCache<TKey, TValue>
 	{

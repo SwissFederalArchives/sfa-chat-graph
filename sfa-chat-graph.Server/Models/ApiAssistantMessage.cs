@@ -1,7 +1,7 @@
 ﻿using MessagePack;
 using System.Text.Json.Serialization;
 
-namespace sfa_chat_graph.Server.Models
+namespace SfaChatGraph.Server.Models
 {
 	[MessagePackObject]
 	public class ApiAssistantMessage : ApiMessage

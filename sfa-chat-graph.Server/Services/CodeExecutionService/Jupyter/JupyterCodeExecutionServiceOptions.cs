@@ -1,4 +1,4 @@
-﻿namespace sfa_chat_graph.Server.Services.CodeExecutionService.Jupyter
+﻿namespace SfaChatGraph.Server.Services.CodeExecutionService.Jupyter
 {
 	public class JupyterCodeExecutionServiceOptions
 	{

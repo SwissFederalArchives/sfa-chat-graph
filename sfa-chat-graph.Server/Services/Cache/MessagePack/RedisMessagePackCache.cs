@@ -1,11 +1,11 @@
 ﻿
 using Microsoft.Extensions.Options;
-using sfa_chat_graph.Server.Utils.ServiceCollection;
+using SfaChatGraph.Server.Utils.ServiceCollection;
 using Sprache;
 using StackExchange.Redis;
 using System.Buffers;
 
-namespace sfa_chat_graph.Server.Services.Cache.MessagePack
+namespace SfaChatGraph.Server.Services.Cache.MessagePack
 {
 	[ServiceImplementation(typeof(IAppendableCache<,>), typeof(AppendableCacheOptions), ServiceLifetime.Singleton, Key = "Redis")]
 	public class RedisMessagePackCache<TKey, TValue> : MessagePackCacheBase<TKey, TValue>

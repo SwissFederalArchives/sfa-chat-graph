@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 
-namespace sfa_chat_graph.Server.Services.CodeExecutionService
+namespace SfaChatGraph.Server.Services.CodeExecutionService
 {
 	public class CodeExecutionResult
 	{

@@ -1,7 +1,7 @@
 ﻿using System.Collections.Frozen;
 using System.Reflection;
 
-namespace sfa_chat_graph.Server.Utils.ServiceCollection
+namespace SfaChatGraph.Server.Utils.ServiceCollection
 {
 	public record ImplementationDetail(Type ServiceType, Type ConcreteType, Type? ConfigType, ServiceLifetime Lifetime, string? Key)
 	{

@@ -1,16 +1,16 @@
-﻿using sfa_chat_graph.Server.Models;
-using sfa_chat_graph.Server.Services.ChatService.OpenAI;
-using sfa_chat_graph.Server.Utils;
+﻿using SfaChatGraph.Server.Models;
+using SfaChatGraph.Server.Services.ChatService.OpenAI;
+using SfaChatGraph.Server.Utils;
 using System.Text.Json;
 using VDS.RDF.Query;
 using VDS.RDF;
 using AwosFramework.Generators.FunctionCalling;
-using sfa_chat_graph.Server.RDF;
-using sfa_chat_graph.Server.Services.CodeExecutionService;
+using SfaChatGraph.Server.RDF;
+using SfaChatGraph.Server.Services.CodeExecutionService;
 using VDS.RDF.Parsing.Tokens;
 using OpenAI.Chat;
 
-namespace sfa_chat_graph.Server.Services.ChatService.Abstract
+namespace SfaChatGraph.Server.Services.ChatService.Abstract
 {
 	public abstract class AbstractChatService<TMessage, TContext, TOptions> : ChatServiceBase<TContext> where TContext : AbstractChatContext<TMessage>
 	{

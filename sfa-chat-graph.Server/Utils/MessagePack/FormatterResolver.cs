@@ -4,7 +4,7 @@ using MessagePack.Resolvers;
 using System.Text.Json;
 using VDS.RDF.Query;
 
-namespace sfa_chat_graph.Server.Utils.MessagePack
+namespace SfaChatGraph.Server.Utils.MessagePack
 {
 	public class FormatterResolver : IFormatterResolver
 	{

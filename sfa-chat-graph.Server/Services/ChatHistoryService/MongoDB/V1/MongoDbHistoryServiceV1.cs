@@ -3,13 +3,13 @@ using Microsoft.IO;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using MongoDB.Driver.GridFS;
-using sfa_chat_graph.Server.Models;
-using sfa_chat_graph.Server.Utils.MessagePack;
-using sfa_chat_graph.Server.Versioning;
-using sfa_chat_graph.Server.Versioning.Migrations;
+using SfaChatGraph.Server.Models;
+using SfaChatGraph.Server.Utils.MessagePack;
+using SfaChatGraph.Server.Versioning;
+using SfaChatGraph.Server.Versioning.Migrations;
 using System.Text.Json;
 
-namespace sfa_chat_graph.Server.Services.ChatHistoryService.MongoDB.V1
+namespace SfaChatGraph.Server.Services.ChatHistoryService.MongoDB.V1
 {
 	[ServiceVersion<IChatHistoryService>(Version)]
 	[Obsolete("This class is deprecated. Use MongoDbHistoryServiceV2 instead.")]

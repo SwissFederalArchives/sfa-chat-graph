@@ -1,7 +1,7 @@
 ﻿using OpenAI.Chat;
-using sfa_chat_graph.Server.Models;
+using SfaChatGraph.Server.Models;
 
-namespace sfa_chat_graph.Server.Services.ChatService
+namespace SfaChatGraph.Server.Services.ChatService
 {
 	public record CompletionResult(ApiMessage[] Messages, string Error, bool Success);
 }

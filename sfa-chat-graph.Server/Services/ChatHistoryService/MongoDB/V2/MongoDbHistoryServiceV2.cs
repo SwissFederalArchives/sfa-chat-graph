@@ -5,17 +5,17 @@ using MongoDB.Bson;
 using MongoDB.Driver;
 using MongoDB.Driver.GridFS;
 using MongoDB.Driver.Linq;
-using sfa_chat_graph.Server.Models;
-using sfa_chat_graph.Server.Utils;
-using sfa_chat_graph.Server.Utils.MessagePack;
-using sfa_chat_graph.Server.Versioning;
-using sfa_chat_graph.Server.Versioning.Migrations;
+using SfaChatGraph.Server.Models;
+using SfaChatGraph.Server.Utils;
+using SfaChatGraph.Server.Utils.MessagePack;
+using SfaChatGraph.Server.Versioning;
+using SfaChatGraph.Server.Versioning.Migrations;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using VDS.RDF.Query;
 
-namespace sfa_chat_graph.Server.Services.ChatHistoryService.MongoDB.V2
+namespace SfaChatGraph.Server.Services.ChatHistoryService.MongoDB.V2
 {
 	[ServiceVersion<IChatHistoryService>(2)]
 	public class MongoDbHistoryServiceV2 : MongoDbHistoryServiceBase, IChatHistoryService, IPostMigration

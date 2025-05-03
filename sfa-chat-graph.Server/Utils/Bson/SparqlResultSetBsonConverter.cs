@@ -4,7 +4,7 @@ using MongoDB.Bson.Serialization;
 using VDS.RDF;
 using VDS.RDF.Query;
 
-namespace sfa_chat_graph.Server.Utils.Bson
+namespace SfaChatGraph.Server.Utils.Bson
 {
 	public class SparqlResultSetBsonConverter : IBsonSerializer<SparqlResultSet>
 	{

@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using sfa_chat_graph.Server.Models;
+using SfaChatGraph.Server.Models;
 
-namespace sfa_chat_graph.Server.Services.ChatHistoryService
+namespace SfaChatGraph.Server.Services.ChatHistoryService
 {
 	public interface IChatHistoryService
 	{

@@ -1,6 +1,6 @@
 ﻿using VDS.RDF;
 
-namespace sfa_chat_graph.Server.RDF
+namespace SfaChatGraph.Server.RDF
 {
 	public class RelativeCachingUriFactory : IUriFactory
 	{
