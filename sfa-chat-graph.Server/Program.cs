@@ -1,16 +1,10 @@
-using OpenAI;
-using System.ClientModel;
-using System.Collections.Frozen;
-using VDS.RDF.Storage.Management;
 using AwosFramework.Generators.FunctionCalling;
-using SfaChatGraph.Server.Utils;
 using Json.Schema.Generation.DataAnnotations;
 using SfaChatGraph.Server.RDF;
 using SfaChatGraph.Server.RDF.Endpoints;
 using SfaChatGraph.Server.Services.CodeExecutionService;
 using SfaChatGraph.Server.Services.CodeExecutionService.Jupyter;
 using SfaChatGraph.Server.Services.ChatService;
-using SfaChatGraph.Server.Services.ChatService.OpenAI;
 using VDS.RDF;
 using StackExchange.Redis;
 using MongoDB.Driver;
@@ -20,13 +14,11 @@ using SfaChatGraph.Server.Services.ChatService.Events;
 using SfaChatGraph.Server.Services.Cache;
 using SfaChatGraph.Server.Models;
 using SfaChatGraph.Server.Utils.ServiceCollection;
-using MongoDB.Driver.GridFS;
 using SfaChatGraph.Server.Services.ChatHistoryService.Cached;
-using SfaChatGraph.Server.Services.ChatHistoryService.MongoDB.V2;
 using SfaChatGraph.Server.Versioning;
 using HarmonyLib;
 
-var harmony = new Harmony("sfa-chat-graph");
+var harmony = new Harmony("SfaChatGraph.Server");
 harmony.PatchAll(typeof(Program).Assembly);
 
 DotNetEnv.Env.Load();

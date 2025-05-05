@@ -49,7 +49,7 @@ namespace SfaChatGraph.Server.Services.ChatService
 			this.History = history.ToArray();
 			this.ChatId =chatId;
 			_events = events;
-			_nextMessageIndex = history.Max(x => x.Index) + 1;
+			_nextMessageIndex = history.Any() == false ? 0 : history.Max(x => x.Index) + 1;
 		}
 	}
 }
