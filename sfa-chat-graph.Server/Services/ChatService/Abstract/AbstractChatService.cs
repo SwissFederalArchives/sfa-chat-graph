@@ -145,11 +145,10 @@ namespace SfaChatGraph.Server.Services.ChatService.Abstract
 				if (response.ApiMessage is not ApiToolCallMessage toolCallMessage || toolCallMessage.ToolCalls.Length != 1)
 					continue;
 
-
-
 				try
 				{
 					toolCall = toolCallMessage.ToolCalls.First();
+					toolCall.ToolCallId = originalId;
 					return await HandleToolCallAsync(ctx, toolCall);
 				}
 				catch (Exception newEx)
