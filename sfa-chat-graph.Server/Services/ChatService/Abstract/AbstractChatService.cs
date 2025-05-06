@@ -130,7 +130,7 @@ namespace SfaChatGraph.Server.Services.ChatService.Abstract
 		protected virtual async Task<Message<TMessage>> TryHandleErrorAsync(TContext ctx, ApiToolCall toolCall, Exception ex, int tries)
 		{
 			var originalId = toolCall.ToolCallId;
-			var options = GetOptionsWithSettings(functionName: toolCall.ToolId);
+			var options = GetOptionsWithSettings(functionName: toolCall.ToolId, includeTools: true);
 			while (tries-- > 0)
 			{
 				await ctx.NotifyActivityAsync($"Handling {toolCall.ToolId} tool error", $"Error handling has {tries} tries left", ex.ToString());
@@ -196,7 +196,6 @@ namespace SfaChatGraph.Server.Services.ChatService.Abstract
 		public override async Task<CompletionResult> CompleteAsync(TContext ctx, float temperature, int maxErrors)
 		{
 			var options = GetOptionsWithSettings(temperature: temperature, includeTools: true);
-
 			try
 			{
 				ToolCallsResult toolResponse = ToolCallsResult.None;

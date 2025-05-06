@@ -51,7 +51,12 @@
                     <mat-icon fontSet="material-symbols-outlined">error</mat-icon>
                 </div>
                 <markdown>{{getError()}}</markdown>
-                <button class="inverted-button" (click)="retry()">Retry</button>
+                <div class="error-buttons">
+                    <button class="inverted-button" (click)="retry()">Retry</button>
+                    @if(getErrorEmail()){
+                        <a class="inverted-button" href="{{getErrorEmail()}}">Send error report</a>
+                    }
+                </div>
             </div>
 
         </div>

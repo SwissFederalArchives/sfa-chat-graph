@@ -2,6 +2,7 @@
 using SfaChatGraph.Server.Models;
 using SfaChatGraph.Server.Services.ChatService.Events;
 using SfaChatGraph.Server.Services.EventService;
+using SfaChatGraph.Server.Utils;
 
 namespace SfaChatGraph.Server.Services.ChatService
 {	
@@ -49,7 +50,7 @@ namespace SfaChatGraph.Server.Services.ChatService
 			this.History = history.ToArray();
 			this.ChatId =chatId;
 			_events = events;
-			_nextMessageIndex = history.Any() == false ? 0 : history.Max(x => x.Index) + 1;
+			_nextMessageIndex = history.MaxOrDefault(x => x.Index) + 1;
 		}
 	}
 }

@@ -88,7 +88,7 @@ namespace SfaChatGraph.Server.Controllers
 				service = _serviceProvider.GetFromConfig<IChatService, AiConfig>(chat.AiConfig);
 
 			if(service == null)
-				return NotFound($"No service found for {chat.AiConfig.Implementation}");
+				return NotFound($"No service found for {chat.AiConfig?.Implementation}");
 
 			IEventSink<ChatEvent> sink = null;
 			if (eventChannel.HasValue)
