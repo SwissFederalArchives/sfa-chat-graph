@@ -6,6 +6,7 @@ using OpenAI.Chat;
 using SfaChatGraph.Server.Models;
 using SfaChatGraph.Server.Utils;
 using System.Buffers;
+using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using VDS.RDF.Query;
@@ -65,6 +66,22 @@ namespace SfaChatGraph.Server.Utils
 		{
 			foreach (var item in items)
 				ts.Add(item);
+		}
+
+		public static T MaxOrDefault<T>(this IEnumerable<T> enumerable, T defaultNumber = default) where T : INumber<T>
+		{
+			if(enumerable.Any() == false)
+				return defaultNumber;
+
+			return enumerable.Max();
+		}
+
+		public static TNumber MaxOrDefault<T, TNumber>(this IEnumerable<T> enumerable, Func<T, TNumber> selector, TNumber defaultNumber = default) where TNumber : INumber<TNumber>
+		{
+			if (enumerable.Any() == false)
+				return defaultNumber;
+
+			return enumerable.Max(selector);
 		}
 
 		public static string Ellipsis(this string @string, int maxLen, string end = "...")

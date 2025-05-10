@@ -55,7 +55,6 @@ namespace SfaChatGraph.Server.Services.CodeExecutionService.Jupyter
 			_options = options.Value;
 			_loggerFactory = loggerFactory;
 			_logger = loggerFactory.CreateLogger<JupyterCodeExecutionService>();
-
 		}
 
 		public string Language => _kernelSpec.Spec.Language;

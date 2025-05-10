@@ -1,9 +1,10 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { SparqlStarResult } from './sparql-star-result.model';
-import { firstValueFrom } from 'rxjs';
+import { catchError, firstValueFrom, map, of } from 'rxjs';
 import { ChatRequest } from './chat-request.model';
 import { ApiMessage } from './chat-message.model';
+import { ApiResult } from './api-client.result-model';
 
 @Injectable({
   providedIn: 'root'
@@ -20,12 +21,16 @@ export class ApiClientService {
     return await firstValueFrom(this._httpClient.get<ApiMessage[]>(`/api/v1/chat/history/${id}?loadBlobs=${loadBlobs}`));
   }
 
-  public async chatAsync(id: string, request: ChatRequest, eventChannel?: string): Promise<ApiMessage[]> {
+  public async chatAsync(id: string, request: ChatRequest, eventChannel?: string): Promise<ApiResult<ApiMessage[]>> {
     let endpoint = `/api/v1/chat/complete/${id}`;
     if (eventChannel)
       endpoint += `?eventChannel=${eventChannel}`;
 
-    return await firstValueFrom(this._httpClient.post<ApiMessage[]>(endpoint, request));
+    return firstValueFrom(this._httpClient.post<ApiMessage[]>(endpoint, request)
+      .pipe(
+        map(x => ApiResult.FromResult<ApiMessage[]>(x)),
+        catchError(x => of(ApiResult.FromError<ApiMessage[]>(x))),
+      ));
   }
 
 

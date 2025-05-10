@@ -17,6 +17,7 @@ import { EventChannel } from '../services/api-client/event-channel.service';
 import { DisplayMessage } from './DisplayMessage';
 import { SubGraphMarker } from './SubGraphMarker';
 import { DisplayDetail } from './DisplayDetail';
+import { BackendError } from '../services/api-client/api-client.result-model';
 
 
 export enum ErrorType {
@@ -44,12 +45,15 @@ export class ChatHistoryComponent implements AfterViewChecked, OnInit {
   public activity?: ApiChatEvent = undefined;
   public rolesEnum = ChatRole;
 
-  public getError(): string | undefined { return this._error; }
+  public getError(): string | undefined { return this._errorMessage; }
+  public getErrorEmail(): string | undefined { return this._errorEmail; }
 
   private _lastMesssage?: ApiMessage = undefined;
   private _toolData: Map<string, ApiToolData> = new Map<string, ApiToolData>();
   private _shouldScroll: boolean = false;
-  private _error?: string = undefined;
+  private _errorMessage?: string = undefined;
+  private _error?: BackendError = undefined;
+  private _errorEmail?: string = undefined;
   private _errorType?: ErrorType = undefined;
 
   constructor(private _apiClient: ApiClientService, private _injector: Injector, private _eventChannel: EventChannel) {
@@ -79,7 +83,7 @@ export class ChatHistoryComponent implements AfterViewChecked, OnInit {
   }
 
   public async onMessageKeyPress($event: KeyboardEvent): Promise<void> {
-    if($event.key == "Enter" && !$event.shiftKey) {
+    if ($event.key == "Enter" && !$event.shiftKey) {
       $event.preventDefault();
       if (this.message && this.message.trim() != "") {
         return this.send();
@@ -98,7 +102,7 @@ export class ChatHistoryComponent implements AfterViewChecked, OnInit {
       this.setChatHistory(history);
     } catch (e) {
       console.error(e);
-      this._error = "Error loading chat history";
+      this._errorMessage = "Error loading chat history";
       this._errorType = ErrorType.FetchHistory;
     } finally {
       this.activity = undefined;
@@ -109,7 +113,7 @@ export class ChatHistoryComponent implements AfterViewChecked, OnInit {
   private setChatHistory(messages: ApiMessage[]) {
     this.messages = [];
     this._toolData = new Map<string, ApiToolData>();
-    this._error = undefined;
+    this._errorMessage = undefined;
     messages.filter(m => m.role == ChatRole.ToolResponse && m.graphToolData && m.toolCallId)
       .forEach(m => this.graph.loadFromSparqlStar(m.graphToolData!.visualisationGraph!, 100, m.toolCallId));
     this.graph.updateModels();
@@ -191,7 +195,7 @@ export class ChatHistoryComponent implements AfterViewChecked, OnInit {
 
   public async retry() {
     if (this.waitingForResponse) return;
-    this._error = undefined;
+    this.clearErrors();
 
     switch (this._errorType) {
       case ErrorType.ChatCompletion:
@@ -209,6 +213,12 @@ export class ChatHistoryComponent implements AfterViewChecked, OnInit {
     await this.sendImpl();
   }
 
+  private clearErrors(){
+    this._errorMessage = undefined;
+    this._error = undefined;
+    this._errorEmail = undefined;
+  }
+
   private async sendImpl() {
     if (this.waitingForResponse) return;
     this.waitingForResponse = true;
@@ -222,22 +232,45 @@ export class ChatHistoryComponent implements AfterViewChecked, OnInit {
 
       const request = new ChatRequest(this._lastMesssage);
       const response = await this._apiClient.chatAsync(this.chatId, request, this._eventChannel?.channelId);
-      let sparqlLoaded: boolean = false;
+      if (response.success) {
 
-      for (let sparql of response.filter(m => m.role == ChatRole.ToolResponse).filter(tc => tc && tc.graphToolData && tc.graphToolData.visualisationGraph)) {
-        this.graph.loadFromSparqlStar(sparql!.graphToolData!.visualisationGraph!, 100, sparql!.toolCallId);
-        sparqlLoaded = true;
+        let sparqlLoaded: boolean = false;
+
+        for (let sparql of response.result!.filter(m => m.role == ChatRole.ToolResponse).filter(tc => tc && tc.graphToolData && tc.graphToolData.visualisationGraph)) {
+          this.graph.loadFromSparqlStar(sparql!.graphToolData!.visualisationGraph!, 100, sparql!.toolCallId);
+          sparqlLoaded = true;
+        }
+
+        if (sparqlLoaded)
+          this.graph.updateModels();
+
+        this.displayMessages(response.result!);
+        this._lastMesssage = undefined;
+        this.message = undefined;
+        this.clearErrors();
+      } else {
+        this._error = response.error!;
+        this._errorMessage = `**${response.error?.title}**<br><br>${response.error?.message}`;
+        const subject = `sfa-chat-graph error ${response.error?.title}`;
+        const body = `
+        Error occurred in chat ${document.location.href}
+
+        Sent Message:
+        ${this._lastMesssage?.content}
+
+        Error [${this._error?.status}]:
+        ${this._error?.title}
+        ${this._error?.message}
+
+        ${this._error?.detail}
+        `;
+
+        this._errorEmail = `mailto:${encodeURIComponent('florian.klessascheck@fhgr.ch')}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
+        this._errorType = ErrorType.ChatCompletion;
       }
-
-      if (sparqlLoaded)
-        this.graph.updateModels();
-
-      this.displayMessages(response);
-      this._lastMesssage = undefined;
-      this.message = undefined;
     } catch (e: any) {
       console.error(e);
-      this._error = e.message ?? 'Unknown error occured';
+      this._errorMessage = e.message ?? 'Unknown error occured';
       this._errorType = ErrorType.ChatCompletion;
     } finally {
       this.waitingForResponse = false;

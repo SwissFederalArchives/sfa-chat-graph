@@ -71,6 +71,9 @@
     }
 }
 
+a.inverted-button {
+    color: var(--app-text-color-dark)
+}
 
 
 .chat-message {
@@ -136,6 +139,14 @@
 }
 
 .data-tag-container {
+    display: flex;
+    flex-direction: row;
+    gap: 0.5em;
+    align-items: center;
+    padding-bottom: 1em;
+}
+
+.error-buttons {
     display: flex;
     flex-direction: row;
     gap: 0.5em;

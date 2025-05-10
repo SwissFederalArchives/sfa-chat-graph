@@ -4,7 +4,7 @@
     <TargetFramework>net9.0</TargetFramework>
     <Nullable>disable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <RootNamespace>sfa_chat_graph.Server</RootNamespace>
+    <RootNamespace>SfaChatGraph.Server</RootNamespace>
     <UserSecretsId>93db7034-7675-4a2f-b839-3552f1b546f6</UserSecretsId>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <SpaRoot>..\sfa-chat-graph.client</SpaRoot>
