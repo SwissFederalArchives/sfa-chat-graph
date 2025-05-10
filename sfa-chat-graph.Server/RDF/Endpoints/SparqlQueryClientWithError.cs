@@ -11,9 +11,13 @@ namespace SfaChatGraph.Server.RDF.Endpoints
 	public class SparqlQueryClientWithError<TErr> : SparqlQueryClient
 	{
 		private readonly RelativeCachingUriFactory _uriFactory;
+		private readonly INamespaceMapper _namespaceMapper;
+
 		public SparqlQueryClientWithError(HttpClient httpClient, Uri endpointUri) : base(httpClient, endpointUri)
 		{
 			_uriFactory = new RelativeCachingUriFactory(new CachingUriFactory(UriFactory.Root), endpointUri);
+			_namespaceMapper = new NamespaceMapper(_uriFactory);
+			
 		}
 
 		public new async Task<SparqlResultSet> QueryWithResultSetAsync(string sparqlQuery)
@@ -47,7 +51,7 @@ namespace SfaChatGraph.Server.RDF.Endpoints
 			MediaTypeHeaderValue ctype = response.Content.Headers.ContentType;
 			ISparqlResultsReader resultsParser = MimeTypesHelper.GetSparqlParser(ctype.MediaType);
 			Stream stream = await response.Content.ReadAsStreamAsync();
-			using StreamReader input = (string.IsNullOrEmpty(ctype.CharSet) ? new StreamReader(stream) : new StreamReader(stream, Encoding.GetEncoding(ctype.CharSet)));
+			using StreamReader input = (string.IsNullOrEmpty(ctype.CharSet) ? new StreamReader(stream) : new StreamReader(stream, Encoding.GetEncoding(ctype.CharSet)));	
 			resultsParser.Load(resultsHandler, input, _uriFactory);
 		}
 

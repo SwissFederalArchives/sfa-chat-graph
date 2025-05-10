@@ -43,6 +43,18 @@ var loggerFactory = LoggerFactory.Create(builder =>
 
 
 
+const string query = """
+ SELECT ?obs ?station ?waterLevel WHERE {
+  GRAPH <https://lindas.admin.ch/foen/hydro> {
+    ?obs a <https://cube.link/Observation> ;
+  	<https://environment.ld.admin.ch/foen/hydro/dimension/station> ?station ;
+   	<https://environment.ld.admin.ch/foen/hydro/dimension/waterLevel> ?waterLevel .
+  }
+  FILTER(isNumeric(?waterLevel))
+}
+ORDER BY DESC(xsd:double(?waterLevel))
+LIMIT 1
+""";
 
 var client = new MongoClient("mongodb://localhost:27017");
 var database = client.GetDatabase("sfa-chat-graph-test");
@@ -51,8 +63,10 @@ var activities = new DummyActivities();
 
 var endpoint = new StardogEndpoint("https://lindas.admin.ch/query");
 var rag = new GraphRag(endpoint, loggerFactory, database);
-var schema = await rag.GetSchemaAsync(activities, "https://lindas.admin.ch/sbb/nova");
-Console.WriteLine(schema);
+var queryRes = await rag.QueryAsync(query);
+Console.WriteLine(LLMFormatter.ToCSV(queryRes));
+var visRes = await rag.GetVisualisationResultAsync(queryRes, query);
+Console.WriteLine(LLMFormatter.ToCSV(visRes));
 client.DropDatabase("sfa-chat-graph-test");
 
 

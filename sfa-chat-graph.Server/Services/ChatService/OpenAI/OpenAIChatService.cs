@@ -59,7 +59,7 @@ namespace SfaChatGraph.Server.Services.ChatService.OpenAI
 
 		protected override ChatMessage CreateToolResponse(string id, string content)
 		{
-			return ChatMessage.CreateToolMessage(id, content);
+			return ChatMessage.CreateToolMessage(id, $"ToolCallId: {id}\r\n{content}");
 		}
 
 		protected override ChatCompletionOptions GetOptionsWithSettings(float? temperature = null, string functionName = null, bool includeTools = false)

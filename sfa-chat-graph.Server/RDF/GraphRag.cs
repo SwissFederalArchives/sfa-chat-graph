@@ -18,6 +18,7 @@ namespace SfaChatGraph.Server.RDF
 {
 	public class GraphRag : IGraphRag
 	{
+		private static readonly INamespaceMapper _namespaceMapper = new NamespaceMapper(false);
 		private readonly ISparqlEndpoint _endpoint;
 		private readonly IMongoDatabase _db;
 		private readonly IMongoCollection<EndpointCache> _endpoints;
@@ -28,6 +29,8 @@ namespace SfaChatGraph.Server.RDF
 
 		public GraphRag(ISparqlEndpoint endpoint, ILoggerFactory loggerFactory, IMongoDatabase db)
 		{
+			_parser.AllowUnknownFunctions = true;
+
 			_endpoint = endpoint;
 			_logger = loggerFactory.CreateLogger<GraphRag>();
 			_db=db;
@@ -73,24 +76,33 @@ namespace SfaChatGraph.Server.RDF
 
 		private async Task<string> GetClassSchemaAsync(string graph, string className)
 		{
-			int offset = 0;
-			int limit = 100;
-
-			SparqlResultSet schemaValues = new();
-			SparqlResultSet page;
-			do
+			try
 			{
-				page = await _endpoint.QueryAsync(Queries.GraphSchemaPropertiesQuery(graph, className, offset, limit));
-				offset += limit;
-				schemaValues.Results.AddRange(page.Results);
-			} while (page.Count >= limit);
+
+				int offset = 0;
+				int limit = 100;
+
+				SparqlResultSet schemaValues = new();
+				SparqlResultSet page;
+				do
+				{
+					page = await _endpoint.QueryAsync(Queries.GraphSchemaPropertiesQuery(graph, className, offset, limit));
+					offset += limit;
+					schemaValues.Results.AddRange(page.Results);
+				} while (page.Count >= limit);
 
 
-			var dict = schemaValues.Results.GroupBy(x => ((IUriNode)x["p"]).Uri.AbsoluteUri, x => LLMFormatter.FormatSchemaNode(x["type"]))
-				.Where(x => x.Key != "http://www.w3.org/1999/02/22-rdf-syntax-ns#type")
-				.ToDictionary(x => x.Key, x => x.ToFrozenSet());
+				var dict = schemaValues.Results.GroupBy(x => ((IUriNode)x["p"]).Uri.AbsoluteUri, x => LLMFormatter.FormatSchemaNode(x["type"]))
+					.Where(x => x.Key != "http://www.w3.org/1999/02/22-rdf-syntax-ns#type")
+					.ToDictionary(x => x.Key, x => x.ToFrozenSet());
 
-			return FormatClassProperties(dict);
+				return FormatClassProperties(dict);
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Error getting schema for class {ClassName} in graph {Graph}", className, graph);
+				return null;
+			}
 		}
 
 		public async Task<string> GuessClassSchemaAsync(IChatActivity activities, string graph, string className, int countObjects, int countGuesses, bool randomOffsets = true, int stoppAfter = 50000)
@@ -163,6 +175,11 @@ namespace SfaChatGraph.Server.RDF
 						{
 							await activities?.NotifyActivityAsync($"Fetching schema for {className}");
 							schema = await GetClassSchemaAsync(graph, className);
+							if(schema == null)
+							{
+								await activities?.NotifyActivityAsync($"Falling back to Guessing schema for {className}", $"Schema for {className} has {count} object instances, querying all instance to generate a schema is too slow and strainous for the database, schema is guessed by looking a 10% of all instance at random");
+								schema = await GuessClassSchemaAsync(activities, graph, className, count, (int)(count*0.1), true, 50000);
+							}
 						}
 
 						sb.AppendLine($"<{className}> [\n{schema}\n]");
@@ -263,7 +280,9 @@ namespace SfaChatGraph.Server.RDF
 
 		public async Task<SparqlResultSet> GetVisualisationResultAsync(SparqlResultSet results, string queryString)
 		{
-			var query = _parser.ParseFromString(queryString);
+			var parameterizedQueryString = new SparqlParameterizedString(queryString);
+			parameterizedQueryString.Namespaces = _namespaceMapper;
+			var query = _parser.ParseFromString(parameterizedQueryString);
 			var resultVars = query.Variables.SelectWhere(x => x.Name, x => x.IsResultVariable).ToFrozenSet();
 			var triplePatterns = query.RootGraphPattern.ChildGraphPatterns.SelectMany(x => x.TriplePatterns).ToList();
 			triplePatterns.AddRange(query.RootGraphPattern.TriplePatterns);
