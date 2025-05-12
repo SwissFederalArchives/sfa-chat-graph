@@ -23,15 +23,18 @@ namespace SfaChatGraph.Server.RDF
 			_factory.Clear();
 		}
 
-		public Uri Create(string uri)
+		public Uri Create(string uriString)
 		{
-			if (Uri.IsWellFormedUriString(uri, UriKind.Absolute))
+			if(Uri.TryCreate(uriString, UriKind.RelativeOrAbsolute, out var uri))
 			{
-				return _factory.Create(uri);
-			}
-			else if (Uri.IsWellFormedUriString(uri, UriKind.Relative) || uri.StartsWith("#"))
-			{
-				return Create(_baseUri, uri);
+				if (uri.IsAbsoluteUri)
+				{
+					return _factory.Create(uri.AbsoluteUri);
+				}
+				else
+				{
+					return Create(_baseUri, uriString);
+				}
 			}
 			else
 			{

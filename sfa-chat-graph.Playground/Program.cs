@@ -35,6 +35,11 @@ using VDS.RDF.Parsing;
 using VDS.RDF.Query;
 using VDS.RDF.Storage;
 
+AppContext.SetSwitch("System.Uri.DontEnableStrictRFC3986ReservedCharacterSets", true);
+AppContext.SetSwitch("System.Uri.EnableIdn", true);  // Enables IDN (Internationalized Domain Name) support
+AppContext.SetSwitch("System.Uri.EnableIriParsing", true);  // Enables IRI parsing support
+
+
 var loggerFactory = LoggerFactory.Create(builder =>
 {
 	builder.AddConsole();
@@ -44,16 +49,19 @@ var loggerFactory = LoggerFactory.Create(builder =>
 
 
 const string query = """
- SELECT ?obs ?station ?waterLevel WHERE {
-  GRAPH <https://lindas.admin.ch/foen/hydro> {
-    ?obs a <https://cube.link/Observation> ;
-  	<https://environment.ld.admin.ch/foen/hydro/dimension/station> ?station ;
-   	<https://environment.ld.admin.ch/foen/hydro/dimension/waterLevel> ?waterLevel .
+PREFIX ex: <http://example.com/>
+PREFIX schema: <http://schema.org/>
+PREFIX geo: <http://www.opengis.net/ont/geosparql#>
+SELECT DISTINCT ?station ?stationName ?geometry ?identifier (IF(BOUND(?bodyOfWater), STR(?bodyOfWater), "") AS ?bodyOfWaterIRI) ?bodyOfWaterName WHERE {
+  ?station a ex:HydroMeasuringStation ;
+           schema:name ?stationName ;
+           schema:identifier ?identifier ;
+           geo:hasGeometry/geo:asWKT ?geometry .
+  OPTIONAL {
+    ?station schema:containedInPlace ?bodyOfWater .
+    OPTIONAL { ?bodyOfWater schema:name ?bodyOfWaterName . }
   }
-  FILTER(isNumeric(?waterLevel))
-}
-ORDER BY DESC(xsd:double(?waterLevel))
-LIMIT 1
+} LIMIT 20
 """;
 
 var client = new MongoClient("mongodb://localhost:27017");

@@ -93,7 +93,7 @@ namespace SfaChatGraph.Server.RDF.Endpoints
 			IRdfReader rdfParser = MimeTypesHelper.GetParser(ctype.MediaType);
 			Stream stream = await response.Content.ReadAsStreamAsync();
 			using StreamReader input = (string.IsNullOrEmpty(ctype.CharSet) ? new StreamReader(stream) : new StreamReader(stream, Encoding.GetEncoding(ctype.CharSet)));
-			rdfParser.Load(handler, input, _uriFactory);
+				rdfParser.Load(handler, input, _uriFactory);
 		}
 
 	}

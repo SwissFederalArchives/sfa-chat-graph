@@ -281,7 +281,7 @@ namespace SfaChatGraph.Server.RDF
 		public async Task<SparqlResultSet> GetVisualisationResultAsync(SparqlResultSet results, string queryString)
 		{
 			var parameterizedQueryString = new SparqlParameterizedString(queryString);
-			parameterizedQueryString.Namespaces = _namespaceMapper;
+			parameterizedQueryString.Namespaces.Import(_namespaceMapper);
 			var query = _parser.ParseFromString(parameterizedQueryString);
 			var resultVars = query.Variables.SelectWhere(x => x.Name, x => x.IsResultVariable).ToFrozenSet();
 			var triplePatterns = query.RootGraphPattern.ChildGraphPatterns.SelectMany(x => x.TriplePatterns).ToList();
