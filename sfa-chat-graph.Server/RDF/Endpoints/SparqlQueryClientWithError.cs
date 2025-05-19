@@ -12,12 +12,13 @@ namespace SfaChatGraph.Server.RDF.Endpoints
 	{
 		private readonly RelativeCachingUriFactory _uriFactory;
 		private readonly INamespaceMapper _namespaceMapper;
+		private readonly ILogger _logger;
 
-		public SparqlQueryClientWithError(HttpClient httpClient, Uri endpointUri) : base(httpClient, endpointUri)
+		public SparqlQueryClientWithError(ILoggerFactory loggerFactory, HttpClient httpClient, Uri endpointUri) : base(httpClient, endpointUri)
 		{
 			_uriFactory = new RelativeCachingUriFactory(new CachingUriFactory(UriFactory.Root), endpointUri);
 			_namespaceMapper = new NamespaceMapper(_uriFactory);
-			
+			_logger = loggerFactory.CreateLogger<SparqlQueryClientWithError<TErr>>();
 		}
 
 		public new async Task<SparqlResultSet> QueryWithResultSetAsync(string sparqlQuery)
@@ -34,24 +35,38 @@ namespace SfaChatGraph.Server.RDF.Endpoints
 			return results;
 		}
 
-		public new async Task QueryWithResultSetAsync(string sparqlQuery, ISparqlResultsHandler resultsHandler, CancellationToken cancellationToken)
+		private async Task ThrowIfErrorAsync(HttpResponseMessage response)
 		{
-			resultsHandler.BaseUri ??= EndpointUri;
-			using HttpResponseMessage response = await QueryInternal(sparqlQuery, ResultsAcceptHeader, cancellationToken);
 			if (!response.IsSuccessStatusCode)
 			{
 				var content = await response.Content.ReadAsStringAsync();
 				TErr error = default;
 				if (content.Length > 0 && response.Content.Headers.ContentType.MediaType.StartsWith("application/json", StringComparison.OrdinalIgnoreCase))
-					error = JsonSerializer.Deserialize<TErr>(content);
+				{
+					try
+					{
+						error = JsonSerializer.Deserialize<TErr>(content);
+					}
+					catch (Exception ex)
+					{
+						_logger.LogError(ex, "Error deserializing error response from server [ContentType={ContentType}]\n{Content}", response.Content.Headers.ContentType, content);
+					}
+				}
 
+				_logger.LogError("Error querying SPARQL endpoint: {StatusCode} {ReasonPhrase} {Content}", (int)response.StatusCode, response.ReasonPhrase, content);
 				throw new RdfQueryException($"Server reports {(int)response.StatusCode}: {response.ReasonPhrase}.") { Data = { ["error"] = error, ["status"] = response.StatusCode } };
 			}
+		}
 
+		public new async Task QueryWithResultSetAsync(string sparqlQuery, ISparqlResultsHandler resultsHandler, CancellationToken cancellationToken)
+		{
+			resultsHandler.BaseUri ??= EndpointUri;
+			using HttpResponseMessage response = await QueryInternal(sparqlQuery, ResultsAcceptHeader, cancellationToken);
+			await ThrowIfErrorAsync(response);
 			MediaTypeHeaderValue ctype = response.Content.Headers.ContentType;
 			ISparqlResultsReader resultsParser = MimeTypesHelper.GetSparqlParser(ctype.MediaType);
 			Stream stream = await response.Content.ReadAsStreamAsync();
-			using StreamReader input = (string.IsNullOrEmpty(ctype.CharSet) ? new StreamReader(stream) : new StreamReader(stream, Encoding.GetEncoding(ctype.CharSet)));	
+			using StreamReader input = (string.IsNullOrEmpty(ctype.CharSet) ? new StreamReader(stream) : new StreamReader(stream, Encoding.GetEncoding(ctype.CharSet)));
 			resultsParser.Load(resultsHandler, input, _uriFactory);
 		}
 
@@ -83,17 +98,12 @@ namespace SfaChatGraph.Server.RDF.Endpoints
 		public new async Task QueryWithResultGraphAsync(string sparqlQuery, IRdfHandler handler, CancellationToken cancellationToken)
 		{
 			using HttpResponseMessage response = await QueryInternal(sparqlQuery, RdfAcceptHeader, cancellationToken);
-			if (!response.IsSuccessStatusCode)
-			{
-				var error = await response.Content.ReadFromJsonAsync<TErr>();
-				throw new RdfQueryException($"Server reports {(int)response.StatusCode}: {response.ReasonPhrase}.") { Data = { ["error"] = error } };
-			}
-
+			await ThrowIfErrorAsync(response);
 			MediaTypeHeaderValue ctype = response.Content.Headers.ContentType;
 			IRdfReader rdfParser = MimeTypesHelper.GetParser(ctype.MediaType);
 			Stream stream = await response.Content.ReadAsStreamAsync();
 			using StreamReader input = (string.IsNullOrEmpty(ctype.CharSet) ? new StreamReader(stream) : new StreamReader(stream, Encoding.GetEncoding(ctype.CharSet)));
-				rdfParser.Load(handler, input, _uriFactory);
+			rdfParser.Load(handler, input, _uriFactory);
 		}
 
 	}

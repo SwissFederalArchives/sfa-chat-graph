@@ -30,7 +30,12 @@ builder.Services.AddScoped(x => x.AsIParentResolver());
 builder.Services.AddScoped<FunctionCallRegistry>();
 builder.Services.Configure<JupyterCodeExecutionServiceOptions>(builder.Configuration.GetSection("JupyterOptions"));
 builder.Services.AddSingleton<ICodeExecutionService, JupyterCodeExecutionService>();
-builder.Services.AddSingleton<ISparqlEndpoint>(new StardogEndpoint(builder.Configuration.GetConnectionString("Sparql") ?? "https://lindas.admin.ch/query"));
+builder.Services.AddSingleton<ISparqlEndpoint>(sp =>
+{
+	var loggerFacotry = sp.GetRequiredService<ILoggerFactory>();
+	return new StardogEndpoint(loggerFacotry, builder.Configuration.GetConnectionString("Sparql") ?? "https://lindas.admin.ch/query");
+});
+
 builder.Services.AddScoped<IGraphRag, GraphRag>();
 builder.Services.AddSingleton<ChatCodeService>();
 builder.Services.AddSingleton<ChatServiceEventService>();
