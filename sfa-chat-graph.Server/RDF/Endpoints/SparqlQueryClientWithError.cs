@@ -42,10 +42,10 @@ namespace SfaChatGraph.Server.RDF.Endpoints
 			{
 				var content = await response.Content.ReadAsStringAsync();
 				TErr error = default;
-				if (content.Length > 0)
+				if (content.Length > 0 && response.Content.Headers.ContentType.MediaType.StartsWith("application/json", StringComparison.OrdinalIgnoreCase))
 					error = JsonSerializer.Deserialize<TErr>(content);
 
-				throw new RdfQueryException($"Server reports {(int)response.StatusCode}: {response.ReasonPhrase}.") { Data = { ["error"] = error } };
+				throw new RdfQueryException($"Server reports {(int)response.StatusCode}: {response.ReasonPhrase}.") { Data = { ["error"] = error, ["status"] = response.StatusCode } };
 			}
 
 			MediaTypeHeaderValue ctype = response.Content.Headers.ContentType;

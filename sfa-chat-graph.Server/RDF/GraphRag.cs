@@ -126,28 +126,43 @@ namespace SfaChatGraph.Server.RDF
 				var toQuery = Math.Min(countGuesses, limit);
 				var classIntances = await QueryAsync(Queries.GraphSchemaClassInstancesQuery(graph, className, offset, toQuery));
 				var iris = classIntances.Results.Select(x => x["s"]).OfType<IUriNode>().Select(x => x.Uri.AbsoluteUri);
-				var describe = await QueryAsync(Queries.GraphSchemaBatchDescribeQuery(iris));
-				lastNewProperty += toQuery;
-
-				foreach (var description in describe.Results)
+				try
 				{
-					if (description["p"] is not IUriNode predUriNode || predUriNode.Uri.AbsoluteUri == "http://www.w3.org/1999/02/22-rdf-syntax-ns#type")
-						continue;
 
-					if (result.TryGetValue(predUriNode.Uri.AbsoluteUri, out var objectTypeSet) == false)
+					var describe = await QueryAsync(Queries.GraphSchemaBatchDescribeQuery(iris));
+					lastNewProperty += toQuery;
+
+					foreach (var description in describe.Results)
 					{
-						objectTypeSet = new HashSet<string>();
-						result.Add(predUriNode.Uri.AbsoluteUri, objectTypeSet);
+						if (description["p"] is not IUriNode predUriNode || predUriNode.Uri.AbsoluteUri == "http://www.w3.org/1999/02/22-rdf-syntax-ns#type")
+							continue;
+
+						if (result.TryGetValue(predUriNode.Uri.AbsoluteUri, out var objectTypeSet) == false)
+						{
+							objectTypeSet = new HashSet<string>();
+							result.Add(predUriNode.Uri.AbsoluteUri, objectTypeSet);
+						}
+
+						var objectType = LLMFormatter.FormatSchemaNode(description["type"]);
+						if (objectTypeSet.Add(objectType))
+							lastNewProperty = 0;
+
 					}
 
-					var objectType = LLMFormatter.FormatSchemaNode(description["type"]);
-					if (objectTypeSet.Add(objectType))
-						lastNewProperty = 0;
-
+					countGuesses -= limit;
+					activities?.NotifyActivityAsync($"Guessed properties for {className}", $"Found {result.Count} properties total, {countGuesses} are left, early stopp after no new properties {lastNewProperty}/{stoppAfter}");
 				}
-
-				countGuesses -= limit;
-				activities?.NotifyActivityAsync($"Guessed properties for {className}", $"Found {result.Count} properties total, {countGuesses} are left, early stopp after no new properties {lastNewProperty}/{stoppAfter}");
+				catch (RdfException ex)
+				{
+					if (ex.Data.Contains("status") && ex.Data["status"] is int statusCode && statusCode == 413)
+					{
+						limit = Math.Max(1, limit / 5*4);
+						pageCount = countObjects / limit;
+						pages = Enumerable.Range(0, pageCount);
+						if (randomOffsets)
+							pages = pages.OrderBy(x => Random.Shared.Next());
+					}
+				}
 			}
 
 			return FormatClassProperties(result);
@@ -175,7 +190,7 @@ namespace SfaChatGraph.Server.RDF
 						{
 							await activities?.NotifyActivityAsync($"Fetching schema for {className}");
 							schema = await GetClassSchemaAsync(graph, className);
-							if(schema == null)
+							if (schema == null)
 							{
 								await activities?.NotifyActivityAsync($"Falling back to Guessing schema for {className}", $"Schema for {className} has {count} object instances, querying all instance to generate a schema is too slow and strainous for the database, schema is guessed by looking a 10% of all instance at random");
 								schema = await GuessClassSchemaAsync(activities, graph, className, count, (int)(count*0.1), true, 50000);
