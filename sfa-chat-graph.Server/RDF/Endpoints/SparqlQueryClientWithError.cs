@@ -54,7 +54,7 @@ namespace SfaChatGraph.Server.RDF.Endpoints
 				}
 
 				_logger.LogError("Error querying SPARQL endpoint: {StatusCode} {ReasonPhrase} {Content}", (int)response.StatusCode, response.ReasonPhrase, content);
-				throw new RdfQueryException($"Server reports {(int)response.StatusCode}: {response.ReasonPhrase}.") { Data = { ["error"] = error, ["status"] = response.StatusCode } };
+				throw new RdfQueryException($"Server reports {(int)response.StatusCode}: {response.ReasonPhrase}.") { Data = { ["error"] = error, ["status"] = (int)response.StatusCode } };
 			}
 		}
 
