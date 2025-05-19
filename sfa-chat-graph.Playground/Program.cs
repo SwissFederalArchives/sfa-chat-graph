@@ -35,11 +35,6 @@ using VDS.RDF.Parsing;
 using VDS.RDF.Query;
 using VDS.RDF.Storage;
 
-AppContext.SetSwitch("System.Uri.DontEnableStrictRFC3986ReservedCharacterSets", true);
-AppContext.SetSwitch("System.Uri.EnableIdn", true);  // Enables IDN (Internationalized Domain Name) support
-AppContext.SetSwitch("System.Uri.EnableIriParsing", true);  // Enables IRI parsing support
-
-
 var loggerFactory = LoggerFactory.Create(builder =>
 {
 	builder.AddConsole();
@@ -77,6 +72,7 @@ var visRes = await rag.GetVisualisationResultAsync(queryRes, query);
 Console.WriteLine(LLMFormatter.ToCSV(visRes));
 client.DropDatabase("sfa-chat-graph-test");
 
+Console.WriteLine(schema);
 
 class DummyActivities : IChatActivity
 {

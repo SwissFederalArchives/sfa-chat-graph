@@ -162,6 +162,10 @@ namespace SfaChatGraph.Server.RDF
 						if (randomOffsets)
 							pages = pages.OrderBy(x => Random.Shared.Next());
 					}
+					else
+					{
+						throw;
+					}
 				}
 			}
 
