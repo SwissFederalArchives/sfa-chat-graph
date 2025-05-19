@@ -144,6 +144,7 @@ a.inverted-button {
     gap: 0.5em;
     align-items: center;
     padding-bottom: 1em;
+    flex-wrap: wrap;
 }
 
 .error-buttons {
@@ -161,6 +162,7 @@ a.inverted-button {
     padding: 0.5em 1em;
     border-radius: 0.5em;
     cursor: pointer;
+    height: 3em;
 }
 
 .data-tag-container button:hover {
