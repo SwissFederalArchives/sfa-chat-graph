@@ -16,7 +16,7 @@ namespace SfaChatGraph.Server.RDF.Endpoints
 
 		public SparqlQueryClientWithError(ILoggerFactory loggerFactory, HttpClient httpClient, Uri endpointUri) : base(httpClient, endpointUri)
 		{
-			UriFactory.Root.InternUris = false;
+			//UriFactory.Root.InternUris = false;
 			_uriFactory = new RelativeUriFactory(new CachingUriFactory(UriFactory.Root), endpointUri);
 			_namespaceMapper = new NamespaceMapper(_uriFactory);
 			_logger = loggerFactory.CreateLogger<SparqlQueryClientWithError<TErr>>();
