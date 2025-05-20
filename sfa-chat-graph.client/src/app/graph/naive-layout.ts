@@ -96,9 +96,9 @@ class Spring {
 export class NaiveGraphLayout implements IGraphLayout {
 
   readonly repulsionFactor: number = 300;
-  readonly maxRepulsion: number = 150;
-  readonly centerAttraction: number = 0.05;
-  readonly maxDistance: number = 2000;
+  readonly maxRepulsion: number = 200;
+  readonly centerAttraction: number = 0.01;
+  readonly maxDistance: number = 3000;
 
   readonly graph: Graph;
   readonly springs: Spring[] = [];
@@ -123,7 +123,7 @@ export class NaiveGraphLayout implements IGraphLayout {
     const newNodes = this.graph.getNodes().filter(node => node.isHidden() == false && node.isLeaf() == false && this.circleMap.has(node) == false);
     newNodes.forEach(node => {
       const leafes = node.getVisibleLeafs();
-      const circle = new NodeCircle(node, node.radius * 2 + NODE_CIRCLE_PADDING, Vector.random(4000, leafes.length * 200, 4000 - Math.max(0, (10 - leafes.length) * 200)));
+      const circle = new NodeCircle(node, node.radius * 2 + NODE_CIRCLE_PADDING, Vector.random(8000, 0, 8000));
       node.circleRadius = circle.radius;
       this.nodeCircles.push(circle);
       this.circleMap.set(node, circle);

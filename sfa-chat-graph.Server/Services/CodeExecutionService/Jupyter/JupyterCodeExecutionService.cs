@@ -11,8 +11,10 @@ using SfaChatGraph.Server.Services.ChatHistoryService;
 using SfaChatGraph.Server.Services.ChatService.Events;
 using SfaChatGraph.Server.Services.EventService;
 using SfaChatGraph.Server.Utils;
+using System.Collections.Frozen;
 using System.Reactive.Linq;
 using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace SfaChatGraph.Server.Services.CodeExecutionService.Jupyter
 {
@@ -90,6 +92,23 @@ namespace SfaChatGraph.Server.Services.CodeExecutionService.Jupyter
 			};
 		}
 
+		private async Task<CodeExecutionFragment> AsFragmentAsync(FileModel file)
+		{
+			var description = $"Generated file: {file.Name}";
+			var rawContent = await file.GetRawContentAsync();
+			return new CodeExecutionFragment
+			{
+				Id = Guid.NewGuid(),
+				Description = description,
+				BinaryData = new() {
+					{ file.MimeType, rawContent }
+				},
+				BinaryIDs = new() {
+					{ file.MimeType, Guid.NewGuid() }
+				}
+			};
+		}
+
 		public async Task<CodeExecutionResult> ExecuteCodeAsync(string code, CodeExecutionData[] data, CancellationToken cancellationToken, Func<string, Task>? statusAsync = null)
 		{
 			await statusAsync?.Invoke("Starting jupyter client");
@@ -119,11 +138,20 @@ namespace SfaChatGraph.Server.Services.CodeExecutionService.Jupyter
 			}
 			else
 			{
-				var fragments = result.Results.Select(AsFragment).ToArray();
+				var fragments = result.Results.Select(AsFragment).ToList();
+				var files = await session.ListFilesAsync();
+				var uploadedFiles = data.Select(x => x.Name).ToFrozenSet();
+				files = files.Where(x => uploadedFiles.Contains(x.Name) == false).ToArray();
+				foreach (var file in files)
+				{
+					var fragment = await AsFragmentAsync(file);
+					fragments.Add(fragment);
+				}
+
 				return new CodeExecutionResult
 				{
 					Success = true,
-					Fragments = fragments,
+					Fragments = fragments.ToArray(),
 					Error = null,
 					Language = _kernelSpec.Spec.Language
 				};

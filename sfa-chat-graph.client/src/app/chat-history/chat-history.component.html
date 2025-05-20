@@ -8,9 +8,14 @@
                     {{msg.message}}
                 </markdown>
                 <div *ngIf="msg.data.length > 0" class="data-tag-container">
-                    @for(data of msg.data; track data){
-                    <button [classList]="data.className" (click)="showMessageDisplayDetail(data)"><span
-                            class="tooltip-wide" [attr.data-text]="data.description">{{data.label}}</span></button>
+                    @for(data of msg.data; track data)
+                    {
+                    <div class="data-tag-btn-group" [class]="data.className">
+                        <button [classList]="data.className" (click)="showMessageDisplayDetail(data)"><span
+                                class="tooltip-wide" [attr.data-text]="data.description">{{data.label}}</span></button>
+                        <button class="icon-button"
+                            (click)="showMessageDisplayDetail(data, true)"><mat-icon>download</mat-icon></button>
+                    </div>
                     }
                 </div>
 
@@ -54,7 +59,7 @@
                 <div class="error-buttons">
                     <button class="inverted-button" (click)="retry()">Retry</button>
                     @if(getErrorEmail()){
-                        <a class="inverted-button" href="{{getErrorEmail()}}">Send error report</a>
+                    <a class="inverted-button" href="{{getErrorEmail()}}">Send error report</a>
                     }
                 </div>
             </div>

@@ -29,8 +29,6 @@ namespace SfaChatGraph.Server.Services.ChatService.OpenAI
 		If the conversation switches to a specific graph and you've obtained it's iri with list_graphs tool call get_schema next to get a ontology of the graph
 		Inside a Schema "LITERAL" means the predicate points to a literal and FIXED means it points to one or more fixed iris outside the database
 
-		If the user asks you to output data from code make sure to use the IPython.display function. Every not "text/plain" result we be displayed in the frontend as downloadable data.
-
 		The following tools are available:
 		- list_graphs: Use this tool to get a list of all graphs in the database
 		- get_schema: Use this tool to get the schema of a graph use this as well if the user asks for a schema

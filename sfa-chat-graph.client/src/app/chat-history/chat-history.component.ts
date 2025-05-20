@@ -18,6 +18,7 @@ import { DisplayMessage } from './DisplayMessage';
 import { SubGraphMarker } from './SubGraphMarker';
 import { DisplayDetail } from './DisplayDetail';
 import { BackendError } from '../services/api-client/api-client.result-model';
+import { HttpClient } from '@angular/common/http';
 
 
 export enum ErrorType {
@@ -134,8 +135,8 @@ export class ChatHistoryComponent implements AfterViewChecked, OnInit {
     }
   }
 
-  public showMessageDisplayDetail(data: DisplayDetail) {
-    if (data.mimeType.startsWith("image/") || data.isBase64Content == false) {
+  public showMessageDisplayDetail(data: DisplayDetail, download: boolean = false) {
+    if (download == false && (data.mimeType.startsWith("image/") || data.isBase64Content == false)) {
       ChatDataPopoutComponent.showPopup(this._injector, data);
     } else {
       data.download();
@@ -176,7 +177,7 @@ export class ChatHistoryComponent implements AfterViewChecked, OnInit {
 
         const content = message.content!.replaceAll(URL_SUBST_PATTERN, (match, id) => {
           const data = this._toolData.get(id);
-          if (data && data.blobLoaded == false) {
+          if (data && data.blobLoaded == false) {            
             return `/api/v1/chat/tool-data/${data.id}`;
           } else if (data && data.blobLoaded && data.mimeType && data.isBase64Content) {
             return `data:${data.mimeType};base64,${data.content}`

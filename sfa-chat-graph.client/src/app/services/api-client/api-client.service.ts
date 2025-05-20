@@ -21,6 +21,20 @@ export class ApiClientService {
     return await firstValueFrom(this._httpClient.get<ApiMessage[]>(`/api/v1/chat/history/${id}?loadBlobs=${loadBlobs}`));
   }
 
+  private blobToText(blob: Blob): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsText(blob);
+    });
+  }
+
+  public async getToolDataAsync(id: string): Promise<string> {
+     const data = await firstValueFrom(this._httpClient.get(`/api/v1/chat/tool-data/${id}`, { responseType: 'blob' })).then(this.blobToText);
+     return data;
+  }
+
   public async chatAsync(id: string, request: ChatRequest, eventChannel?: string): Promise<ApiResult<ApiMessage[]>> {
     let endpoint = `/api/v1/chat/complete/${id}`;
     if (eventChannel)

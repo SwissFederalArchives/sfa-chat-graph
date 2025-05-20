@@ -2,12 +2,12 @@
 
 namespace SfaChatGraph.Server.RDF
 {
-	public class RelativeCachingUriFactory : IUriFactory
+	public class RelativeUriFactory : IUriFactory
 	{
-		private readonly CachingUriFactory _factory;
+		private readonly IUriFactory _factory;
 		private readonly Uri _baseUri;
 
-		public RelativeCachingUriFactory(CachingUriFactory factory, Uri baseUri)
+		public RelativeUriFactory(IUriFactory factory, Uri baseUri)
 		{
 			_factory=factory;
 			_baseUri=baseUri;

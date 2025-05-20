@@ -1,21 +1,22 @@
-import { ApplicationRef, Component, ComponentRef, createComponent, EnvironmentInjector, HostListener, inject, Injector, Input, input, ViewContainerRef } from '@angular/core';
+import { ApplicationRef, Component, ComponentRef, createComponent, EnvironmentInjector, HostListener, inject, Injector, Input, input, OnInit, ViewContainerRef } from '@angular/core';
 import { DisplayDetail } from '../chat-history/DisplayDetail';
 import { MatIcon, MatIconModule } from '@angular/material/icon';
 import { MatButton, MatIconButton } from '@angular/material/button';
-import { NgIf } from '@angular/common';
-import { MarkdownComponent } from 'ngx-markdown';
+import { AsyncPipe, NgIf } from '@angular/common';
+import { MarkdownComponent, MarkdownPipe } from 'ngx-markdown';
 import Papa from 'papaparse';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
+import { ApiClientService } from '../services/api-client/api-client.service';
 
 @Component({
   selector: 'chat-data-popout',
-  imports: [MatIcon, NgIf, MarkdownComponent],
+  imports: [MatIcon, NgIf, MarkdownComponent, AsyncPipe, MarkdownPipe],
   standalone: true,
   templateUrl: './chat-data-popout.component.html',
   styleUrl: './chat-data-popout.component.css'
 })
-export class ChatDataPopoutComponent {
+export class ChatDataPopoutComponent implements OnInit {
   @Input() data!: DisplayDetail;
   @Input() selfRef!: ComponentRef<ChatDataPopoutComponent>;
 
@@ -32,6 +33,15 @@ export class ChatDataPopoutComponent {
   }
 
   constructor(private _httpClient: HttpClient) { }
+  textContent: string = "";
+
+  async ngOnInit(): Promise<void> {
+    if(this.data.mimeType == "text/html") {
+      this.textContent = await this.getHtmlContent();
+    }else if (this.data.mimeType?.startsWith("image/") == false) {
+      this.textContent = await this.getMdContent();
+    }
+  }
 
   @HostListener('window:keydown', ['$event'])
   handleKeydown(event: KeyboardEvent) {
@@ -61,10 +71,10 @@ export class ChatDataPopoutComponent {
   }
 
   public getImgContent(): string {
-    if(this.data.isUrl)
+    if (this.data.isUrl)
       return this.data.content;
 
-    if(this.data.isBase64Content)
+    if (this.data.isBase64Content)
       return `data:${this.data.mimeType};base64,${this.data.content}`;
 
     return this.data.content;
@@ -83,11 +93,15 @@ export class ChatDataPopoutComponent {
   }
 
 
-  public getMdContent() {
+  public async getMdContent(): Promise<string> {
+    var content = this.data?.content;
+    if (this.data?.isUrl)
+      content = await firstValueFrom(this._httpClient.get(this.data?.content, { responseType: 'text' }));
+
     if (this.data?.formattingLanguage) {
-      return `\`\`\`${this.data?.formattingLanguage}\n${this.htmlEncode(this.data?.content)}\n\`\`\``;
+      return `\`\`\`${this.data?.formattingLanguage}\n${this.htmlEncode(content)}\n\`\`\``;
     } else {
-      return this.formatTextData(this.data?.content, this.data?.mimeType);
+      return this.formatTextData(content, this.data?.mimeType);
     }
   }
 

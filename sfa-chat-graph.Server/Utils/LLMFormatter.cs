@@ -32,8 +32,8 @@ namespace SfaChatGraph.Server.Utils
 
 		private static string EscapeCSVValue(string line)
 		{
-			line = line.Replace("\r", "\\r").Replace("\n", "\\n");
-			if (line.Contains(";"))
+			//line = line.Replace("\r", "\\r").Replace("\n", "\\n");
+			if (line.Contains(';') || line.Contains('\r') || line.Contains('\n'))
 				return $"\"{line.Replace("\"", "\"\"")}\"";
 
 			return line;
@@ -125,7 +125,7 @@ namespace SfaChatGraph.Server.Utils
 				builder.AppendLine("The code yielded the following results:");
 				foreach (var (isLast, fragment) in result.Fragments.IsLast())
 				{
-					builder.Append($"Fragment: {fragment.Id}");
+					builder.AppendLine($"Fragment: {fragment.Id}");
 					if (string.IsNullOrEmpty(fragment.Description) == false)
 					{
 						builder.Append("Description: ");

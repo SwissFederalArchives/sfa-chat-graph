@@ -29,11 +29,11 @@
             <img [src]="getImgContent()" alt="Image: {{data.description}}" />
             }
             @else if (data.mimeType && data.mimeType == "text/html") {
-            <div class="html-content" [innerHtml]="getHtmlContent()"></div>
+            <div *ngIf="textContent" class="html-content" [innerHtml]="textContent"></div>
             }
             @else {
-            <markdown [katex]="true" [emoji]="true" [clipboard]="true" [lineNumbers]="true" ngPreserveWhitespaces
-                [innerHtml]="getMdContent()">
+            <markdown *ngIf="textContent" [katex]="true" [emoji]="true" [clipboard]="true" [lineNumbers]="true" ngPreserveWhitespaces
+                [innerHtml]="textContent">
             </markdown>
             }
         </div>

@@ -10,13 +10,14 @@ namespace SfaChatGraph.Server.RDF.Endpoints
 {
 	public class SparqlQueryClientWithError<TErr> : SparqlQueryClient
 	{
-		private readonly RelativeCachingUriFactory _uriFactory;
+		private readonly RelativeUriFactory _uriFactory;
 		private readonly INamespaceMapper _namespaceMapper;
 		private readonly ILogger _logger;
 
 		public SparqlQueryClientWithError(ILoggerFactory loggerFactory, HttpClient httpClient, Uri endpointUri) : base(httpClient, endpointUri)
 		{
-			_uriFactory = new RelativeCachingUriFactory(new CachingUriFactory(UriFactory.Root), endpointUri);
+			UriFactory.Root.InternUris = false;
+			_uriFactory = new RelativeUriFactory(new CachingUriFactory(UriFactory.Root), endpointUri);
 			_namespaceMapper = new NamespaceMapper(_uriFactory);
 			_logger = loggerFactory.CreateLogger<SparqlQueryClientWithError<TErr>>();
 		}

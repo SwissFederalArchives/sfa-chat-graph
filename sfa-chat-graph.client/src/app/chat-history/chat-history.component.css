@@ -155,6 +155,29 @@ a.inverted-button {
     padding-bottom: 1em;
 }
 
+.data-tag-btn-group {
+    display: flex;
+    flex-direction: row;
+    gap: 0;
+}
+
+.data-tag-btn-group .icon-button {
+   padding: 0;
+}
+
+.data-tag-btn-group button:first-child
+{
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    border-right: #afafaf 1px solid;
+}
+
+
+.data-tag-btn-group button:last-child {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
 .data-tag-container button {
     background-color: var(--app-text-color-dark);
     color: var(--app-text-color);
