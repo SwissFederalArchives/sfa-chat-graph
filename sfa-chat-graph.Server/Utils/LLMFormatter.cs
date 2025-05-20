@@ -1,4 +1,5 @@
-﻿using AwosFramework.ApiClients.Jupyter.Utils;
+﻿using AngleSharp.Text;
+using AwosFramework.ApiClients.Jupyter.Utils;
 using Microsoft.EntityFrameworkCore;
 using SfaChatGraph.Server.Services.CodeExecutionService;
 using SfaChatGraph.Server.Utils;
@@ -29,6 +30,15 @@ namespace SfaChatGraph.Server.Utils
 			_ => "BLANK"
 		};
 
+		private static string EscapeCSVValue(string line)
+		{
+			line = line.Replace("\r", "\\r").Replace("\n", "\\n");
+			if (line.Contains(";"))
+				return $"\"{line.Replace("\"", "\"\"")}\"";
+
+			return line;
+		}
+
 		private static string CsvFormatNode(INode node)
 		{
 			var str = node switch
@@ -38,12 +48,7 @@ namespace SfaChatGraph.Server.Utils
 				_ => string.Empty
 			};
 
-			if (str.Contains(";"))
-			{
-				str = $"\"{str.Replace("\"", "\\\"")}\"";
-			}
-
-			return str;
+			return EscapeCSVValue(str);
 		}
 
 		public static SparqlResultSet ToResultSet(IGraph graph, string[] header = null)
@@ -80,6 +85,8 @@ namespace SfaChatGraph.Server.Utils
 			return builder.ToString();
 		}
 
+
+
 		public static string ToCSV(SparqlResultSet resultSet, int? maxLines = null)
 		{
 			if (resultSet.ResultsType == SparqlResultsType.Boolean)
@@ -88,7 +95,7 @@ namespace SfaChatGraph.Server.Utils
 			if (resultSet.Results.Count == 0)
 				return "Query yielded empty collection";
 
-			var variables = resultSet.Variables.ToArray();
+			var variables = resultSet.Variables.Select(EscapeCSVValue).ToArray();
 			var builder = new StringBuilder();
 			builder.AppendLine(string.Join(";", variables));
 			foreach (var result in resultSet)
