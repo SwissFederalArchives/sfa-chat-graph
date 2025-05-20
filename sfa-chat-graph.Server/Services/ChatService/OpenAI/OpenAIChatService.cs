@@ -29,11 +29,14 @@ namespace SfaChatGraph.Server.Services.ChatService.OpenAI
 		If the conversation switches to a specific graph and you've obtained it's iri with list_graphs tool call get_schema next to get a ontology of the graph
 		Inside a Schema "LITERAL" means the predicate points to a literal and FIXED means it points to one or more fixed iris outside the database
 
+		If the user asks you to output data from code make sure to use the IPython.display function. Every not "text/plain" result we be displayed in the frontend as downloadable data.
+
 		The following tools are available:
 		- list_graphs: Use this tool to get a list of all graphs in the database
 		- get_schema: Use this tool to get the schema of a graph use this as well if the user asks for a schema
 		- query: Use this tool to query the database with sparql. When querying the graph database, try to include the IRI's in the query response as well even if not directly needed. This is important to know which part of the graph was used for the answer.
 		- execute_code: Use this tool to write python code to visualize data or fully analyze large datasets, the code execution state is not stored, so variables from another call won't be accessible in the next call. Don't hardcode data into your code snippet if not necessary. Reference it instead as explained in the tool call description
+		- describe: Use this tool to get informations about one specific node in the graph by its iri
 		""";
 
 		private static readonly SystemChatMessage ChatSystemMessage = new SystemChatMessage(CHAT_SYS_PROMPT);

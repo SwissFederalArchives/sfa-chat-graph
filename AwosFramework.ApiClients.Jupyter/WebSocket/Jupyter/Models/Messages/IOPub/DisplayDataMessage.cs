@@ -14,7 +14,7 @@ namespace AwosFramework.ApiClients.Jupyter.WebSocket.Jupyter.Models.Messages.IOP
 	public class DisplayDataMessage
 	{
 		[JsonPropertyName("data")]
-		public required Dictionary<string, string> Data { get; set; }
+		public required Dictionary<string, JsonElement> Data { get; set; }
 
 		[JsonPropertyName("metadata")]
 		public Dictionary<string, JsonDocument>? MetaData { get; set; }

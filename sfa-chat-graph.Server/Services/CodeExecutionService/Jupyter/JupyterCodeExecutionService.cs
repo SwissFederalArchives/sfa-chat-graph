@@ -12,6 +12,7 @@ using SfaChatGraph.Server.Services.ChatService.Events;
 using SfaChatGraph.Server.Services.EventService;
 using SfaChatGraph.Server.Utils;
 using System.Reactive.Linq;
+using System.Text.Json;
 
 namespace SfaChatGraph.Server.Services.CodeExecutionService.Jupyter
 {
@@ -72,13 +73,19 @@ namespace SfaChatGraph.Server.Services.CodeExecutionService.Jupyter
 
 		private CodeExecutionFragment AsFragment(DisplayDataMessage message)
 		{
-			var description = (string)message.Data.GetValueOrDefault("text/plain", null);
-			message.Data.Remove("text/plain");
+
+			string description = null;
+			if (message.Data.TryGetValue("text/plain", out var descriptionElement))
+			{
+				description = descriptionElement.ValueKind == JsonValueKind.Null ? null : descriptionElement.ToString();
+				message.Data.Remove("text/plain");
+			}
+
 			return new CodeExecutionFragment
 			{
 				Id = Guid.NewGuid(),
 				Description = description,
-				BinaryData = message.Data,
+				BinaryData = message.Data.ToDictionary(x => x.Key, x => x.Value.ToString()),
 				BinaryIDs = message.Data.Keys.ToDictionary(x => x, x => Guid.NewGuid())
 			};
 		}
