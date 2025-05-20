@@ -41,6 +41,8 @@ namespace AwosFramework.ApiClients.Jupyter.Rest.Models.Contents
 		public Task RestoreCheckpointAsync(Checkpoint checkpoint) => _client.RestoreCheckpointAsync(Path, checkpoint.Id);
 		public Task RestoreCheckpointAsync(string checkpointId) => _client.RestoreCheckpointAsync(Path, checkpointId);
 
+
+
 		public async Task<byte[]> GetBinaryContentAsync(bool forceReload = false)
 		{
 			if (Format.HasValue == false || forceReload)
@@ -65,6 +67,14 @@ namespace AwosFramework.ApiClients.Jupyter.Rest.Models.Contents
 				ContentFormat.Base64 => Encoding.UTF8.GetString(Convert.FromBase64String(RawContent ?? string.Empty)),
 				_ => throw new NotSupportedException($"Content format {Format} is not supported."),
 			};
+		}
+
+		public async Task<string> GetRawContentAsync(bool forceReload = false)
+		{
+			if (Format.HasValue == false || forceReload)
+				await LoadContentAsync();
+			
+			return RawContent ?? string.Empty;
 		}
 
 		private bool IsTextMimeType()

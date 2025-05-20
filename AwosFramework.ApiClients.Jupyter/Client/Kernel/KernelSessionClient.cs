@@ -74,6 +74,14 @@ namespace AwosFramework.ApiClients.Jupyter.Client.Jupyter
 			await UploadFileAsync(name, encoding.GetBytes(data));
 		}
 
+		public async Task<FileModel[]> ListFilesAsync(string? directory = null)
+		{
+			FileIOCheck();
+			directory ??= string.Empty;
+			var contents = await _restClient.GetContentsAsync($"{_options.StoragePath}/{directory}");
+			return contents.AsDirectory.Content.OfType<FileModel>().ToArray();
+		}
+
 		public async Task UploadFileAsync(string name, Stream data)
 		{
 			FileIOCheck();
