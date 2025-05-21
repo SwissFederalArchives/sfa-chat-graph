@@ -97,7 +97,8 @@ export class NaiveGraphLayout implements IGraphLayout {
 
   readonly repulsionFactor: number = 300;
   readonly maxRepulsion: number = 200;
-  readonly centerAttraction: number = 0.01;
+  readonly centerAttraction: number = 0.005;
+  readonly maxCenterAttraction: number = 200;
   readonly maxDistance: number = 3000;
 
   readonly graph: Graph;
@@ -179,7 +180,7 @@ export class NaiveGraphLayout implements IGraphLayout {
     circles.filter(x => x.node.shouldRender()).forEach(circle => {
       const distance = Math.max(0.1, circle.center.distance(center) - circle.radius);
       const force = this.centerAttraction * distance;
-      const vector = center.sub(circle.center).normalize().mul(Math.min(force, distance / 2));
+      const vector = center.sub(circle.center).normalize().mul(Math.min(force, distance / 2, this.maxCenterAttraction));
       circle.next.addSet(vector);
      // circle.node.debugVectors.push(vector);
     })
