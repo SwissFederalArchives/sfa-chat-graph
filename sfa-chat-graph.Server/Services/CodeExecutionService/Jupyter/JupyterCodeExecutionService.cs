@@ -117,7 +117,7 @@ namespace SfaChatGraph.Server.Services.CodeExecutionService.Jupyter
 			using var session = await client.CreateKernelSessionAsync(opts =>
 			{
 				opts.KernelSpecName = _kernelSpec.Name;
-				opts.CreateWorkingDirectory = data.Length > 0;
+				opts.CreateWorkingDirectory = true;
 				opts.DeleteWorkingDirectoryOnDispose = true;
 			});
 
