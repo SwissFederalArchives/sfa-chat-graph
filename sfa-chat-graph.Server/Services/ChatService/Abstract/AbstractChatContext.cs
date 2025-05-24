@@ -3,17 +3,28 @@ using SfaChatGraph.Server.Models;
 using SfaChatGraph.Server.Services.ChatService.Events;
 using SfaChatGraph.Server.Services.ChatService.OpenAI;
 using SfaChatGraph.Server.Services.EventService;
+using System.Diagnostics.CodeAnalysis;
 
 namespace SfaChatGraph.Server.Services.ChatService.Abstract
 {
 	public abstract class AbstractChatContext<TMessage> : ChatContext
 	{
 		private readonly List<TMessage> _messages;
+		private Exception? _lastExeption;
 		public IEnumerable<TMessage> InternalHistory => _messages;
 
 		public AbstractChatContext(Guid chatId, IEventSink<ChatEvent> events, IEnumerable<ApiMessage> history) : base(chatId, events, history)
 		{
 			_messages = history.Select(ToInternalMessage).ToList();
+		}
+
+		public Exception? LastException => _lastExeption;
+		[MemberNotNullWhen(true, nameof(LastException))]
+		public bool HasException => _lastExeption != null;
+		public void SetLastException(Exception ex)
+		{
+			ArgumentNullException.ThrowIfNull(ex);
+			_lastExeption = ex;
 		}
 
 		public abstract TMessage ToInternalMessage(ApiMessage message);

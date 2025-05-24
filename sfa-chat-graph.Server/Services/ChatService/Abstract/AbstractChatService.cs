@@ -151,14 +151,23 @@ namespace SfaChatGraph.Server.Services.ChatService.Abstract
 					toolCall.ToolCallId = originalId;
 					return await HandleToolCallAsync(ctx, toolCall);
 				}
+				catch(TimeoutException tEx)
+				{
+					await ctx.NotifyActivityAsync("Timeout most likely graph database is not reachable");
+					_logger.LogError(tEx, "Timeout exception while handling query error");
+					ctx.SetLastException(tEx);
+					return null;
+				}
 				catch (Exception newEx)
 				{
 					ex = newEx;
+					_logger.LogError(newEx, "Error while trying to handle error");
 					continue;
 				}
 			}
 
 			await ctx.NotifyActivityAsync($"Handling {toolCall.ToolId} tool error, no more tries left");
+			ctx.SetLastException(ex);
 			return null;
 		}
 
@@ -169,9 +178,15 @@ namespace SfaChatGraph.Server.Services.ChatService.Abstract
 			{
 				return await HandleToolCallAsync(ctx, toolCall);
 			}
+			catch(TimeoutException tEx)
+			{
+				ctx.SetLastException(tEx);
+				_logger.LogError(tEx, "timeout while handling tool call");
+				return null;
+			}
 			catch (Exception ex)
 			{
-				return await TryHandleErrorAsync(ctx, toolCall, ex, maxErrors);
+				return await TryHandleErrorAsync(ctx, toolCall, ex, maxErrors);	
 			}
 		}
 
@@ -204,8 +219,11 @@ namespace SfaChatGraph.Server.Services.ChatService.Abstract
 					var completion = await CompleteChatAsync(ctx.InternalHistory, options);
 					ctx.AddMessage(completion);
 					toolResponse = await MakeToolCallsAsync(ctx, completion, maxErrors);
-					if (toolResponse == ToolCallsResult.ErrorsExceeded)
-						return new CompletionResult(null, "Max errors exceeded", false);
+					if (toolResponse == ToolCallsResult.ErrorsExceeded || ctx.HasException)
+					{
+						var errorMsg = ctx.LastException?.Message ?? "Max amount of errors exceeded";
+						return new CompletionResult(null, errorMsg, false);
+					}
 
 					if (ctx.Created.Count() > 30)
 						return new CompletionResult(ctx.Created.ToArray(), "Max messages exceeded", false);
