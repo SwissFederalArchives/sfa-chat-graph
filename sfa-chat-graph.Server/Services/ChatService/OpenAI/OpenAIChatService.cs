@@ -35,6 +35,8 @@ namespace SfaChatGraph.Server.Services.ChatService.OpenAI
 		- query: Use this tool to query the database with sparql. When querying the graph database, try to include the IRI's in the query response as well even if not directly needed. This is important to know which part of the graph was used for the answer.
 		- execute_code: Use this tool to write python code to visualize data or fully analyze large datasets, the code execution state is not stored, so variables from another call won't be accessible in the next call. Don't hardcode data into your code snippet if not necessary. Reference it instead as explained in the tool call description
 		- describe: Use this tool to get informations about one specific node in the graph by its iri
+
+		If the User asks for data as a file form code, just save it to disk in any way, the user will be given access to files from code exec.
 		""";
 
 		private static readonly SystemChatMessage ChatSystemMessage = new SystemChatMessage(CHAT_SYS_PROMPT);
