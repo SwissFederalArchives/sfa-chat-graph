@@ -14,9 +14,17 @@ services:
 
   jupyter:
     restart: unless-stopped
-    image: quay.io/jupyter/scipy-notebook
+# comment for production
+    image: quay.io/jupyter/scipy-notebook 
     command: start-notebook.sh --NotebookApp.token='' --NotebookApp.password='' --NotebookApp.disable_check_xsrf=True
-  
+#   uncomment for production
+#    networks:
+#      - no-internet
+#    image: ${DOCKER_REGISTRY-}sfachatgraphjupyter 
+#    build:
+#      context: .
+#      dockerfile: ./jupyter/Dockerfile
+
   mongodb:
     restart: unless-stopped
     image: mongo

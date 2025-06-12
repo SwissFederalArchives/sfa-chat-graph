@@ -44,19 +44,25 @@ var loggerFactory = LoggerFactory.Create(builder =>
 
 
 const string query = """
-PREFIX ex: <http://example.com/>
-PREFIX schema: <http://schema.org/>
-PREFIX geo: <http://www.opengis.net/ont/geosparql#>
-SELECT DISTINCT ?station ?stationName ?geometry ?identifier (IF(BOUND(?bodyOfWater), STR(?bodyOfWater), "") AS ?bodyOfWaterIRI) ?bodyOfWaterName WHERE {
-  ?station a ex:HydroMeasuringStation ;
-           schema:name ?stationName ;
-           schema:identifier ?identifier ;
-           geo:hasGeometry/geo:asWKT ?geometry .
-  OPTIONAL {
-    ?station schema:containedInPlace ?bodyOfWater .
-    OPTIONAL { ?bodyOfWater schema:name ?bodyOfWaterName . }
+PREFIX ric: <https://www.ica.org/standards/RiC/ontology#>
+SELECT ?year ?thema (SUM(?recordCount) AS ?count)
+FROM <https://lindas.admin.ch/sfa/ais>
+WHERE {
+  {
+    SELECT ?year ?thema (COUNT(?record) AS ?recordCount)
+    WHERE {
+      ?record a ric:Record ;
+              ric:isAssociatedWithDate ?dateRange ;
+              <https://schema.ld.admin.ch/thema> ?thema .
+      ?dateRange ric:beginningDate ?beginningDate .
+      BIND(YEAR(xsd:dateTime(?beginningDate)) AS ?year)
+      FILTER(?year >= 1900 && ?year <= 2025)
+    }
+    GROUP BY ?year ?thema
   }
-} LIMIT 20
+}
+GROUP BY ?year ?thema
+ORDER BY ?year
 """;
 
 var client = new MongoClient("mongodb://localhost:27017");
@@ -64,15 +70,65 @@ var database = client.GetDatabase("sfa-chat-graph-test");
 
 var activities = new DummyActivities();
 
-var endpoint = new StardogEndpoint("https://lindas.admin.ch/query");
+var endpoint = new StardogEndpoint(loggerFactory, "https://lindas.admin.ch/query");
 var rag = new GraphRag(endpoint, loggerFactory, database);
 var queryRes = await rag.QueryAsync(query);
-Console.WriteLine(LLMFormatter.ToCSV(queryRes));
-var visRes = await rag.GetVisualisationResultAsync(queryRes, query);
-Console.WriteLine(LLMFormatter.ToCSV(visRes));
-client.DropDatabase("sfa-chat-graph-test");
+using var csv = File.Create("output.csv");
+using var writer = new StreamWriter(csv);
+var data = LLMFormatter.ToCSV(queryRes);
+await writer.WriteAsync(data);
 
-Console.WriteLine(schema);
+var jupyter = new JupyterClient("http://localhost:8888", null, loggerFactory);
+using (var session = await jupyter.CreateKernelSessionAsync())
+{
+  var code = """
+  import pandas as pd
+  import re
+  from IPython.display import display, JSON
+
+  data = pd.read_csv('call_eWGgYqgeTxQgGqeLOh6OoCuV.csv', sep=';')
+
+  def extract_place(thema):
+      if pd.isnull(thema):
+          return 'None'
+      thema = thema.replace('\\n', '\n')
+      match = re.search(r'Orte:\s*([^\n]+)', thema)
+      if match:
+          places = re.split(r';|,', match.group(1))
+          return places[0].strip() if places[0].strip() else 'None'
+      return 'None'
+
+  clean_data = data.dropna(subset=['year', 'thema'])
+  clean_data = clean_data[clean_data['year'].apply(lambda x: str(x).isdigit())]
+  clean_data['year'] = clean_data['year'].astype(int)
+  clean_data['count'] = clean_data['count'].astype(int)
+  clean_data['place'] = clean_data['thema'].apply(extract_place)
+
+  grouped = clean_data.groupby(['year', 'place'])['count'].sum().reset_index()
+
+  # Saved
+  grouped.to_csv('ais_records_by_place.csv', index=False)
+  grouped.to_json('ais_records_by_place.json', orient='records')
+
+  # Display as JSON
+  json_data = grouped.to_dict(orient='records')
+  display(JSON(json_data))
+  """;
+
+  await session.UploadFileAsync("call_eWGgYqgeTxQgGqeLOh6OoCuV.csv", data);
+	var result = await session.ExecuteCodeAsync(code);
+  var files = await session.ListFilesAsync();
+  files = files.Where(x => x.Name != "call_eWGgYqgeTxQgGqeLOh6OoCuV.csv").ToArray();
+	foreach (var file in files)
+	{
+    var content = await file.GetStringContentAsync();
+    Console.WriteLine(file.Name);
+    Console.WriteLine(content);
+	}
+
+  var frag1 = result.Results.First();
+  Console.WriteLine(frag1.Data["text/plain"]);
+}
 
 class DummyActivities : IChatActivity
 {
