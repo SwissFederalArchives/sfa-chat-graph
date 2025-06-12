@@ -26,12 +26,14 @@ The following Settings can be made.
 
 ## CacheImplementation
 | Value | Description |
+|---|---|
 | InMemory | Caching should happen in memory of the application itself |
 | Redis | Caching should happen in the supplied redis database |
 | None | Caching should be disabled. Will lower memory usage in the cost of reponse time of the application |
 
 ## AiImplementation
 | Value | Description |
+|---|---|
 | OpenAI | Supports Openai compatible inference endpoints. Uses OpenAI per default |
 
 # Deployment
