@@ -1,6 +1,8 @@
 # sfa-chat-graph
 
-sfa-chat-graph is a retrieval-augmented generation system for RDF knowledge graphs that translates natural-language queries into SPARQL and executes them against the graph. It features a C#/.NET backend with a document-oriented database, REST and WebSocket endpoints for chat operations and real-time status updates, and an embedded secure Jupyter Notebook service for on-the-fly Python execution alongside an LLM API. The single-page frontend provides a conversational chat panel and an interactive force-directed graph visualization of each answer’s subgraph, complete with fragment downloads and detailed views.
+`sfa-chat-graph` is a retrieval-augmented generation system for RDF knowledge graphs that translates natural-language queries into SPARQL and executes them against the graph. It features a C#/.NET backend with a document-oriented database, REST and WebSocket endpoints for chat operations and real-time status updates, and an embedded secure Jupyter Notebook service for on-the-fly Python execution alongside an LLM API. The single-page frontend provides a conversational chat panel and an interactive force-directed graph visualization of each answer’s subgraph, complete with fragment downloads and detailed views.
+
+It was built for the Swiss Federal Archives (SFA) by the University of Applied Sciences of the Grisons/Fachhochschule Graubünden (FHGR) in the context of the "SIARD zu Linked Data" project (2024-2025).
 
 # Configuration
 Configuration of the System can be adjusted in the `appsettings.json` file, located in the `sfa-chat-graph.Server` folder.
