@@ -67,7 +67,11 @@ namespace SfaChatGraph.Server.Services.ChatService.OpenAI
 
 		protected override ChatCompletionOptions GetOptionsWithSettings(float? temperature = null, string functionName = null, bool includeTools = false)
 		{
-			var options = new ChatCompletionOptions();
+			var options = new ChatCompletionOptions()
+			{
+				ReasoningEffortLevel = ChatReasoningEffortLevel.None,
+			};
+
 			if (temperature != null)
 				options.Temperature = temperature.Value;
 
